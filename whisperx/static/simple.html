@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unicorn Amanuensis - AI Transcription</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="gradient-bg shadow-lg">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                    <span class="text-2xl">📜</span>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-white">Unicorn Amanuensis</h1>
+                    <p class="text-purple-200 text-sm">AI-Powered Transcription</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-8 max-w-4xl">
+        <!-- Upload Section -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Upload Audio</h2>
+            
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                <input type="file" id="file-input" accept="audio/*,video/*" class="hidden">
+                <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                </svg>
+                <p class="text-gray-600 mb-2">Drop audio file here or click to browse</p>
+                <button onclick="document.getElementById('file-input').click()" 
+                    class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                    Choose File
+                </button>
+                <p class="text-sm text-gray-500 mt-2">Supports: MP3, WAV, M4A, MP4, WebM</p>
+            </div>
+            
+            <div id="file-info" class="mt-4 p-3 bg-gray-100 rounded-lg hidden">
+                <p class="text-sm text-gray-600">Selected: <span id="filename" class="font-medium"></span></p>
+            </div>
+        </div>
+
+        <!-- Options -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Options</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Language</label>
+                    <select id="language" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        <option value="auto">Auto-detect</option>
+                        <option value="en">English</option>
+                        <option value="es">Spanish</option>
+                        <option value="fr">French</option>
+                        <option value="de">German</option>
+                        <option value="zh">Chinese</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Features</label>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="diarize" class="mr-2">
+                        <span class="text-sm">Enable Speaker Diarization</span>
+                    </label>
+                </div>
+            </div>
+            
+            <button id="transcribe-btn" disabled
+                class="mt-4 w-full px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
+                Start Transcription
+            </button>
+        </div>
+
+        <!-- Progress -->
+        <div id="progress" class="bg-white rounded-xl shadow-lg p-6 mb-6 hidden">
+            <h2 class="text-xl font-semibold mb-4">Processing</h2>
+            <div class="relative pt-1">
+                <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-purple-200">
+                    <div id="progress-bar" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-purple-500 transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <p id="progress-text" class="text-center text-gray-600">Uploading...</p>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div id="results" class="bg-white rounded-xl shadow-lg p-6 hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">Transcript</h2>
+                <div class="flex space-x-2">
+                    <button onclick="copyTranscript()" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
+                        Copy
+                    </button>
+                    <button onclick="downloadTranscript()" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
+                        Download
+                    </button>
+                </div>
+            </div>
+            
+            <div id="transcript" class="prose max-w-none">
+                <!-- Transcript will appear here -->
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let selectedFile = null;
+        let transcriptionResult = null;
+
+        // File input handler
+        document.getElementById('file-input').addEventListener('change', (e) => {
+            selectedFile = e.target.files[0];
+            if (selectedFile) {
+                document.getElementById('file-info').classList.remove('hidden');
+                document.getElementById('filename').textContent = selectedFile.name;
+                document.getElementById('transcribe-btn').disabled = false;
+            }
+        });
+
+        // Drag and drop
+        const dropZone = document.querySelector('.border-dashed');
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('bg-purple-50');
+        });
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('bg-purple-50');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('bg-purple-50');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                selectedFile = files[0];
+                document.getElementById('file-info').classList.remove('hidden');
+                document.getElementById('filename').textContent = selectedFile.name;
+                document.getElementById('transcribe-btn').disabled = false;
+            }
+        });
+
+        // Transcribe button
+        document.getElementById('transcribe-btn').addEventListener('click', async () => {
+            if (!selectedFile) return;
+            
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('language', document.getElementById('language').value);
+            formData.append('diarize', document.getElementById('diarize').checked);
+            
+            // Show progress
+            document.getElementById('progress').classList.remove('hidden');
+            document.getElementById('results').classList.add('hidden');
+            updateProgress(10, 'Uploading audio...');
+            
+            try {
+                // Simulate progress updates
+                setTimeout(() => updateProgress(30, 'Processing audio...'), 1000);
+                setTimeout(() => updateProgress(60, 'Transcribing...'), 3000);
+                
+                const response = await fetch('/v1/audio/transcriptions', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) throw new Error('Transcription failed');
+                
+                updateProgress(90, 'Finalizing...');
+                transcriptionResult = await response.json();
+                
+                updateProgress(100, 'Complete!');
+                displayResults();
+                
+            } catch (error) {
+                alert('Transcription failed. Please try again.');
+                console.error(error);
+            } finally {
+                setTimeout(() => {
+                    document.getElementById('progress').classList.add('hidden');
+                }, 1000);
+            }
+        });
+
+        function updateProgress(percent, message) {
+            document.getElementById('progress-bar').style.width = percent + '%';
+            document.getElementById('progress-text').textContent = message;
+        }
+
+        function displayResults() {
+            document.getElementById('results').classList.remove('hidden');
+            const transcript = document.getElementById('transcript');
+            
+            if (transcriptionResult.segments && document.getElementById('diarize').checked) {
+                // Display with speakers
+                transcript.innerHTML = transcriptionResult.segments.map(seg => {
+                    if (seg.speaker) {
+                        return `<p><strong class="text-purple-600">${seg.speaker}:</strong> ${seg.text}</p>`;
+                    }
+                    return `<p>${seg.text}</p>`;
+                }).join('');
+            } else {
+                // Simple text
+                transcript.innerHTML = `<p>${transcriptionResult.text}</p>`;
+            }
+        }
+
+        function copyTranscript() {
+            const text = transcriptionResult.text || 
+                transcriptionResult.segments.map(s => s.text).join(' ');
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Transcript copied to clipboard!');
+            });
+        }
+
+        function downloadTranscript() {
+            const text = transcriptionResult.text || 
+                transcriptionResult.segments.map(s => 
+                    s.speaker ? `${s.speaker}: ${s.text}` : s.text
+                ).join('\n\n');
+            
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'transcript.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

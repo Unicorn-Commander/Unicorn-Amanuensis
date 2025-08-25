@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unicorn Scribe - Professional AI Transcription</title>
+    <link rel="icon" type="image/png" href="/static/unicorn-scribe-logo.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/wavesurfer.js@7"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #f093fb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .speaker-color-1 { color: #3B82F6; }
+        .speaker-color-2 { color: #10B981; }
+        .speaker-color-3 { color: #F59E0B; }
+        .speaker-color-4 { color: #EF4444; }
+        .speaker-color-5 { color: #8B5CF6; }
+        
+        .diarization-timeline {
+            position: relative;
+            height: 60px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .speaker-segment {
+            position: absolute;
+            height: 100%;
+            opacity: 0.8;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .word-highlight {
+            background-color: yellow;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .recording-pulse {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <!-- Header -->
+    <header class="gradient-bg shadow-lg">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <img src="/static/unicorn-scribe-logo.png" alt="Unicorn Scribe" class="h-12 w-12">
+                    <div>
+                        <h1 class="text-2xl font-bold text-white">Unicorn Scribe</h1>
+                        <p class="text-purple-200 text-sm">Professional AI Transcription</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span id="hardware-badge" class="px-3 py-1 bg-white/20 text-white rounded-full text-sm">
+                        CPU Mode
+                    </span>
+                    <button id="settings-btn" class="text-white hover:text-purple-200">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-8">
+        <!-- Input Section -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4 dark:text-white">Audio Input</h2>
+            
+            <!-- Tab Navigation -->
+            <div class="flex space-x-1 mb-6 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+                <button class="tab-btn flex-1 px-4 py-2 rounded-md transition-all active" data-tab="upload">
+                    Upload File
+                </button>
+                <button class="tab-btn flex-1 px-4 py-2 rounded-md transition-all" data-tab="record">
+                    Record Audio
+                </button>
+                <button class="tab-btn flex-1 px-4 py-2 rounded-md transition-all" data-tab="url">
+                    From URL
+                </button>
+            </div>
+
+            <!-- Upload Tab -->
+            <div id="upload-tab" class="tab-content">
+                <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
+                    <input type="file" id="file-input" accept="audio/*,video/*" class="hidden">
+                    <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    <p class="text-gray-600 dark:text-gray-400 mb-2">Drop audio/video file here or click to browse</p>
+                    <button onclick="document.getElementById('file-input').click()" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                        Choose File
+                    </button>
+                    <p class="text-sm text-gray-500 mt-2">Supports: MP3, WAV, M4A, MP4, WebM, etc.</p>
+                </div>
+            </div>
+
+            <!-- Record Tab -->
+            <div id="record-tab" class="tab-content hidden">
+                <div class="text-center">
+                    <button id="record-btn" class="px-6 py-6 bg-red-600 text-white rounded-full hover:bg-red-700 transition-all">
+                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Z"/>
+                            <path d="M16 10v1a4 4 0 0 1-8 0v-1h-1v1a5 5 0 0 0 4.5 4.97V18h-2v1h5v-1h-2v-2.03A5 5 0 0 0 17 11v-1h-1Z"/>
+                        </svg>
+                    </button>
+                    <p id="record-status" class="mt-4 text-gray-600 dark:text-gray-400">Click to start recording</p>
+                    <div id="record-timer" class="mt-2 text-2xl font-mono hidden">00:00</div>
+                </div>
+            </div>
+
+            <!-- URL Tab -->
+            <div id="url-tab" class="tab-content hidden">
+                <input type="url" id="url-input" placeholder="https://example.com/audio.mp3" 
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white">
+                <button id="fetch-url-btn" class="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                    Fetch Audio
+                </button>
+            </div>
+        </div>
+
+        <!-- Waveform Visualization -->
+        <div id="waveform-container" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6 hidden">
+            <h2 class="text-xl font-semibold mb-4 dark:text-white">Audio Waveform</h2>
+            <div id="waveform"></div>
+            <div class="flex items-center justify-between mt-4">
+                <button id="play-pause-btn" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                    Play
+                </button>
+                <span id="time-display" class="text-gray-600 dark:text-gray-400">0:00 / 0:00</span>
+            </div>
+        </div>
+
+        <!-- Transcription Options -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4 dark:text-white">Transcription Options</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Language -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Language</label>
+                    <select id="language-select" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white">
+                        <option value="auto">Auto-detect</option>
+                        <option value="en">English</option>
+                        <option value="es">Spanish</option>
+                        <option value="fr">French</option>
+                        <option value="de">German</option>
+                        <option value="zh">Chinese</option>
+                        <option value="ja">Japanese</option>
+                    </select>
+                </div>
+
+                <!-- Model -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Model</label>
+                    <select id="model-select" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white">
+                        <option value="base">Base (Fast)</option>
+                        <option value="small">Small (Balanced)</option>
+                        <option value="medium">Medium (Accurate)</option>
+                        <option value="large">Large (Most Accurate)</option>
+                    </select>
+                </div>
+
+                <!-- Diarization -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Speaker Diarization</label>
+                    <div class="flex items-center space-x-4">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="diarization-check" class="mr-2">
+                            <span class="text-sm dark:text-gray-300">Enable</span>
+                        </label>
+                        <input type="number" id="speaker-count" min="2" max="10" value="2" 
+                            class="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white"
+                            placeholder="Speakers">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transcribe Button -->
+            <button id="transcribe-btn" class="mt-6 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 font-semibold">
+                Start Transcription
+            </button>
+        </div>
+
+        <!-- Progress -->
+        <div id="progress-container" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6 hidden">
+            <h2 class="text-xl font-semibold mb-4 dark:text-white">Processing</h2>
+            <div class="relative pt-1">
+                <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-purple-200">
+                    <div id="progress-bar" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-purple-500 transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <p id="progress-text" class="text-center text-gray-600 dark:text-gray-400">Initializing...</p>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div id="results-container" class="hidden">
+            <!-- Diarization Timeline -->
+            <div id="diarization-timeline" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6 hidden">
+                <h2 class="text-xl font-semibold mb-4 dark:text-white">Speaker Timeline</h2>
+                <div class="diarization-timeline" id="timeline"></div>
+                <div id="speaker-legend" class="mt-4 flex flex-wrap gap-2"></div>
+            </div>
+
+            <!-- Transcript -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold dark:text-white">Transcript</h2>
+                    <div class="flex space-x-2">
+                        <button id="search-btn" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </button>
+                        <button id="copy-btn" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">
+                            Copy
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Search Bar -->
+                <div id="search-bar" class="mb-4 hidden">
+                    <input type="text" id="search-input" placeholder="Search in transcript..." 
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white">
+                </div>
+
+                <!-- Transcript Content -->
+                <div id="transcript-content" class="prose dark:prose-invert max-w-none">
+                    <!-- Transcript will be inserted here -->
+                </div>
+            </div>
+
+            <!-- Export Options -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-semibold mb-4 dark:text-white">Export</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <button class="export-btn px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700" data-format="txt">
+                        Plain Text
+                    </button>
+                    <button class="export-btn px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700" data-format="srt">
+                        SRT Subtitles
+                    </button>
+                    <button class="export-btn px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700" data-format="vtt">
+                        WebVTT
+                    </button>
+                    <button class="export-btn px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700" data-format="json">
+                        JSON
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Global variables
+        let wavesurfer = null;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let transcriptionResult = null;
+        let recordingTimer = null;
+        let recordingStartTime = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            setupEventListeners();
+            detectHardware();
+        });
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Tab switching
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+            });
+
+            // File upload
+            const fileInput = document.getElementById('file-input');
+            fileInput.addEventListener('change', handleFileUpload);
+
+            // Recording
+            document.getElementById('record-btn').addEventListener('click', toggleRecording);
+
+            // URL fetch
+            document.getElementById('fetch-url-btn').addEventListener('click', fetchFromURL);
+
+            // Transcribe
+            document.getElementById('transcribe-btn').addEventListener('click', startTranscription);
+
+            // Search
+            document.getElementById('search-btn').addEventListener('click', toggleSearch);
+            document.getElementById('search-input')?.addEventListener('input', performSearch);
+
+            // Copy
+            document.getElementById('copy-btn').addEventListener('click', copyTranscript);
+
+            // Export
+            document.querySelectorAll('.export-btn').forEach(btn => {
+                btn.addEventListener('click', () => exportTranscript(btn.dataset.format));
+            });
+
+            // Play/Pause
+            document.getElementById('play-pause-btn')?.addEventListener('click', togglePlayback);
+        }
+
+        // Tab switching
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tab);
+                btn.classList.toggle('bg-white', btn.dataset.tab === tab);
+                btn.classList.toggle('dark:bg-gray-800', btn.dataset.tab === tab);
+                btn.classList.toggle('text-purple-600', btn.dataset.tab === tab);
+            });
+
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            document.getElementById(`${tab}-tab`).classList.remove('hidden');
+        }
+
+        // File upload handler
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            console.log('File selected:', file.name);
+            
+            // Show waveform container
+            document.getElementById('waveform-container').classList.remove('hidden');
+            
+            // Initialize waveform
+            if (wavesurfer) wavesurfer.destroy();
+            wavesurfer = WaveSurfer.create({
+                container: '#waveform',
+                waveColor: '#9333ea',
+                progressColor: '#c084fc',
+                cursorColor: '#f9a8d4',
+                barWidth: 2,
+                barRadius: 3,
+                responsive: true,
+                height: 100
+            });
+
+            // Load file
+            const url = URL.createObjectURL(file);
+            wavesurfer.load(url);
+
+            // Update time display
+            wavesurfer.on('audioprocess', updateTimeDisplay);
+            wavesurfer.on('seek', updateTimeDisplay);
+        }
+
+        // Recording functions
+        async function toggleRecording() {
+            if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+                startRecording();
+            } else {
+                stopRecording();
+            }
+        }
+
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                recordedChunks = [];
+
+                mediaRecorder.ondataavailable = event => {
+                    if (event.data.size > 0) {
+                        recordedChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+                    handleRecordedAudio(blob);
+                };
+
+                mediaRecorder.start();
+                recordingStartTime = Date.now();
+                startRecordingTimer();
+
+                // Update UI
+                document.getElementById('record-btn').classList.add('recording-pulse');
+                document.getElementById('record-btn').classList.replace('bg-red-600', 'bg-red-700');
+                document.getElementById('record-status').textContent = 'Recording...';
+                document.getElementById('record-timer').classList.remove('hidden');
+            } catch (error) {
+                console.error('Error accessing microphone:', error);
+                alert('Could not access microphone. Please check permissions.');
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                
+                stopRecordingTimer();
+                
+                // Update UI
+                document.getElementById('record-btn').classList.remove('recording-pulse');
+                document.getElementById('record-btn').classList.replace('bg-red-700', 'bg-red-600');
+                document.getElementById('record-status').textContent = 'Click to start recording';
+                document.getElementById('record-timer').classList.add('hidden');
+            }
+        }
+
+        function startRecordingTimer() {
+            recordingTimer = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                document.getElementById('record-timer').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function stopRecordingTimer() {
+            if (recordingTimer) {
+                clearInterval(recordingTimer);
+                recordingTimer = null;
+            }
+        }
+
+        function handleRecordedAudio(blob) {
+            // Show waveform
+            document.getElementById('waveform-container').classList.remove('hidden');
+            
+            // Initialize waveform
+            if (wavesurfer) wavesurfer.destroy();
+            wavesurfer = WaveSurfer.create({
+                container: '#waveform',
+                waveColor: '#9333ea',
+                progressColor: '#c084fc',
+                cursorColor: '#f9a8d4',
+                barWidth: 2,
+                barRadius: 3,
+                responsive: true,
+                height: 100
+            });
+
+            const url = URL.createObjectURL(blob);
+            wavesurfer.load(url);
+        }
+
+        // Transcription
+        async function startTranscription() {
+            const formData = new FormData();
+            
+            // Get audio source
+            const fileInput = document.getElementById('file-input');
+            if (fileInput.files[0]) {
+                formData.append('file', fileInput.files[0]);
+            } else if (recordedChunks.length > 0) {
+                const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+                formData.append('file', blob, 'recording.webm');
+            } else {
+                alert('Please select or record audio first');
+                return;
+            }
+
+            // Add options
+            formData.append('language', document.getElementById('language-select').value);
+            formData.append('model', document.getElementById('model-select').value);
+            formData.append('diarize', document.getElementById('diarization-check').checked);
+            formData.append('min_speakers', document.getElementById('speaker-count').value);
+            formData.append('max_speakers', document.getElementById('speaker-count').value);
+
+            // Show progress
+            document.getElementById('progress-container').classList.remove('hidden');
+            document.getElementById('results-container').classList.add('hidden');
+            updateProgress(0, 'Uploading audio...');
+
+            try {
+                const response = await fetch('/api/v1/transcribe', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Transcription failed');
+
+                // Handle streaming progress
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let result = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value);
+                    result += chunk;
+                    
+                    // Parse progress updates
+                    try {
+                        const lines = chunk.split('\n');
+                        for (const line of lines) {
+                            if (line.startsWith('data: ')) {
+                                const data = JSON.parse(line.slice(6));
+                                if (data.progress) {
+                                    updateProgress(data.progress, data.message);
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        // Not a progress update
+                    }
+                }
+
+                // Parse final result
+                transcriptionResult = JSON.parse(result);
+                displayResults();
+                
+            } catch (error) {
+                console.error('Transcription error:', error);
+                alert('Transcription failed. Please try again.');
+            } finally {
+                document.getElementById('progress-container').classList.add('hidden');
+            }
+        }
+
+        function updateProgress(percent, message) {
+            document.getElementById('progress-bar').style.width = `${percent}%`;
+            document.getElementById('progress-text').textContent = message;
+        }
+
+        // Display results
+        function displayResults() {
+            if (!transcriptionResult) return;
+
+            document.getElementById('results-container').classList.remove('hidden');
+
+            // Display diarization timeline if available
+            if (transcriptionResult.diarization) {
+                displayDiarizationTimeline();
+            }
+
+            // Display transcript
+            displayTranscript();
+        }
+
+        function displayDiarizationTimeline() {
+            const timeline = document.getElementById('timeline');
+            const legend = document.getElementById('speaker-legend');
+            
+            document.getElementById('diarization-timeline').classList.remove('hidden');
+            
+            // Clear previous content
+            timeline.innerHTML = '';
+            legend.innerHTML = '';
+            
+            const duration = transcriptionResult.duration || 100;
+            const speakers = new Set();
+            
+            // Create segments
+            transcriptionResult.diarization.forEach(segment => {
+                const speaker = segment.speaker;
+                speakers.add(speaker);
+                
+                const div = document.createElement('div');
+                div.className = `speaker-segment speaker-color-${(parseInt(speaker.replace('SPEAKER_', '')) % 5) + 1}`;
+                div.style.left = `${(segment.start / duration) * 100}%`;
+                div.style.width = `${((segment.end - segment.start) / duration) * 100}%`;
+                div.style.backgroundColor = getSpeakerColor(speaker);
+                div.textContent = speaker;
+                
+                timeline.appendChild(div);
+            });
+            
+            // Create legend
+            Array.from(speakers).forEach(speaker => {
+                const span = document.createElement('span');
+                span.className = 'flex items-center space-x-2 px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-full';
+                span.innerHTML = `
+                    <span class="w-3 h-3 rounded-full" style="background-color: ${getSpeakerColor(speaker)}"></span>
+                    <span class="text-sm">${speaker}</span>
+                `;
+                legend.appendChild(span);
+            });
+        }
+
+        function displayTranscript() {
+            const content = document.getElementById('transcript-content');
+            content.innerHTML = '';
+            
+            if (transcriptionResult.segments) {
+                transcriptionResult.segments.forEach(segment => {
+                    const p = document.createElement('p');
+                    p.className = 'mb-4';
+                    
+                    if (segment.speaker) {
+                        const speaker = document.createElement('span');
+                        speaker.className = 'font-semibold';
+                        speaker.style.color = getSpeakerColor(segment.speaker);
+                        speaker.textContent = `${segment.speaker}: `;
+                        p.appendChild(speaker);
+                    }
+                    
+                    const text = document.createElement('span');
+                    text.textContent = segment.text;
+                    text.dataset.start = segment.start;
+                    text.dataset.end = segment.end;
+                    p.appendChild(text);
+                    
+                    content.appendChild(p);
+                });
+            } else {
+                // Simple text display
+                content.textContent = transcriptionResult.text;
+            }
+        }
+
+        function getSpeakerColor(speaker) {
+            const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+            const index = parseInt(speaker.replace('SPEAKER_', '')) % colors.length;
+            return colors[index];
+        }
+
+        // Search functionality
+        function toggleSearch() {
+            const searchBar = document.getElementById('search-bar');
+            searchBar.classList.toggle('hidden');
+            if (!searchBar.classList.contains('hidden')) {
+                document.getElementById('search-input').focus();
+            }
+        }
+
+        function performSearch() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const content = document.getElementById('transcript-content');
+            
+            // Remove previous highlights
+            content.querySelectorAll('.word-highlight').forEach(el => {
+                el.classList.remove('word-highlight');
+            });
+            
+            if (query) {
+                // Highlight matches
+                const walker = document.createTreeWalker(
+                    content,
+                    NodeFilter.SHOW_TEXT,
+                    null,
+                    false
+                );
+                
+                let node;
+                while (node = walker.nextNode()) {
+                    const text = node.textContent;
+                    const index = text.toLowerCase().indexOf(query);
+                    if (index !== -1) {
+                        // Wrap match in highlight span
+                        const span = document.createElement('span');
+                        span.className = 'word-highlight';
+                        const parent = node.parentNode;
+                        const before = document.createTextNode(text.substring(0, index));
+                        const match = document.createTextNode(text.substring(index, index + query.length));
+                        const after = document.createTextNode(text.substring(index + query.length));
+                        
+                        span.appendChild(match);
+                        parent.replaceChild(after, node);
+                        parent.insertBefore(span, after);
+                        parent.insertBefore(before, span);
+                    }
+                }
+            }
+        }
+
+        // Copy transcript
+        function copyTranscript() {
+            const content = document.getElementById('transcript-content');
+            const text = content.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById('copy-btn');
+                btn.textContent = 'Copied!';
+                setTimeout(() => {
+                    btn.textContent = 'Copy';
+                }, 2000);
+            });
+        }
+
+        // Export functions
+        function exportTranscript(format) {
+            if (!transcriptionResult) return;
+            
+            let content = '';
+            let filename = 'transcript';
+            let mimeType = 'text/plain';
+            
+            switch (format) {
+                case 'txt':
+                    content = exportAsText();
+                    filename += '.txt';
+                    break;
+                case 'srt':
+                    content = exportAsSRT();
+                    filename += '.srt';
+                    break;
+                case 'vtt':
+                    content = exportAsVTT();
+                    filename += '.vtt';
+                    break;
+                case 'json':
+                    content = JSON.stringify(transcriptionResult, null, 2);
+                    filename += '.json';
+                    mimeType = 'application/json';
+                    break;
+            }
+            
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function exportAsText() {
+            if (transcriptionResult.segments) {
+                return transcriptionResult.segments.map(s => 
+                    s.speaker ? `${s.speaker}: ${s.text}` : s.text
+                ).join('\n\n');
+            }
+            return transcriptionResult.text;
+        }
+
+        function exportAsSRT() {
+            if (!transcriptionResult.segments) return '';
+            
+            return transcriptionResult.segments.map((segment, index) => {
+                const start = formatTimeSRT(segment.start);
+                const end = formatTimeSRT(segment.end);
+                const text = segment.speaker ? `${segment.speaker}: ${segment.text}` : segment.text;
+                return `${index + 1}\n${start} --> ${end}\n${text}\n`;
+            }).join('\n');
+        }
+
+        function exportAsVTT() {
+            if (!transcriptionResult.segments) return '';
+            
+            let vtt = 'WEBVTT\n\n';
+            vtt += transcriptionResult.segments.map((segment, index) => {
+                const start = formatTimeVTT(segment.start);
+                const end = formatTimeVTT(segment.end);
+                const text = segment.speaker ? `<v ${segment.speaker}>${segment.text}</v>` : segment.text;
+                return `${start} --> ${end}\n${text}\n`;
+            }).join('\n');
+            
+            return vtt;
+        }
+
+        function formatTimeSRT(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            const ms = Math.floor((seconds % 1) * 1000);
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')},${ms.toString().padStart(3, '0')}`;
+        }
+
+        function formatTimeVTT(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            const ms = Math.floor((seconds % 1) * 1000);
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+        }
+
+        // Playback controls
+        function togglePlayback() {
+            if (!wavesurfer) return;
+            
+            wavesurfer.playPause();
+            const btn = document.getElementById('play-pause-btn');
+            btn.textContent = wavesurfer.isPlaying() ? 'Pause' : 'Play';
+        }
+
+        function updateTimeDisplay() {
+            if (!wavesurfer) return;
+            
+            const current = wavesurfer.getCurrentTime();
+            const total = wavesurfer.getDuration();
+            
+            const formatTime = (seconds) => {
+                const m = Math.floor(seconds / 60);
+                const s = Math.floor(seconds % 60);
+                return `${m}:${s.toString().padStart(2, '0')}`;
+            };
+            
+            document.getElementById('time-display').textContent = 
+                `${formatTime(current)} / ${formatTime(total)}`;
+        }
+
+        // Hardware detection
+        async function detectHardware() {
+            try {
+                const response = await fetch('/api/v1/hardware');
+                const data = await response.json();
+                
+                let badge = 'CPU Mode';
+                if (data.backend === 'npu') {
+                    badge = 'NPU Accelerated';
+                } else if (data.backend === 'igpu') {
+                    badge = 'iGPU Accelerated';
+                } else if (data.backend === 'cuda') {
+                    badge = 'GPU Accelerated';
+                }
+                
+                document.getElementById('hardware-badge').textContent = badge;
+            } catch (error) {
+                console.error('Hardware detection failed:', error);
+            }
+        }
+
+        // URL fetch
+        async function fetchFromURL() {
+            const url = document.getElementById('url-input').value;
+            if (!url) return;
+            
+            try {
+                const response = await fetch(url);
+                const blob = await response.blob();
+                const file = new File([blob], 'audio-from-url', { type: blob.type });
+                
+                // Simulate file upload
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                document.getElementById('file-input').files = dataTransfer.files;
+                
+                handleFileUpload({ target: { files: [file] } });
+            } catch (error) {
+                alert('Failed to fetch audio from URL');
+            }
+        }
+    </script>
+</body>
+</html>

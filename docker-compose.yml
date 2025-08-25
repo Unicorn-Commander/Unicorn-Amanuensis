@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  # WhisperX Speech-to-Text Service
+  whisperx:
+    build: ./whisperx
+    container_name: amanuensis-whisperx
+    restart: unless-stopped
+    ports:
+      - "9000:9000"  # API port
+      - "9001:9001"  # Web UI port
+    environment:
+      WHISPER_MODEL: "${WHISPER_MODEL:-base}"
+      WHISPER_DEVICE: "${WHISPER_DEVICE:-auto}"
+      WHISPER_BACKEND: "${WHISPER_BACKEND:-cpu}"  # cpu, cuda, npu, igpu
+      COMPUTE_TYPE: "${COMPUTE_TYPE:-int8}"
+      BATCH_SIZE: "${BATCH_SIZE:-16}"
+      HF_TOKEN: "${HF_TOKEN:-}"
+      ENABLE_DIARIZATION: "${ENABLE_DIARIZATION:-true}"
+      WEB_UI_PORT: "9001"
+      API_PORT: "9000"
+    volumes:
+      - whisperx_models:/app/models
+      - ./whisperx/static:/app/static:ro
+    networks:
+      - amanuensis-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 300s
+    # Device mappings for hardware acceleration
+    devices:
+      # For Intel iGPU
+      - /dev/dri:/dev/dri
+    group_add:
+      - "44"    # video group
+      - "993"   # render group
+
+networks:
+  amanuensis-network:
+    driver: bridge
+
+volumes:
+  whisperx_models:
