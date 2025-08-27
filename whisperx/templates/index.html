@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🦄 Unicorn Amanuensis Pro - Enterprise Transcription Suite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * { font-family: 'Inter', sans-serif; }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .dark .glass-morphism {
+            background: rgba(30, 30, 40, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .speaker-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 4px;
+        }
+        
+        .speaker-1 { background: #3B82F620; color: #3B82F6; }
+        .speaker-2 { background: #10B98120; color: #10B981; }
+        .speaker-3 { background: #F59E0B20; color: #F59E0B; }
+        .speaker-4 { background: #EF444420; color: #EF4444; }
+        .speaker-5 { background: #8B5CF620; color: #8B5CF6; }
+        
+        .waveform {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            height: 40px;
+        }
+        
+        .waveform-bar {
+            width: 3px;
+            background: linear-gradient(to top, #667eea, #764ba2);
+            animation: wave 1s ease-in-out infinite;
+            border-radius: 3px;
+        }
+        
+        .waveform-bar:nth-child(odd) { animation-delay: 0.1s; }
+        .waveform-bar:nth-child(even) { animation-delay: 0.2s; }
+        
+        @keyframes wave {
+            0%, 100% { height: 10px; }
+            50% { height: 30px; }
+        }
+        
+        .recording-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .confidence-bar {
+            height: 4px;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+        
+        .timeline-segment {
+            position: absolute;
+            height: 100%;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .timeline-segment:hover {
+            filter: brightness(1.2);
+            z-index: 10;
+        }
+        
+        /* Hardware indicator animations */
+        @keyframes gpu-pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+        
+        .hardware-active {
+            animation: gpu-pulse 2s ease-in-out infinite;
+        }
+        
+        /* Dark mode */
+        .dark {
+            background: #0f0f1e;
+            color: #e4e4e7;
+        }
+        
+        .dark .glass-morphism {
+            background: rgba(30, 30, 40, 0.95);
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            white-space: nowrap;
+            z-index: 1000;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-50 to-pink-50 min-h-screen">
+    <!-- Header -->
+    <header class="glass-morphism shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="text-3xl">🦄</div>
+                    <div>
+                        <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                            Unicorn Amanuensis Pro
+                        </h1>
+                        <p class="text-sm text-gray-600">Enterprise AI Transcription Suite</p>
+                    </div>
+                </div>
+                
+                <!-- Hardware Status -->
+                <div class="flex items-center gap-6">
+                    <div id="hardwareStatus" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-white shadow-sm">
+                        <i class="fas fa-microchip text-purple-600"></i>
+                        <span class="text-sm font-medium">Detecting...</span>
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        <button onclick="toggleTheme()" class="p-2 rounded-lg hover:bg-gray-100 transition">
+                            <i class="fas fa-moon text-gray-600"></i>
+                        </button>
+                        <button onclick="showSettings()" class="p-2 rounded-lg hover:bg-gray-100 transition">
+                            <i class="fas fa-cog text-gray-600"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-8">
+        <div class="grid lg:grid-cols-3 gap-6">
+            <!-- Left Panel - Input & Controls -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Upload Card -->
+                <div class="glass-morphism rounded-xl p-6 shadow-xl">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <i class="fas fa-upload text-purple-600"></i>
+                        Audio Input
+                    </h2>
+                    
+                    <!-- Tab Selection -->
+                    <div class="flex gap-2 mb-4">
+                        <button onclick="setInputMode('file')" class="tab-btn flex-1 px-4 py-2 rounded-lg bg-purple-600 text-white font-medium transition">
+                            <i class="fas fa-file-audio mr-2"></i>File
+                        </button>
+                        <button onclick="setInputMode('record')" class="tab-btn flex-1 px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-medium hover:bg-gray-200 transition">
+                            <i class="fas fa-microphone mr-2"></i>Record
+                        </button>
+                        <button onclick="setInputMode('url')" class="tab-btn flex-1 px-4 py-2 rounded-lg bg-gray-100 text-gray-700 font-medium hover:bg-gray-200 transition">
+                            <i class="fas fa-link mr-2"></i>URL
+                        </button>
+                    </div>
+                    
+                    <!-- File Upload -->
+                    <div id="fileInput" class="input-panel">
+                        <div class="border-2 border-dashed border-purple-300 rounded-lg p-8 text-center hover:border-purple-500 transition cursor-pointer"
+                             ondrop="handleDrop(event)" ondragover="handleDragOver(event)" onclick="document.getElementById('audioFile').click()">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-purple-400 mb-3"></i>
+                            <p class="text-gray-600">Drop audio/video files here</p>
+                            <p class="text-sm text-gray-500 mt-1">MP3, WAV, M4A, MP4, MKV, WebM</p>
+                            <input type="file" id="audioFile" class="hidden" accept="audio/*,video/*" onchange="handleFileSelect(event)" multiple>
+                        </div>
+                        <div id="fileList" class="mt-4 space-y-2"></div>
+                    </div>
+                    
+                    <!-- Recording -->
+                    <div id="recordInput" class="input-panel hidden">
+                        <div class="text-center py-8">
+                            <button id="recordBtn" onclick="toggleRecording()" class="w-20 h-20 rounded-full bg-red-500 hover:bg-red-600 text-white transition transform hover:scale-105">
+                                <i class="fas fa-microphone text-2xl"></i>
+                            </button>
+                            <div id="recordingTime" class="mt-4 text-2xl font-mono hidden">00:00</div>
+                            <div class="waveform justify-center mt-4 hidden" id="recordingWaveform">
+                                <div class="waveform-bar" style="height: 20px;"></div>
+                                <div class="waveform-bar" style="height: 30px;"></div>
+                                <div class="waveform-bar" style="height: 15px;"></div>
+                                <div class="waveform-bar" style="height: 35px;"></div>
+                                <div class="waveform-bar" style="height: 25px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- URL Input -->
+                    <div id="urlInput" class="input-panel hidden">
+                        <input type="url" id="audioUrl" placeholder="https://example.com/audio.mp3" 
+                               class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-600 focus:border-transparent">
+                        <button onclick="loadFromUrl()" class="mt-3 w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
+                            <i class="fas fa-download mr-2"></i>Load Audio
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Processing Options -->
+                <div class="glass-morphism rounded-xl p-6 shadow-xl">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <i class="fas fa-sliders-h text-purple-600"></i>
+                        Processing Options
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <!-- Model Selection -->
+                        <div>
+                            <label class="text-sm font-medium text-gray-700">Model Size</label>
+                            <select id="modelSize" class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-600">
+                                <option value="tiny">Tiny (39M) - Fastest</option>
+                                <option value="base">Base (74M) - Fast</option>
+                                <option value="small">Small (244M) - Balanced</option>
+                                <option value="medium">Medium (769M) - Accurate</option>
+                                <option value="large-v3" selected>Large v3 (1550M) - Best</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Language -->
+                        <div>
+                            <label class="text-sm font-medium text-gray-700">Language</label>
+                            <select id="language" class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-600">
+                                <option value="auto">Auto-detect</option>
+                                <option value="en">English</option>
+                                <option value="es">Spanish</option>
+                                <option value="fr">French</option>
+                                <option value="de">German</option>
+                                <option value="zh">Chinese</option>
+                                <option value="ja">Japanese</option>
+                                <option value="ko">Korean</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Features -->
+                        <div class="space-y-2">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="enableDiarization" checked class="w-4 h-4 text-purple-600 rounded">
+                                <span class="text-sm">Speaker Diarization</span>
+                                <i class="fas fa-info-circle text-gray-400 text-xs ml-1" title="Identify different speakers"></i>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="enableTimestamps" checked class="w-4 h-4 text-purple-600 rounded">
+                                <span class="text-sm">Word-level Timestamps</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="enableVAD" checked class="w-4 h-4 text-purple-600 rounded">
+                                <span class="text-sm">Voice Activity Detection</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="enablePunctuation" checked class="w-4 h-4 text-purple-600 rounded">
+                                <span class="text-sm">Smart Punctuation</span>
+                            </label>
+                        </div>
+                        
+                        <!-- Process Button -->
+                        <button id="transcribeBtn" onclick="startTranscription()" 
+                                class="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:shadow-lg transform hover:scale-[1.02] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled>
+                            <i class="fas fa-magic mr-2"></i>
+                            Start Transcription
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Stats Card -->
+                <div class="glass-morphism rounded-xl p-6 shadow-xl">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <i class="fas fa-chart-bar text-purple-600"></i>
+                        Session Stats
+                    </h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-purple-600" id="totalWords">0</div>
+                            <div class="text-xs text-gray-600">Words</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-pink-600" id="totalSpeakers">0</div>
+                            <div class="text-xs text-gray-600">Speakers</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-blue-600" id="avgConfidence">0%</div>
+                            <div class="text-xs text-gray-600">Confidence</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-green-600" id="processingSpeed">0x</div>
+                            <div class="text-xs text-gray-600">Speed</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Panel - Results -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Progress Bar -->
+                <div id="progressSection" class="glass-morphism rounded-xl p-6 shadow-xl hidden">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium">Processing...</span>
+                        <span id="progressPercent" class="text-sm font-medium">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div id="progressBar" class="bg-gradient-to-r from-purple-600 to-pink-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <p id="progressStatus" class="text-sm text-gray-600 mt-2">Initializing...</p>
+                </div>
+                
+                <!-- Timeline Visualization -->
+                <div id="timelineSection" class="glass-morphism rounded-xl p-6 shadow-xl hidden">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <i class="fas fa-film text-purple-600"></i>
+                        Speaker Timeline
+                    </h2>
+                    <div class="relative h-20 bg-gray-100 rounded-lg overflow-hidden" id="timeline">
+                        <!-- Timeline segments will be added here -->
+                    </div>
+                    <div class="flex justify-between mt-2 text-xs text-gray-600">
+                        <span id="timelineStart">0:00</span>
+                        <span id="timelineEnd">0:00</span>
+                    </div>
+                </div>
+                
+                <!-- Transcription Results -->
+                <div id="resultsSection" class="glass-morphism rounded-xl p-6 shadow-xl hidden">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold flex items-center gap-2">
+                            <i class="fas fa-transcript text-purple-600"></i>
+                            Transcription
+                        </h2>
+                        <div class="flex gap-2">
+                            <button onclick="copyTranscript()" class="px-3 py-1 text-sm bg-gray-100 rounded-lg hover:bg-gray-200 transition">
+                                <i class="fas fa-copy mr-1"></i>Copy
+                            </button>
+                            <button onclick="downloadTranscript('txt')" class="px-3 py-1 text-sm bg-gray-100 rounded-lg hover:bg-gray-200 transition">
+                                <i class="fas fa-download mr-1"></i>TXT
+                            </button>
+                            <button onclick="downloadTranscript('srt')" class="px-3 py-1 text-sm bg-gray-100 rounded-lg hover:bg-gray-200 transition">
+                                <i class="fas fa-download mr-1"></i>SRT
+                            </button>
+                            <button onclick="downloadTranscript('vtt')" class="px-3 py-1 text-sm bg-gray-100 rounded-lg hover:bg-gray-200 transition">
+                                <i class="fas fa-download mr-1"></i>VTT
+                            </button>
+                            <button onclick="downloadTranscript('json')" class="px-3 py-1 text-sm bg-gray-100 rounded-lg hover:bg-gray-200 transition">
+                                <i class="fas fa-download mr-1"></i>JSON
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Search Bar -->
+                    <div class="mb-4">
+                        <div class="relative">
+                            <input type="text" id="searchInput" placeholder="Search in transcript..." 
+                                   class="w-full px-4 py-2 pl-10 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-600"
+                                   oninput="searchTranscript()">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Results Container -->
+                    <div id="transcriptContent" class="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+                        <!-- Transcript segments will appear here -->
+                    </div>
+                </div>
+                
+                <!-- Word Cloud -->
+                <div id="wordCloudSection" class="glass-morphism rounded-xl p-6 shadow-xl hidden">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <i class="fas fa-cloud text-purple-600"></i>
+                        Key Topics
+                    </h2>
+                    <canvas id="wordCloud" width="600" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Global variables
+        let selectedFiles = [];
+        let transcriptionResult = null;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let recordingStartTime = null;
+        let currentInputMode = 'file';
+        
+        // Check hardware on load
+        window.addEventListener('load', async () => {
+            checkHardwareStatus();
+            setInterval(checkHardwareStatus, 30000); // Check every 30s
+        });
+        
+        async function checkHardwareStatus() {
+            try {
+                const response = await fetch('/api/hardware');
+                const data = await response.json();
+                const statusEl = document.getElementById('hardwareStatus');
+                
+                let icon = 'fa-microchip';
+                let text = 'CPU';
+                let color = 'gray';
+                
+                if (data.backend === 'npu') {
+                    icon = 'fa-bolt';
+                    text = `AMD NPU (${data.npu_name})`;
+                    color = 'red';
+                } else if (data.backend === 'igpu') {
+                    icon = 'fa-memory';
+                    text = 'Intel iGPU (OpenVINO)';
+                    color = 'blue';
+                } else if (data.backend === 'cuda') {
+                    icon = 'fa-gamepad';
+                    text = `NVIDIA GPU (${data.gpu_name})`;
+                    color = 'green';
+                }
+                
+                statusEl.innerHTML = `
+                    <i class="fas ${icon} text-${color}-600 hardware-active"></i>
+                    <span class="text-sm font-medium">${text}</span>
+                `;
+            } catch (error) {
+                console.error('Failed to get hardware status:', error);
+            }
+        }
+        
+        function setInputMode(mode) {
+            currentInputMode = mode;
+            
+            // Update tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-purple-600', 'text-white');
+                btn.classList.add('bg-gray-100', 'text-gray-700');
+            });
+            event.target.classList.remove('bg-gray-100', 'text-gray-700');
+            event.target.classList.add('bg-purple-600', 'text-white');
+            
+            // Show/hide panels
+            document.querySelectorAll('.input-panel').forEach(panel => {
+                panel.classList.add('hidden');
+            });
+            
+            if (mode === 'file') {
+                document.getElementById('fileInput').classList.remove('hidden');
+            } else if (mode === 'record') {
+                document.getElementById('recordInput').classList.remove('hidden');
+            } else if (mode === 'url') {
+                document.getElementById('urlInput').classList.remove('hidden');
+            }
+        }
+        
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('border-purple-500', 'bg-purple-50');
+        }
+        
+        function handleDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('border-purple-500', 'bg-purple-50');
+            
+            const files = Array.from(e.dataTransfer.files);
+            addFiles(files);
+        }
+        
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            addFiles(files);
+        }
+        
+        function addFiles(files) {
+            const audioFiles = files.filter(file => 
+                file.type.startsWith('audio/') || file.type.startsWith('video/')
+            );
+            
+            selectedFiles = [...selectedFiles, ...audioFiles];
+            updateFileList();
+            
+            if (selectedFiles.length > 0) {
+                document.getElementById('transcribeBtn').disabled = false;
+            }
+        }
+        
+        function updateFileList() {
+            const listEl = document.getElementById('fileList');
+            listEl.innerHTML = selectedFiles.map((file, idx) => `
+                <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-file-audio text-purple-600"></i>
+                        <span class="text-sm">${file.name}</span>
+                        <span class="text-xs text-gray-500">(${formatFileSize(file.size)})</span>
+                    </div>
+                    <button onclick="removeFile(${idx})" class="text-red-500 hover:text-red-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+        
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateFileList();
+            
+            if (selectedFiles.length === 0) {
+                document.getElementById('transcribeBtn').disabled = true;
+            }
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+        
+        async function toggleRecording() {
+            const btn = document.getElementById('recordBtn');
+            const timeEl = document.getElementById('recordingTime');
+            const waveform = document.getElementById('recordingWaveform');
+            
+            if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+                // Start recording
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                recordedChunks = [];
+                
+                mediaRecorder.ondataavailable = event => {
+                    if (event.data.size > 0) {
+                        recordedChunks.push(event.data);
+                    }
+                };
+                
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+                    const file = new File([blob], `recording_${Date.now()}.webm`, { type: 'audio/webm' });
+                    selectedFiles = [file];
+                    updateFileList();
+                    document.getElementById('transcribeBtn').disabled = false;
+                };
+                
+                mediaRecorder.start();
+                recordingStartTime = Date.now();
+                
+                btn.innerHTML = '<i class="fas fa-stop text-2xl"></i>';
+                btn.classList.add('recording-pulse');
+                timeEl.classList.remove('hidden');
+                waveform.classList.remove('hidden');
+                
+                // Update timer
+                setInterval(() => {
+                    if (mediaRecorder && mediaRecorder.state === 'recording') {
+                        const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+                        const minutes = Math.floor(elapsed / 60);
+                        const seconds = elapsed % 60;
+                        timeEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    }
+                }, 100);
+                
+            } else {
+                // Stop recording
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                
+                btn.innerHTML = '<i class="fas fa-microphone text-2xl"></i>';
+                btn.classList.remove('recording-pulse');
+                timeEl.classList.add('hidden');
+                waveform.classList.add('hidden');
+            }
+        }
+        
+        async function loadFromUrl() {
+            const url = document.getElementById('audioUrl').value;
+            if (!url) return;
+            
+            // For demo, we'll just show that URL is loaded
+            selectedFiles = [{ name: url.split('/').pop(), size: 0, url: url }];
+            updateFileList();
+            document.getElementById('transcribeBtn').disabled = false;
+        }
+        
+        async function startTranscription() {
+            const btn = document.getElementById('transcribeBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+            
+            // Show progress
+            document.getElementById('progressSection').classList.remove('hidden');
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('timelineSection').classList.add('hidden');
+            
+            updateProgress(10, 'Uploading audio files...');
+            
+            try {
+                const formData = new FormData();
+                
+                if (currentInputMode === 'file' || currentInputMode === 'record') {
+                    selectedFiles.forEach(file => {
+                        formData.append('files', file);
+                    });
+                } else if (currentInputMode === 'url') {
+                    formData.append('url', document.getElementById('audioUrl').value);
+                }
+                
+                formData.append('model', document.getElementById('modelSize').value);
+                formData.append('language', document.getElementById('language').value);
+                formData.append('diarize', document.getElementById('enableDiarization').checked);
+                formData.append('timestamps', document.getElementById('enableTimestamps').checked);
+                formData.append('vad', document.getElementById('enableVAD').checked);
+                
+                updateProgress(30, 'Processing with AI model...');
+                
+                const response = await fetch('/api/transcribe', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Transcription failed');
+                }
+                
+                updateProgress(70, 'Generating results...');
+                
+                const result = await response.json();
+                transcriptionResult = result;
+                
+                updateProgress(100, 'Complete!');
+                
+                // Show results
+                setTimeout(() => {
+                    displayResults(result);
+                    document.getElementById('progressSection').classList.add('hidden');
+                }, 500);
+                
+            } catch (error) {
+                console.error('Transcription error:', error);
+                alert('Transcription failed. Please try again.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-magic mr-2"></i>Start Transcription';
+            }
+        }
+        
+        function updateProgress(percent, status) {
+            document.getElementById('progressBar').style.width = percent + '%';
+            document.getElementById('progressPercent').textContent = percent + '%';
+            document.getElementById('progressStatus').textContent = status;
+        }
+        
+        function displayResults(result) {
+            // Show result sections
+            document.getElementById('resultsSection').classList.remove('hidden');
+            
+            if (result.speakers && result.speakers.length > 1) {
+                document.getElementById('timelineSection').classList.remove('hidden');
+                displayTimeline(result);
+            }
+            
+            // Update stats
+            const words = result.text.split(' ').length;
+            const speakers = result.speakers ? result.speakers.length : 1;
+            const confidence = result.confidence || 95;
+            const speed = result.processing_time ? (result.duration / result.processing_time).toFixed(1) : '10';
+            
+            document.getElementById('totalWords').textContent = words.toLocaleString();
+            document.getElementById('totalSpeakers').textContent = speakers;
+            document.getElementById('avgConfidence').textContent = confidence + '%';
+            document.getElementById('processingSpeed').textContent = speed + 'x';
+            
+            // Display transcript
+            const contentEl = document.getElementById('transcriptContent');
+            
+            if (result.segments) {
+                contentEl.innerHTML = result.segments.map(segment => {
+                    const speakerClass = `speaker-${(segment.speaker % 5) + 1}`;
+                    return `
+                        <div class="segment p-3 rounded-lg hover:bg-gray-50 transition">
+                            <div class="flex items-start gap-3">
+                                <div class="flex-shrink-0">
+                                    <span class="speaker-badge ${speakerClass}">
+                                        <i class="fas fa-user mr-1"></i>Speaker ${segment.speaker}
+                                    </span>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-gray-800">${highlightText(segment.text)}</p>
+                                    <div class="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                                        <span><i class="far fa-clock mr-1"></i>${formatTime(segment.start)} - ${formatTime(segment.end)}</span>
+                                        ${segment.confidence ? `<span><i class="fas fa-chart-line mr-1"></i>${Math.round(segment.confidence * 100)}%</span>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                contentEl.innerHTML = `<div class="p-4">${result.text}</div>`;
+            }
+        }
+        
+        function displayTimeline(result) {
+            if (!result.segments) return;
+            
+            const timeline = document.getElementById('timeline');
+            const duration = result.duration || result.segments[result.segments.length - 1].end;
+            
+            // Group segments by speaker
+            const speakerSegments = {};
+            result.segments.forEach(segment => {
+                const speaker = segment.speaker || 0;
+                if (!speakerSegments[speaker]) {
+                    speakerSegments[speaker] = [];
+                }
+                speakerSegments[speaker].push(segment);
+            });
+            
+            // Create timeline segments
+            timeline.innerHTML = '';
+            Object.entries(speakerSegments).forEach(([speaker, segments]) => {
+                segments.forEach(segment => {
+                    const startPercent = (segment.start / duration) * 100;
+                    const widthPercent = ((segment.end - segment.start) / duration) * 100;
+                    const speakerClass = `speaker-${(parseInt(speaker) % 5) + 1}`;
+                    
+                    const div = document.createElement('div');
+                    div.className = `timeline-segment ${speakerClass}`;
+                    div.style.left = startPercent + '%';
+                    div.style.width = widthPercent + '%';
+                    div.title = `Speaker ${speaker}: ${formatTime(segment.start)} - ${formatTime(segment.end)}`;
+                    timeline.appendChild(div);
+                });
+            });
+            
+            // Update timeline labels
+            document.getElementById('timelineStart').textContent = '0:00';
+            document.getElementById('timelineEnd').textContent = formatTime(duration);
+        }
+        
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+        
+        function highlightText(text) {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            if (!searchTerm) return text;
+            
+            const regex = new RegExp(`(${searchTerm})`, 'gi');
+            return text.replace(regex, '<mark class="bg-yellow-200">$1</mark>');
+        }
+        
+        function searchTranscript() {
+            displayResults(transcriptionResult);
+        }
+        
+        function copyTranscript() {
+            const text = transcriptionResult.text;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Copied to clipboard!');
+            });
+        }
+        
+        function downloadTranscript(format) {
+            let content, filename, mimeType;
+            
+            if (format === 'txt') {
+                content = transcriptionResult.text;
+                filename = 'transcript.txt';
+                mimeType = 'text/plain';
+            } else if (format === 'srt') {
+                content = generateSRT(transcriptionResult);
+                filename = 'transcript.srt';
+                mimeType = 'text/srt';
+            } else if (format === 'vtt') {
+                content = generateVTT(transcriptionResult);
+                filename = 'transcript.vtt';
+                mimeType = 'text/vtt';
+            } else if (format === 'json') {
+                content = JSON.stringify(transcriptionResult, null, 2);
+                filename = 'transcript.json';
+                mimeType = 'application/json';
+            }
+            
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function generateSRT(result) {
+            if (!result.segments) return result.text;
+            
+            return result.segments.map((segment, i) => {
+                const startTime = formatSRTTime(segment.start);
+                const endTime = formatSRTTime(segment.end);
+                return `${i + 1}\n${startTime} --> ${endTime}\n${segment.text}\n`;
+            }).join('\n');
+        }
+        
+        function generateVTT(result) {
+            if (!result.segments) return 'WEBVTT\n\n' + result.text;
+            
+            let vtt = 'WEBVTT\n\n';
+            result.segments.forEach((segment, i) => {
+                const startTime = formatVTTTime(segment.start);
+                const endTime = formatVTTTime(segment.end);
+                vtt += `${startTime} --> ${endTime}\n${segment.text}\n\n`;
+            });
+            return vtt;
+        }
+        
+        function formatSRTTime(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = Math.floor(seconds % 60);
+            const ms = Math.floor((seconds % 1) * 1000);
+            return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')},${ms.toString().padStart(3, '0')}`;
+        }
+        
+        function formatVTTTime(seconds) {
+            return formatSRTTime(seconds).replace(',', '.');
+        }
+        
+        function toggleTheme() {
+            document.body.classList.toggle('dark');
+        }
+        
+        function showSettings() {
+            alert('Settings panel coming soon!');
+        }
+        
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

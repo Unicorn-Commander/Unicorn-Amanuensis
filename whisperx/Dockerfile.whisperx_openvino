@@ -1,0 +1,94 @@
+FROM python:3.10-slim
+
+# Install system dependencies including Intel GPU runtime
+RUN apt-get update && apt-get install -y \
+    # Build tools
+    build-essential \
+    gcc \
+    g++ \
+    make \
+    cmake \
+    # Git for pip installations from git
+    git \
+    curl \
+    wget \
+    # FFmpeg with hardware acceleration support
+    ffmpeg \
+    # Intel GPU runtime dependencies
+    ocl-icd-libopencl1 \
+    ocl-icd-opencl-dev \
+    clinfo \
+    vainfo \
+    libva-dev \
+    libva-drm2 \
+    libva-glx2 \
+    i965-va-driver \
+    # Audio processing libraries
+    libsndfile1 \
+    libsndfile1-dev \
+    libsox-dev \
+    sox \
+    # Additional libraries for OpenVINO
+    libgomp1 \
+    libnuma1 \
+    libusb-1.0-0 \
+    libpugixml1v5 \
+    # Python audio dependencies
+    portaudio19-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Add Intel GPU repository and install compute runtime
+RUN wget -qO - https://repositories.intel.com/graphics/intel-graphics.key | \
+    gpg --dearmor -o /usr/share/keyrings/intel-graphics.gpg && \
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/graphics/ubuntu jammy main" > /etc/apt/sources.list.d/intel-graphics.list && \
+    apt-get update && \
+    apt-get install -y \
+    intel-level-zero-gpu \
+    level-zero \
+    intel-media-va-driver-non-free \
+    libmfx1 \
+    libmfx-dev \
+    libvpl2 \
+    libvpl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Upgrade pip and install build tools
+RUN pip install --upgrade pip setuptools wheel
+
+# Install PyTorch CPU version (for WhisperX on CPU with OpenVINO backend)
+RUN pip install torch==2.1.0 torchaudio==2.1.0 --index-url https://download.pytorch.org/whl/cpu
+
+# Copy and install requirements
+COPY requirements_whisperx_openvino.txt .
+RUN pip install --no-cache-dir -r requirements_whisperx_openvino.txt
+
+# Install OpenVINO toolkit
+RUN pip install --no-cache-dir \
+    openvino==2024.0.0 \
+    openvino-dev[pytorch]==2024.0.0
+
+# Set environment variables for Intel GPU
+ENV LIBVA_DRIVER_NAME=iHD
+ENV LIBVA_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
+ENV OCL_ICD_VENDORS=/etc/OpenCL/vendors/
+ENV InferenceEngine_DIR=/usr/local/lib/python3.10/dist-packages/openvino
+
+# Create OpenCL vendor directory
+RUN mkdir -p /etc/OpenCL/vendors && \
+    echo "/usr/lib/x86_64-linux-gnu/intel-opencl/libigdrcl.so" > /etc/OpenCL/vendors/intel.icd || true
+
+# Copy application code
+COPY server_whisperx_openvino.py ./server.py
+COPY static/ ./static/
+
+# Create models directory
+RUN mkdir -p /app/models
+
+# Expose ports
+EXPOSE 9000
+EXPOSE 9001
+
+# Run the WhisperX + OpenVINO server
+CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "9000"]

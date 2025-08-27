@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🦄 Unicorn Amanuensis Pro - AI Transcription Suite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/wavesurfer.js@7"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+        }
+        
+        /* Theme Variables */
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f3f4f6;
+            --bg-card: #ffffff;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --accent-purple: #8b5cf6;
+            --accent-pink: #ec4899;
+        }
+        
+        /* Dark Theme */
+        .dark {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+        }
+        
+        /* Unicorn Theme */
+        .unicorn {
+            --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-secondary: rgba(30, 30, 40, 0.95);
+            --bg-card: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: #e0e7ff;
+            --border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .bg-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+        }
+        
+        .text-secondary {
+            color: var(--text-secondary);
+        }
+        
+        /* Ensure form fields are always visible */
+        .form-input {
+            background: var(--bg-primary) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-primary) !important;
+        }
+        
+        .form-input:focus {
+            border-color: var(--accent-purple) !important;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+        
+        /* Animated gradient for unicorn theme only */
+        .unicorn-gradient {
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab, #667eea, #764ba2);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+        
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        /* Speaker colors */
+        .speaker-1 { 
+            background: #8b5cf6;
+            color: white;
+        }
+        .speaker-2 { 
+            background: #ec4899;
+            color: white;
+        }
+        .speaker-3 { 
+            background: #3b82f6;
+            color: white;
+        }
+        .speaker-4 { 
+            background: #10b981;
+            color: white;
+        }
+        .speaker-5 { 
+            background: #f59e0b;
+            color: white;
+        }
+        
+        /* Wave animation for recording */
+        .wave {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            height: 50px;
+        }
+        
+        .wave-bar {
+            width: 4px;
+            background: var(--accent-purple);
+            border-radius: 4px;
+            animation: wave-animation 1s ease-in-out infinite;
+        }
+        
+        .wave-bar:nth-child(1) { animation-delay: 0s; }
+        .wave-bar:nth-child(2) { animation-delay: 0.1s; }
+        .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(4) { animation-delay: 0.3s; }
+        .wave-bar:nth-child(5) { animation-delay: 0.4s; }
+        
+        @keyframes wave-animation {
+            0%, 100% { height: 20px; }
+            50% { height: 40px; }
+        }
+        
+        /* Loading spinner */
+        .spinner {
+            border: 3px solid var(--border-color);
+            border-radius: 50%;
+            border-top: 3px solid var(--accent-purple);
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-purple);
+            border-radius: 8px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-pink);
+        }
+        
+        /* Button styles */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-pink) 100%);
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px rgba(139, 92, 246, 0.3);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: scale(1);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s;
+        }
+        
+        .btn-secondary:hover {
+            background: var(--bg-primary);
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="min-h-screen transition-colors duration-300">
+    <!-- Background (only for unicorn theme) -->
+    <div id="unicornBg" class="fixed inset-0 unicorn-gradient hidden"></div>
+    
+    <!-- Main Container -->
+    <div class="relative z-10 min-h-screen">
+        <!-- Header -->
+        <header class="bg-card border-b sticky top-0 z-50 backdrop-blur-lg bg-opacity-95">
+            <div class="container mx-auto px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="text-4xl">🦄</div>
+                        <div>
+                            <h1 class="text-2xl font-bold">
+                                Unicorn Amanuensis <span class="text-purple-600">Pro</span>
+                            </h1>
+                            <p class="text-secondary text-sm">AI-Powered Transcription Suite</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-3">
+                        <!-- Hardware Status -->
+                        <div id="hardwareStatus" class="bg-card px-4 py-2 rounded-lg flex items-center gap-2 border">
+                            <div class="spinner" id="hardwareSpinner"></div>
+                            <span class="hidden font-medium" id="hardwareInfo">Detecting...</span>
+                        </div>
+                        
+                        <!-- Theme Switcher -->
+                        <div class="flex bg-card rounded-lg border p-1">
+                            <button onclick="setTheme('light')" class="theme-btn px-3 py-1 rounded text-sm font-medium transition" data-theme="light">
+                                <i class="fas fa-sun"></i>
+                            </button>
+                            <button onclick="setTheme('dark')" class="theme-btn px-3 py-1 rounded text-sm font-medium transition" data-theme="dark">
+                                <i class="fas fa-moon"></i>
+                            </button>
+                            <button onclick="setTheme('unicorn')" class="theme-btn px-3 py-1 rounded text-sm font-medium transition" data-theme="unicorn">
+                                <i class="fas fa-sparkles"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="container mx-auto px-6 py-8">
+            <div class="grid lg:grid-cols-12 gap-6">
+                
+                <!-- Left Panel -->
+                <div class="lg:col-span-4 space-y-6">
+                    
+                    <!-- Input Card -->
+                    <div class="bg-card rounded-xl p-6 shadow-lg">
+                        <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                            <i class="fas fa-microphone-lines text-purple-600"></i>
+                            Audio Input
+                        </h2>
+                        
+                        <!-- Input Tabs -->
+                        <div class="flex gap-2 mb-4">
+                            <button onclick="setInputMode('file')" class="input-tab flex-1 px-3 py-2 rounded-lg btn-secondary text-sm font-medium">
+                                <i class="fas fa-file-audio mr-1"></i>File
+                            </button>
+                            <button onclick="setInputMode('record')" class="input-tab flex-1 px-3 py-2 rounded-lg btn-secondary text-sm font-medium">
+                                <i class="fas fa-microphone mr-1"></i>Record
+                            </button>
+                            <button onclick="setInputMode('url')" class="input-tab flex-1 px-3 py-2 rounded-lg btn-secondary text-sm font-medium">
+                                <i class="fas fa-link mr-1"></i>URL
+                            </button>
+                        </div>
+                        
+                        <!-- File Input -->
+                        <div id="fileInput" class="input-panel">
+                            <div class="border-2 border-dashed border-purple-300 rounded-lg p-6 text-center hover:border-purple-500 transition cursor-pointer bg-card"
+                                 ondrop="handleDrop(event)" ondragover="handleDragOver(event)" onclick="document.getElementById('audioFile').click()">
+                                <i class="fas fa-cloud-upload-alt text-3xl text-purple-600 mb-2"></i>
+                                <p class="font-medium">Drop files or click to browse</p>
+                                <p class="text-secondary text-sm mt-1">Supports audio and video files</p>
+                                <input type="file" id="audioFile" class="hidden" accept="audio/*,video/*" multiple onchange="handleFileSelect(event)">
+                            </div>
+                            <div id="fileList" class="mt-3 space-y-2"></div>
+                        </div>
+                        
+                        <!-- Record Input -->
+                        <div id="recordInput" class="input-panel hidden">
+                            <div class="text-center py-4">
+                                <button id="recordBtn" onclick="toggleRecording()" class="w-24 h-24 rounded-full bg-red-500 hover:bg-red-600 text-white transition">
+                                    <i class="fas fa-microphone text-3xl"></i>
+                                </button>
+                                <div id="recordTime" class="mt-4 text-2xl font-mono hidden">00:00</div>
+                                <div class="wave mt-4 hidden" id="recordWave">
+                                    <div class="wave-bar"></div>
+                                    <div class="wave-bar"></div>
+                                    <div class="wave-bar"></div>
+                                    <div class="wave-bar"></div>
+                                    <div class="wave-bar"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- URL Input -->
+                        <div id="urlInput" class="input-panel hidden">
+                            <input type="url" id="audioUrl" placeholder="https://example.com/audio.mp3" 
+                                   class="w-full px-4 py-3 rounded-lg form-input">
+                            <button onclick="loadUrl()" class="mt-3 w-full btn-primary">
+                                <i class="fas fa-download mr-2"></i>Load Audio
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Options Card -->
+                    <div class="bg-card rounded-xl p-6 shadow-lg">
+                        <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                            <i class="fas fa-sliders text-purple-600"></i>
+                            Processing Options
+                        </h2>
+                        
+                        <div class="space-y-4">
+                            <!-- Model -->
+                            <div>
+                                <label class="text-sm font-medium text-secondary block mb-1">Model Size</label>
+                                <select id="model" class="w-full px-3 py-2 rounded-lg form-input">
+                                    <option value="tiny">Tiny (Fast)</option>
+                                    <option value="base" selected>Base (Balanced)</option>
+                                    <option value="small">Small (Accurate)</option>
+                                    <option value="medium">Medium (High Quality)</option>
+                                    <option value="large-v3">Large v3 (Best)</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Language -->
+                            <div>
+                                <label class="text-sm font-medium text-secondary block mb-1">Language</label>
+                                <select id="language" class="w-full px-3 py-2 rounded-lg form-input">
+                                    <option value="auto">Auto-detect</option>
+                                    <option value="en">English</option>
+                                    <option value="es">Spanish</option>
+                                    <option value="fr">French</option>
+                                    <option value="de">German</option>
+                                    <option value="zh">Chinese</option>
+                                    <option value="ja">Japanese</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Features -->
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="diarization" checked class="w-4 h-4 text-purple-600 rounded">
+                                    <span class="text-sm">Speaker Diarization</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="timestamps" checked class="w-4 h-4 text-purple-600 rounded">
+                                    <span class="text-sm">Word Timestamps</span>
+                                </label>
+                            </div>
+                            
+                            <!-- Process Button -->
+                            <button id="processBtn" onclick="startTranscription()" class="w-full btn-primary" disabled>
+                                <i class="fas fa-magic mr-2"></i>Start Transcription
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Stats Card -->
+                    <div class="bg-card rounded-xl p-6 shadow-lg">
+                        <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                            <i class="fas fa-chart-bar text-purple-600"></i>
+                            Statistics
+                        </h2>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="text-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                                <div class="text-2xl font-bold text-purple-600" id="wordCount">0</div>
+                                <div class="text-xs text-secondary">Words</div>
+                            </div>
+                            <div class="text-center p-3 bg-pink-50 dark:bg-pink-900/20 rounded-lg">
+                                <div class="text-2xl font-bold text-pink-600" id="speakerCount">0</div>
+                                <div class="text-xs text-secondary">Speakers</div>
+                            </div>
+                            <div class="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                <div class="text-2xl font-bold text-blue-600" id="duration">0:00</div>
+                                <div class="text-xs text-secondary">Duration</div>
+                            </div>
+                            <div class="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                                <div class="text-2xl font-bold text-green-600" id="speed">0x</div>
+                                <div class="text-xs text-secondary">Speed</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Panel -->
+                <div class="lg:col-span-8 space-y-6">
+                    
+                    <!-- Progress -->
+                    <div id="progressCard" class="bg-card rounded-xl p-6 shadow-lg hidden">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="font-bold">Processing</h3>
+                            <span class="font-medium" id="progressPercent">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                            <div id="progressBar" class="h-3 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 transition-all" style="width: 0%"></div>
+                        </div>
+                        <p class="text-secondary text-sm mt-2" id="progressText">Initializing...</p>
+                    </div>
+                    
+                    <!-- Waveform -->
+                    <div id="waveformCard" class="bg-card rounded-xl p-6 shadow-lg hidden">
+                        <h3 class="font-bold mb-4">Audio Waveform</h3>
+                        <div id="waveform"></div>
+                        <div class="flex items-center justify-between mt-4">
+                            <button onclick="playPause()" class="btn-secondary">
+                                <i class="fas fa-play" id="playIcon"></i>
+                            </button>
+                            <span class="font-mono text-sm" id="audioTime">0:00 / 0:00</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Timeline -->
+                    <div id="timelineCard" class="bg-card rounded-xl p-6 shadow-lg hidden">
+                        <h3 class="font-bold mb-4">Speaker Timeline</h3>
+                        <div class="relative h-20 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden" id="timeline"></div>
+                        <div class="flex justify-between mt-2 text-xs text-secondary">
+                            <span>0:00</span>
+                            <span id="timelineEnd">0:00</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Results -->
+                    <div id="resultsCard" class="bg-card rounded-xl p-6 shadow-lg hidden">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold">Transcription</h3>
+                            <div class="flex gap-2">
+                                <button onclick="copyText()" class="btn-secondary text-sm">
+                                    <i class="fas fa-copy mr-1"></i>Copy
+                                </button>
+                                <button onclick="download('txt')" class="btn-secondary text-sm">
+                                    <i class="fas fa-download mr-1"></i>TXT
+                                </button>
+                                <button onclick="download('srt')" class="btn-secondary text-sm">
+                                    <i class="fas fa-download mr-1"></i>SRT
+                                </button>
+                                <button onclick="download('json')" class="btn-secondary text-sm">
+                                    <i class="fas fa-download mr-1"></i>JSON
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Search -->
+                        <div class="mb-4">
+                            <input type="text" id="search" placeholder="Search transcript..." 
+                                   class="w-full px-4 py-2 rounded-lg form-input"
+                                   oninput="searchTranscript()">
+                        </div>
+                        
+                        <!-- Transcript -->
+                        <div id="transcript" class="space-y-3 max-h-[600px] overflow-y-auto">
+                            <!-- Segments will appear here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-card px-4 py-3 rounded-lg shadow-lg transform translate-y-full transition-transform duration-300">
+        <div class="flex items-center gap-2">
+            <i class="fas fa-check-circle text-green-500"></i>
+            <span id="toastMsg">Success!</span>
+        </div>
+    </div>
+
+    <script>
+        // Theme management
+        let currentTheme = localStorage.getItem('theme') || 'light';
+        
+        function setTheme(theme) {
+            currentTheme = theme;
+            localStorage.setItem('theme', theme);
+            
+            document.body.className = theme === 'dark' ? 'dark min-h-screen transition-colors duration-300' : 
+                                     theme === 'unicorn' ? 'unicorn min-h-screen transition-colors duration-300' : 
+                                     'min-h-screen transition-colors duration-300';
+            
+            document.getElementById('unicornBg').classList.toggle('hidden', theme !== 'unicorn');
+            
+            // Update theme buttons
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.toggle('bg-purple-600', btn.dataset.theme === theme);
+                btn.classList.toggle('text-white', btn.dataset.theme === theme);
+            });
+            
+            // Update waveform colors if it exists
+            if (window.wavesurfer) {
+                wavesurfer.setOptions({
+                    waveColor: theme === 'unicorn' ? '#a855f7' : '#8b5cf6',
+                    progressColor: theme === 'unicorn' ? '#ec4899' : '#ec4899',
+                    cursorColor: theme === 'dark' ? '#fff' : '#000'
+                });
+            }
+        }
+        
+        // Initialize theme
+        setTheme(currentTheme);
+        
+        // Global variables
+        let selectedFiles = [];
+        let transcriptionResult = null;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let recordingStartTime = null;
+        let wavesurfer = null;
+        
+        // Initialize
+        window.addEventListener('load', async () => {
+            checkHardware();
+            initWaveform();
+        });
+        
+        // Hardware check
+        async function checkHardware() {
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                
+                document.getElementById('hardwareSpinner').classList.add('hidden');
+                document.getElementById('hardwareInfo').classList.remove('hidden');
+                
+                let info = 'CPU';
+                if (data.device === 'cuda') info = '🚀 NVIDIA GPU';
+                else if (data.hardware?.openvino_available) info = '⚡ Intel iGPU';
+                else if (data.device === 'npu') info = '🧠 AMD NPU';
+                else info = '💻 CPU Mode';
+                
+                document.getElementById('hardwareInfo').textContent = info;
+            } catch (error) {
+                console.error('Hardware check failed:', error);
+            }
+        }
+        
+        // Initialize waveform
+        function initWaveform() {
+            wavesurfer = WaveSurfer.create({
+                container: '#waveform',
+                waveColor: '#8b5cf6',
+                progressColor: '#ec4899',
+                cursorColor: currentTheme === 'dark' ? '#fff' : '#000',
+                barWidth: 2,
+                barRadius: 2,
+                responsive: true,
+                height: 60,
+                normalize: true
+            });
+        }
+        
+        // Input mode switching
+        function setInputMode(mode) {
+            document.querySelectorAll('.input-tab').forEach(tab => {
+                tab.classList.remove('bg-purple-600', 'text-white');
+            });
+            event.target.classList.add('bg-purple-600', 'text-white');
+            
+            document.querySelectorAll('.input-panel').forEach(panel => {
+                panel.classList.add('hidden');
+            });
+            document.getElementById(mode + 'Input').classList.remove('hidden');
+        }
+        
+        // File handling
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('border-purple-500', 'bg-purple-50', 'dark:bg-purple-900/20');
+        }
+        
+        function handleDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('border-purple-500', 'bg-purple-50', 'dark:bg-purple-900/20');
+            handleFiles(Array.from(e.dataTransfer.files));
+        }
+        
+        function handleFileSelect(e) {
+            handleFiles(Array.from(e.target.files));
+        }
+        
+        function handleFiles(files) {
+            selectedFiles = files.filter(f => f.type.startsWith('audio/') || f.type.startsWith('video/'));
+            updateFileList();
+            
+            if (selectedFiles.length > 0) {
+                document.getElementById('processBtn').disabled = false;
+                
+                // Load into waveform
+                if (selectedFiles.length === 1) {
+                    const url = URL.createObjectURL(selectedFiles[0]);
+                    wavesurfer.load(url);
+                    document.getElementById('waveformCard').classList.remove('hidden');
+                }
+            }
+        }
+        
+        function updateFileList() {
+            const list = document.getElementById('fileList');
+            list.innerHTML = selectedFiles.map((file, i) => `
+                <div class="flex items-center justify-between p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-file-audio text-purple-600"></i>
+                        <span class="text-sm font-medium">${file.name}</span>
+                        <span class="text-xs text-secondary">(${formatSize(file.size)})</span>
+                    </div>
+                    <button onclick="removeFile(${i})" class="text-red-500 hover:text-red-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+        
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateFileList();
+            if (selectedFiles.length === 0) {
+                document.getElementById('processBtn').disabled = true;
+            }
+        }
+        
+        function formatSize(bytes) {
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            if (bytes === 0) return '0 B';
+            const i = Math.floor(Math.log(bytes) / Math.log(1024));
+            return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+        }
+        
+        // Recording
+        async function toggleRecording() {
+            const btn = document.getElementById('recordBtn');
+            const time = document.getElementById('recordTime');
+            const wave = document.getElementById('recordWave');
+            
+            if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+                // Start
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                recordedChunks = [];
+                
+                mediaRecorder.ondataavailable = e => {
+                    if (e.data.size > 0) recordedChunks.push(e.data);
+                };
+                
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+                    const file = new File([blob], `recording_${Date.now()}.webm`, { type: 'audio/webm' });
+                    selectedFiles = [file];
+                    updateFileList();
+                    document.getElementById('processBtn').disabled = false;
+                };
+                
+                mediaRecorder.start();
+                recordingStartTime = Date.now();
+                
+                btn.innerHTML = '<i class="fas fa-stop text-3xl"></i>';
+                btn.classList.replace('bg-red-500', 'bg-gray-500');
+                time.classList.remove('hidden');
+                wave.classList.remove('hidden');
+                
+                // Timer
+                const timer = setInterval(() => {
+                    if (mediaRecorder.state !== 'recording') {
+                        clearInterval(timer);
+                        return;
+                    }
+                    const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+                    const mins = Math.floor(elapsed / 60);
+                    const secs = elapsed % 60;
+                    time.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                }, 100);
+            } else {
+                // Stop
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                
+                btn.innerHTML = '<i class="fas fa-microphone text-3xl"></i>';
+                btn.classList.replace('bg-gray-500', 'bg-red-500');
+                time.classList.add('hidden');
+                wave.classList.add('hidden');
+            }
+        }
+        
+        // Transcription
+        async function startTranscription() {
+            const btn = document.getElementById('processBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+            
+            // Show progress
+            document.getElementById('progressCard').classList.remove('hidden');
+            updateProgress(10, 'Uploading files...');
+            
+            try {
+                const formData = new FormData();
+                selectedFiles.forEach(f => formData.append('files', f));
+                formData.append('model', document.getElementById('model').value);
+                formData.append('language', document.getElementById('language').value);
+                formData.append('diarize', document.getElementById('diarization').checked);
+                formData.append('timestamps', document.getElementById('timestamps').checked);
+                
+                updateProgress(30, 'Processing audio...');
+                
+                const response = await fetch('/api/transcribe', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                updateProgress(70, 'Generating transcript...');
+                
+                if (!response.ok) throw new Error('Transcription failed');
+                
+                const result = await response.json();
+                transcriptionResult = result;
+                
+                updateProgress(100, 'Complete!');
+                
+                setTimeout(() => {
+                    displayResults(result);
+                    document.getElementById('progressCard').classList.add('hidden');
+                    showToast('Transcription complete!');
+                }, 500);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('Transcription failed', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-magic mr-2"></i>Start Transcription';
+            }
+        }
+        
+        function updateProgress(percent, text) {
+            document.getElementById('progressBar').style.width = percent + '%';
+            document.getElementById('progressPercent').textContent = percent + '%';
+            document.getElementById('progressText').textContent = text;
+        }
+        
+        function displayResults(result) {
+            // Show results card
+            document.getElementById('resultsCard').classList.remove('hidden');
+            
+            // Update stats
+            const words = result.text ? result.text.split(' ').length : 0;
+            const speakers = result.speakers ? result.speakers.length : 1;
+            const duration = result.duration || 0;
+            const speed = result.processing_time ? (duration / result.processing_time).toFixed(1) : '0';
+            
+            document.getElementById('wordCount').textContent = words;
+            document.getElementById('speakerCount').textContent = speakers;
+            document.getElementById('duration').textContent = formatTime(duration);
+            document.getElementById('speed').textContent = speed + 'x';
+            
+            // Display transcript
+            const container = document.getElementById('transcript');
+            if (result.segments && result.segments.length > 0) {
+                // Show timeline
+                if (speakers > 1) {
+                    document.getElementById('timelineCard').classList.remove('hidden');
+                    displayTimeline(result);
+                }
+                
+                container.innerHTML = result.segments.map(seg => `
+                    <div class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div class="flex items-start gap-3">
+                            <span class="speaker-${(seg.speaker % 5) + 1} px-2 py-1 rounded text-xs font-bold">
+                                ${seg.speaker || 1}
+                            </span>
+                            <div class="flex-1">
+                                <p>${seg.text}</p>
+                                <div class="flex gap-3 mt-2 text-xs text-secondary">
+                                    <span><i class="far fa-clock mr-1"></i>${formatTime(seg.start)} - ${formatTime(seg.end)}</span>
+                                    ${seg.confidence ? `<span><i class="fas fa-chart-line mr-1"></i>${Math.round(seg.confidence * 100)}%</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = `<div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">${result.text || 'No transcript available'}</div>`;
+            }
+        }
+        
+        function displayTimeline(result) {
+            const timeline = document.getElementById('timeline');
+            const duration = result.duration || result.segments[result.segments.length - 1].end;
+            
+            timeline.innerHTML = '';
+            result.segments.forEach(seg => {
+                const start = (seg.start / duration) * 100;
+                const width = ((seg.end - seg.start) / duration) * 100;
+                const div = document.createElement('div');
+                div.className = `absolute h-full speaker-${(seg.speaker % 5) + 1}`;
+                div.style.left = start + '%';
+                div.style.width = width + '%';
+                timeline.appendChild(div);
+            });
+            
+            document.getElementById('timelineEnd').textContent = formatTime(duration);
+        }
+        
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+        
+        function playPause() {
+            if (wavesurfer) {
+                wavesurfer.playPause();
+                const icon = document.getElementById('playIcon');
+                icon.className = wavesurfer.isPlaying() ? 'fas fa-pause' : 'fas fa-play';
+            }
+        }
+        
+        function copyText() {
+            if (transcriptionResult?.text) {
+                navigator.clipboard.writeText(transcriptionResult.text);
+                showToast('Copied to clipboard!');
+            }
+        }
+        
+        function download(format) {
+            if (!transcriptionResult) return;
+            
+            let content, filename, mime;
+            if (format === 'txt') {
+                content = transcriptionResult.text;
+                filename = 'transcript.txt';
+                mime = 'text/plain';
+            } else if (format === 'srt') {
+                content = generateSRT(transcriptionResult);
+                filename = 'transcript.srt';
+                mime = 'text/srt';
+            } else if (format === 'json') {
+                content = JSON.stringify(transcriptionResult, null, 2);
+                filename = 'transcript.json';
+                mime = 'application/json';
+            }
+            
+            const blob = new Blob([content], { type: mime });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function generateSRT(result) {
+            if (!result.segments) return result.text;
+            return result.segments.map((seg, i) => 
+                `${i + 1}\n${formatSRTTime(seg.start)} --> ${formatSRTTime(seg.end)}\n${seg.text}\n`
+            ).join('\n');
+        }
+        
+        function formatSRTTime(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            const ms = Math.floor((seconds % 1) * 1000);
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')},${ms.toString().padStart(3, '0')}`;
+        }
+        
+        function searchTranscript() {
+            // Implement search highlighting
+            if (transcriptionResult) {
+                displayResults(transcriptionResult);
+            }
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = toast.querySelector('i');
+            icon.className = type === 'error' ? 'fas fa-exclamation-circle text-red-500' : 'fas fa-check-circle text-green-500';
+            document.getElementById('toastMsg').textContent = message;
+            
+            toast.classList.remove('translate-y-full');
+            setTimeout(() => {
+                toast.classList.add('translate-y-full');
+            }, 3000);
+        }
+        
+        function loadUrl() {
+            showToast('URL loading coming soon!', 'error');
+        }
+    </script>
+</body>
+</html>

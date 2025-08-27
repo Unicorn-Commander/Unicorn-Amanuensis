@@ -1,0 +1,27 @@
+# Intel iGPU specific requirements with OpenVINO
+fastapi==0.110.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.9
+aiofiles==23.2.1
+
+# WhisperX without PyTorch (we'll use OpenVINO)
+git+https://github.com/m-bain/whisperx.git
+
+# OpenVINO and Optimum Intel (installed in Dockerfile)
+# openvino==2024.0.0
+# optimum-intel>=1.16.0
+
+# Audio processing
+librosa==0.10.1
+soundfile==0.12.1
+pydub==0.25.1
+
+# For speaker diarization
+pyannote.audio==3.1.1
+speechbrain==0.5.16
+
+# Utilities
+numpy<2.0
+tqdm
+pandas
+huggingface-hub>=0.20.0

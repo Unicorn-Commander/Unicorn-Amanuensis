@@ -1,0 +1,83 @@
+FROM python:3.10-slim
+
+# Install system dependencies including Intel GPU runtime
+RUN apt-get update && apt-get install -y \
+    # Basic tools
+    git \
+    curl \
+    wget \
+    # FFmpeg with hardware acceleration support
+    ffmpeg \
+    # Build tools needed for some Python packages
+    build-essential \
+    # Security tools to fix executable stack
+    patchelf \
+    # VA-API support for Intel GPU
+    libva-dev \
+    libva-drm2 \
+    libva-glx2 \
+    vainfo \
+    # OpenCL support
+    ocl-icd-libopencl1 \
+    clinfo \
+    # Additional libraries
+    libgomp1 \
+    libnuma1 \
+    libpugixml1v5 \
+    libtbb12 \
+    libusb-1.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Upgrade pip
+RUN pip install --upgrade pip
+
+# Install PyTorch first (CPU version for Intel iGPU/OpenVINO)
+RUN pip install --no-cache-dir \
+    torch==2.0.1+cpu \
+    torchaudio==2.0.2+cpu \
+    -f https://download.pytorch.org/whl/torch_stable.html
+
+# Install WhisperX and dependencies
+RUN pip install --no-cache-dir \
+    git+https://github.com/m-bain/whisperx.git \
+    pyannote.audio \
+    faster-whisper
+
+# Install OpenVINO for Intel optimization
+RUN pip install --no-cache-dir \
+    openvino==2024.0.0 \
+    openvino-dev==2024.0.0 \
+    onnx \
+    onnxruntime-openvino
+
+# Install web server dependencies
+RUN pip install --no-cache-dir \
+    fastapi==0.110.0 \
+    uvicorn==0.27.1 \
+    python-multipart==0.0.9
+
+# Fix ctranslate2 executable stack issue
+RUN python -c "import ctranslate2" 2>/dev/null || true && \
+    find /usr/local/lib/python3.10/site-packages/ -name "*.so" -exec patchelf --set-rpath '$ORIGIN' {} \; 2>/dev/null || true
+
+# Copy application code
+COPY . .
+
+# Copy WhisperX server
+COPY server_whisperx_full.py /app/server.py
+
+# Set environment variables for Intel GPU
+ENV LIBVA_DRIVER_NAME=i965
+ENV WHISPER_MODEL=large-v3
+ENV WHISPER_DEVICE=cpu
+ENV COMPUTE_TYPE=int8
+ENV HF_TOKEN=""
+ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libgomp.so.1
+
+# Expose port
+EXPOSE 9000
+
+# Run WhisperX server with all features
+CMD ["python", "-u", "server.py"]

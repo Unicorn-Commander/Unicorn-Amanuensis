@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🦄 Unicorn Amanuensis Pro - AI Transcription Suite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/wavesurfer.js@7"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+        }
+        
+        /* Animated gradient background */
+        .animated-gradient {
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab, #667eea, #764ba2);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+        
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        /* Glassmorphism effects */
+        .glass {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        .glass-dark {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Neon glow effects */
+        .neon-purple {
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.5),
+                       0 0 40px rgba(168, 85, 247, 0.3),
+                       0 0 60px rgba(168, 85, 247, 0.1);
+        }
+        
+        .neon-blue {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5),
+                       0 0 40px rgba(59, 130, 246, 0.3),
+                       0 0 60px rgba(59, 130, 246, 0.1);
+        }
+        
+        /* Floating animation */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        /* Pulse animation */
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.7);
+            }
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(168, 85, 247, 0);
+            }
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(168, 85, 247, 0);
+            }
+        }
+        
+        .pulse {
+            animation: pulse-ring 2s infinite;
+        }
+        
+        /* Wave animation for recording */
+        .wave {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            height: 60px;
+        }
+        
+        .wave-bar {
+            width: 4px;
+            background: linear-gradient(to top, #a855f7, #ec4899);
+            border-radius: 4px;
+            animation: wave-animation 1s ease-in-out infinite;
+        }
+        
+        .wave-bar:nth-child(1) { animation-delay: 0s; }
+        .wave-bar:nth-child(2) { animation-delay: 0.1s; }
+        .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(4) { animation-delay: 0.3s; }
+        .wave-bar:nth-child(5) { animation-delay: 0.4s; }
+        .wave-bar:nth-child(6) { animation-delay: 0.5s; }
+        .wave-bar:nth-child(7) { animation-delay: 0.6s; }
+        
+        @keyframes wave-animation {
+            0%, 100% { height: 20px; }
+            50% { height: 50px; }
+        }
+        
+        /* Speaker colors with modern palette */
+        .speaker-1 { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .speaker-2 { 
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        .speaker-3 { 
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+        .speaker-4 { 
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+        }
+        .speaker-5 { 
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+        }
+        
+        /* Smooth transitions */
+        .transition-all {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+        
+        /* Loading spinner */
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top: 3px solid #a855f7;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Typewriter effect */
+        @keyframes typewriter {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+        
+        @keyframes blink {
+            50% { border-color: transparent; }
+        }
+        
+        .typewriter {
+            overflow: hidden;
+            border-right: 3px solid #a855f7;
+            white-space: nowrap;
+            animation: typewriter 3s steps(40, end),
+                      blink 0.75s step-end infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen animated-gradient">
+    <!-- Animated background particles -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute w-96 h-96 -top-48 -left-48 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+        <div class="absolute w-96 h-96 -top-48 -right-48 bg-yellow-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+        <div class="absolute w-96 h-96 -bottom-48 -left-48 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+        <div class="absolute w-96 h-96 -bottom-48 -right-48 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-6000"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="glass-dark sticky top-0 z-50 border-b border-white/10">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="text-5xl floating">🦄</div>
+                    <div>
+                        <h1 class="text-3xl font-black text-white">
+                            Unicorn Amanuensis <span class="text-purple-400">Pro</span>
+                        </h1>
+                        <p class="text-sm text-gray-300">AI-Powered Transcription Suite</p>
+                    </div>
+                </div>
+                
+                <!-- Hardware Status Badge -->
+                <div class="flex items-center gap-4">
+                    <div id="hardwareStatus" class="glass px-6 py-3 rounded-full flex items-center gap-3">
+                        <div class="spinner" id="hardwareSpinner"></div>
+                        <div class="hidden" id="hardwareInfo">
+                            <span class="text-white font-semibold" id="hardwareName">Detecting...</span>
+                            <span class="text-xs text-gray-300 block" id="hardwareDetails"></span>
+                        </div>
+                    </div>
+                    
+                    <button onclick="toggleTheme()" class="glass p-3 rounded-full hover:scale-110 transition-all">
+                        <i class="fas fa-moon text-white text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-8">
+        <div class="grid lg:grid-cols-12 gap-6">
+            
+            <!-- Left Sidebar - Input & Controls -->
+            <div class="lg:col-span-4 space-y-6">
+                
+                <!-- Input Card -->
+                <div class="glass rounded-3xl p-6 neon-purple">
+                    <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-3">
+                        <i class="fas fa-microphone-lines text-purple-300"></i>
+                        Audio Input
+                    </h2>
+                    
+                    <!-- Input Mode Tabs -->
+                    <div class="flex gap-2 mb-6">
+                        <button onclick="setMode('file')" class="mode-btn flex-1 glass px-4 py-3 rounded-xl text-white font-semibold hover:scale-105 transition-all active">
+                            <i class="fas fa-file-audio mr-2"></i>File
+                        </button>
+                        <button onclick="setMode('record')" class="mode-btn flex-1 glass px-4 py-3 rounded-xl text-white font-semibold hover:scale-105 transition-all">
+                            <i class="fas fa-microphone mr-2"></i>Record
+                        </button>
+                        <button onclick="setMode('live')" class="mode-btn flex-1 glass px-4 py-3 rounded-xl text-white font-semibold hover:scale-105 transition-all">
+                            <i class="fas fa-satellite-dish mr-2"></i>Live
+                        </button>
+                    </div>
+                    
+                    <!-- File Upload -->
+                    <div id="fileMode" class="mode-panel">
+                        <div class="glass rounded-2xl p-8 border-2 border-dashed border-purple-400 hover:border-purple-300 transition-all cursor-pointer text-center"
+                             ondrop="handleDrop(event)" ondragover="handleDragOver(event)" onclick="document.getElementById('fileInput').click()">
+                            <i class="fas fa-cloud-upload-alt text-6xl text-purple-300 mb-4"></i>
+                            <p class="text-white font-semibold text-lg">Drop files here</p>
+                            <p class="text-gray-300 text-sm mt-2">MP3, WAV, M4A, MP4, WebM, and more</p>
+                            <input type="file" id="fileInput" class="hidden" accept="audio/*,video/*" multiple onchange="handleFiles(event)">
+                        </div>
+                        <div id="fileList" class="mt-4 space-y-2"></div>
+                    </div>
+                    
+                    <!-- Recording -->
+                    <div id="recordMode" class="mode-panel hidden">
+                        <div class="text-center">
+                            <button id="recordBtn" onclick="toggleRecording()" class="w-32 h-32 rounded-full bg-gradient-to-r from-red-500 to-pink-500 text-white hover:scale-110 transition-all pulse">
+                                <i class="fas fa-microphone text-4xl"></i>
+                            </button>
+                            <div id="recordingTime" class="text-3xl font-mono text-white mt-6 hidden">00:00</div>
+                            <div class="wave mt-6 hidden" id="recordingWave">
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Live Stream -->
+                    <div id="liveMode" class="mode-panel hidden">
+                        <div class="space-y-4">
+                            <input type="url" id="streamUrl" placeholder="rtmp://stream.url or https://youtube.com/live" 
+                                   class="w-full px-4 py-3 rounded-xl glass text-white placeholder-gray-400 border border-purple-400 focus:border-purple-300 outline-none">
+                            <button onclick="startLiveTranscription()" class="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold hover:scale-105 transition-all">
+                                <i class="fas fa-play mr-2"></i>Start Live Transcription
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Processing Options -->
+                <div class="glass rounded-3xl p-6">
+                    <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-3">
+                        <i class="fas fa-sliders text-purple-300"></i>
+                        Processing Options
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <!-- Model Selection -->
+                        <div>
+                            <label class="text-sm font-semibold text-gray-300 mb-2 block">AI Model</label>
+                            <select id="modelSize" class="w-full px-4 py-3 rounded-xl glass text-white border border-gray-600 focus:border-purple-400 outline-none">
+                                <option value="tiny">Tiny - Lightning Fast</option>
+                                <option value="base" selected>Base - Balanced</option>
+                                <option value="small">Small - Accurate</option>
+                                <option value="medium">Medium - Professional</option>
+                                <option value="large-v3">Large v3 - Maximum Quality</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Language -->
+                        <div>
+                            <label class="text-sm font-semibold text-gray-300 mb-2 block">Language</label>
+                            <select id="language" class="w-full px-4 py-3 rounded-xl glass text-white border border-gray-600 focus:border-purple-400 outline-none">
+                                <option value="auto">Auto-detect</option>
+                                <option value="en">English</option>
+                                <option value="es">Spanish</option>
+                                <option value="fr">French</option>
+                                <option value="de">German</option>
+                                <option value="zh">Chinese</option>
+                                <option value="ja">Japanese</option>
+                                <option value="ko">Korean</option>
+                                <option value="ar">Arabic</option>
+                                <option value="hi">Hindi</option>
+                                <option value="pt">Portuguese</option>
+                                <option value="ru">Russian</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Features -->
+                        <div class="space-y-3">
+                            <label class="flex items-center gap-3 cursor-pointer group">
+                                <input type="checkbox" id="enableDiarization" checked class="w-5 h-5 rounded text-purple-600 focus:ring-purple-500">
+                                <span class="text-white group-hover:text-purple-300 transition-colors">
+                                    <i class="fas fa-users mr-2"></i>Speaker Diarization
+                                </span>
+                            </label>
+                            <label class="flex items-center gap-3 cursor-pointer group">
+                                <input type="checkbox" id="enableTimestamps" checked class="w-5 h-5 rounded text-purple-600 focus:ring-purple-500">
+                                <span class="text-white group-hover:text-purple-300 transition-colors">
+                                    <i class="fas fa-clock mr-2"></i>Word Timestamps
+                                </span>
+                            </label>
+                            <label class="flex items-center gap-3 cursor-pointer group">
+                                <input type="checkbox" id="enableTranslation" class="w-5 h-5 rounded text-purple-600 focus:ring-purple-500">
+                                <span class="text-white group-hover:text-purple-300 transition-colors">
+                                    <i class="fas fa-language mr-2"></i>Translate to English
+                                </span>
+                            </label>
+                        </div>
+                        
+                        <!-- Process Button -->
+                        <button id="transcribeBtn" onclick="startTranscription()" 
+                                class="w-full py-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed neon-purple"
+                                disabled>
+                            <i class="fas fa-magic mr-2"></i>
+                            Start Transcription
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Stats -->
+                <div class="glass rounded-3xl p-6">
+                    <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-3">
+                        <i class="fas fa-chart-line text-purple-300"></i>
+                        Session Stats
+                    </h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="glass rounded-xl p-4 text-center">
+                            <div class="text-3xl font-bold text-purple-400" id="statWords">0</div>
+                            <div class="text-xs text-gray-300">Words</div>
+                        </div>
+                        <div class="glass rounded-xl p-4 text-center">
+                            <div class="text-3xl font-bold text-pink-400" id="statSpeakers">0</div>
+                            <div class="text-xs text-gray-300">Speakers</div>
+                        </div>
+                        <div class="glass rounded-xl p-4 text-center">
+                            <div class="text-3xl font-bold text-blue-400" id="statDuration">0:00</div>
+                            <div class="text-xs text-gray-300">Duration</div>
+                        </div>
+                        <div class="glass rounded-xl p-4 text-center">
+                            <div class="text-3xl font-bold text-green-400" id="statSpeed">0x</div>
+                            <div class="text-xs text-gray-300">Speed</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Panel - Results -->
+            <div class="lg:col-span-8 space-y-6">
+                
+                <!-- Progress -->
+                <div id="progressPanel" class="glass rounded-3xl p-6 hidden">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-white">Processing</h3>
+                        <span class="text-white font-semibold" id="progressPercent">0%</span>
+                    </div>
+                    <div class="w-full h-3 bg-gray-700 rounded-full overflow-hidden">
+                        <div id="progressBar" class="h-full bg-gradient-to-r from-purple-600 to-pink-600 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <p class="text-gray-300 mt-3" id="progressStatus">Initializing...</p>
+                </div>
+                
+                <!-- Waveform Visualization -->
+                <div id="waveformPanel" class="glass rounded-3xl p-6 hidden">
+                    <h3 class="text-xl font-bold text-white mb-4">Audio Waveform</h3>
+                    <div id="waveform"></div>
+                    <div class="flex items-center justify-between mt-4">
+                        <button onclick="playPause()" class="px-6 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition">
+                            <i class="fas fa-play" id="playIcon"></i>
+                        </button>
+                        <span class="text-white font-mono" id="currentTime">0:00 / 0:00</span>
+                    </div>
+                </div>
+                
+                <!-- Speaker Timeline -->
+                <div id="timelinePanel" class="glass rounded-3xl p-6 hidden">
+                    <h3 class="text-xl font-bold text-white mb-4">Speaker Timeline</h3>
+                    <div class="relative h-24 bg-gray-800 rounded-xl overflow-hidden" id="timeline">
+                        <!-- Timeline segments will be added here -->
+                    </div>
+                    <div class="flex justify-between mt-2 text-xs text-gray-400">
+                        <span id="timelineStart">0:00</span>
+                        <span id="timelineEnd">0:00</span>
+                    </div>
+                </div>
+                
+                <!-- Transcription Results -->
+                <div id="resultsPanel" class="glass rounded-3xl p-6 hidden">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-bold text-white">Transcription</h3>
+                        <div class="flex gap-2">
+                            <button onclick="copyTranscript()" class="px-4 py-2 rounded-lg glass text-white hover:scale-105 transition-all">
+                                <i class="fas fa-copy mr-2"></i>Copy
+                            </button>
+                            <button onclick="downloadTranscript('txt')" class="px-4 py-2 rounded-lg glass text-white hover:scale-105 transition-all">
+                                <i class="fas fa-download mr-2"></i>TXT
+                            </button>
+                            <button onclick="downloadTranscript('srt')" class="px-4 py-2 rounded-lg glass text-white hover:scale-105 transition-all">
+                                <i class="fas fa-download mr-2"></i>SRT
+                            </button>
+                            <button onclick="downloadTranscript('vtt')" class="px-4 py-2 rounded-lg glass text-white hover:scale-105 transition-all">
+                                <i class="fas fa-download mr-2"></i>VTT
+                            </button>
+                            <button onclick="downloadTranscript('json')" class="px-4 py-2 rounded-lg glass text-white hover:scale-105 transition-all">
+                                <i class="fas fa-download mr-2"></i>JSON
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Search -->
+                    <div class="mb-6">
+                        <div class="relative">
+                            <input type="text" id="searchInput" placeholder="Search in transcript..." 
+                                   class="w-full px-4 py-3 pl-12 rounded-xl glass text-white placeholder-gray-400 border border-gray-600 focus:border-purple-400 outline-none"
+                                   oninput="searchTranscript()">
+                            <i class="fas fa-search absolute left-4 top-4 text-gray-400"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Transcript Container -->
+                    <div id="transcriptContainer" class="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+                        <!-- Segments will appear here -->
+                    </div>
+                </div>
+                
+                <!-- Key Insights -->
+                <div id="insightsPanel" class="glass rounded-3xl p-6 hidden">
+                    <h3 class="text-xl font-bold text-white mb-4">Key Insights</h3>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="glass rounded-xl p-4">
+                            <h4 class="text-sm font-semibold text-gray-300 mb-2">Most Active Speaker</h4>
+                            <p class="text-2xl font-bold text-purple-400" id="mostActiveSpeaker">-</p>
+                        </div>
+                        <div class="glass rounded-xl p-4">
+                            <h4 class="text-sm font-semibold text-gray-300 mb-2">Silence Ratio</h4>
+                            <p class="text-2xl font-bold text-blue-400" id="silenceRatio">-</p>
+                        </div>
+                        <div class="glass rounded-xl p-4">
+                            <h4 class="text-sm font-semibold text-gray-300 mb-2">Avg Words/Min</h4>
+                            <p class="text-2xl font-bold text-green-400" id="wordsPerMinute">-</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-4 right-4 glass px-6 py-4 rounded-xl hidden transform transition-all duration-300 translate-y-full">
+        <div class="flex items-center gap-3">
+            <i class="fas fa-check-circle text-green-400 text-xl"></i>
+            <span class="text-white font-semibold" id="toastMessage">Success!</span>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let selectedFiles = [];
+        let transcriptionResult = null;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let recordingStartTime = null;
+        let wavesurfer = null;
+        let isRecording = false;
+        
+        // Initialize on load
+        window.addEventListener('load', async () => {
+            checkHardwareStatus();
+            setInterval(checkHardwareStatus, 30000);
+            
+            // Initialize WaveSurfer
+            wavesurfer = WaveSurfer.create({
+                container: '#waveform',
+                waveColor: '#a855f7',
+                progressColor: '#ec4899',
+                cursorColor: '#fff',
+                barWidth: 3,
+                barRadius: 3,
+                responsive: true,
+                height: 60,
+                normalize: true
+            });
+        });
+        
+        // Check hardware status
+        async function checkHardwareStatus() {
+            try {
+                const response = await fetch('/api/hardware');
+                const data = await response.json();
+                
+                document.getElementById('hardwareSpinner').classList.add('hidden');
+                document.getElementById('hardwareInfo').classList.remove('hidden');
+                
+                let icon = '💻';
+                let name = 'CPU Mode';
+                let details = 'Standard processing';
+                
+                if (data.backend === 'igpu') {
+                    icon = '⚡';
+                    name = 'Intel iGPU';
+                    details = 'OpenVINO accelerated';
+                } else if (data.backend === 'cuda') {
+                    icon = '🚀';
+                    name = 'NVIDIA GPU';
+                    details = data.gpu_name || 'CUDA accelerated';
+                } else if (data.backend === 'npu') {
+                    icon = '🧠';
+                    name = 'AMD NPU';
+                    details = 'AI processor';
+                }
+                
+                document.getElementById('hardwareName').innerHTML = `${icon} ${name}`;
+                document.getElementById('hardwareDetails').textContent = details;
+                
+            } catch (error) {
+                console.error('Hardware check failed:', error);
+            }
+        }
+        
+        // Mode switching
+        function setMode(mode) {
+            // Update buttons
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('bg-purple-600');
+            });
+            event.target.classList.add('bg-purple-600');
+            
+            // Show/hide panels
+            document.querySelectorAll('.mode-panel').forEach(panel => {
+                panel.classList.add('hidden');
+            });
+            document.getElementById(mode + 'Mode').classList.remove('hidden');
+        }
+        
+        // File handling
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('scale-105', 'border-purple-300');
+        }
+        
+        function handleDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('scale-105', 'border-purple-300');
+            const files = Array.from(e.dataTransfer.files);
+            addFiles(files);
+        }
+        
+        function handleFiles(e) {
+            const files = Array.from(e.target.files);
+            addFiles(files);
+        }
+        
+        function addFiles(files) {
+            const audioFiles = files.filter(file => 
+                file.type.startsWith('audio/') || file.type.startsWith('video/')
+            );
+            
+            selectedFiles = [...selectedFiles, ...audioFiles];
+            updateFileList();
+            
+            if (selectedFiles.length > 0) {
+                document.getElementById('transcribeBtn').disabled = false;
+                
+                // Load first file into waveform
+                if (selectedFiles.length === 1 && wavesurfer) {
+                    const url = URL.createObjectURL(selectedFiles[0]);
+                    wavesurfer.load(url);
+                    document.getElementById('waveformPanel').classList.remove('hidden');
+                }
+            }
+        }
+        
+        function updateFileList() {
+            const listEl = document.getElementById('fileList');
+            listEl.innerHTML = selectedFiles.map((file, idx) => `
+                <div class="glass rounded-xl p-3 flex items-center justify-between group hover:scale-[1.02] transition-all">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-file-audio text-purple-400"></i>
+                        <div>
+                            <p class="text-white font-medium">${file.name}</p>
+                            <p class="text-xs text-gray-400">${formatFileSize(file.size)}</p>
+                        </div>
+                    </div>
+                    <button onclick="removeFile(${idx})" class="text-red-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+        
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateFileList();
+            if (selectedFiles.length === 0) {
+                document.getElementById('transcribeBtn').disabled = true;
+                document.getElementById('waveformPanel').classList.add('hidden');
+            }
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+        
+        // Recording
+        async function toggleRecording() {
+            const btn = document.getElementById('recordBtn');
+            const timeEl = document.getElementById('recordingTime');
+            const waveEl = document.getElementById('recordingWave');
+            
+            if (!isRecording) {
+                // Start recording
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                recordedChunks = [];
+                
+                mediaRecorder.ondataavailable = event => {
+                    if (event.data.size > 0) {
+                        recordedChunks.push(event.data);
+                    }
+                };
+                
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+                    const file = new File([blob], `recording_${Date.now()}.webm`, { type: 'audio/webm' });
+                    selectedFiles = [file];
+                    updateFileList();
+                    document.getElementById('transcribeBtn').disabled = false;
+                    
+                    // Load into waveform
+                    const url = URL.createObjectURL(blob);
+                    wavesurfer.load(url);
+                    document.getElementById('waveformPanel').classList.remove('hidden');
+                };
+                
+                mediaRecorder.start();
+                recordingStartTime = Date.now();
+                isRecording = true;
+                
+                btn.innerHTML = '<i class="fas fa-stop text-4xl"></i>';
+                btn.classList.remove('from-red-500', 'to-pink-500');
+                btn.classList.add('from-gray-500', 'to-gray-600');
+                timeEl.classList.remove('hidden');
+                waveEl.classList.remove('hidden');
+                
+                // Update timer
+                const timerInterval = setInterval(() => {
+                    if (!isRecording) {
+                        clearInterval(timerInterval);
+                        return;
+                    }
+                    const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+                    const minutes = Math.floor(elapsed / 60);
+                    const seconds = elapsed % 60;
+                    timeEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }, 100);
+                
+            } else {
+                // Stop recording
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                isRecording = false;
+                
+                btn.innerHTML = '<i class="fas fa-microphone text-4xl"></i>';
+                btn.classList.remove('from-gray-500', 'to-gray-600');
+                btn.classList.add('from-red-500', 'to-pink-500');
+                timeEl.classList.add('hidden');
+                waveEl.classList.add('hidden');
+            }
+        }
+        
+        // Transcription
+        async function startTranscription() {
+            const btn = document.getElementById('transcribeBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+            
+            // Show progress
+            document.getElementById('progressPanel').classList.remove('hidden');
+            document.getElementById('resultsPanel').classList.add('hidden');
+            document.getElementById('timelinePanel').classList.add('hidden');
+            
+            updateProgress(10, 'Preparing audio files...');
+            
+            try {
+                const formData = new FormData();
+                
+                selectedFiles.forEach(file => {
+                    formData.append('files', file);
+                });
+                
+                formData.append('model', document.getElementById('modelSize').value);
+                formData.append('language', document.getElementById('language').value);
+                formData.append('diarize', document.getElementById('enableDiarization').checked);
+                formData.append('timestamps', document.getElementById('enableTimestamps').checked);
+                
+                updateProgress(30, 'Sending to AI processor...');
+                
+                const response = await fetch('/api/transcribe', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                updateProgress(60, 'Processing with AI model...');
+                
+                if (!response.ok) {
+                    throw new Error('Transcription failed');
+                }
+                
+                const result = await response.json();
+                transcriptionResult = result;
+                
+                updateProgress(90, 'Finalizing results...');
+                
+                setTimeout(() => {
+                    updateProgress(100, 'Complete!');
+                    displayResults(result);
+                    document.getElementById('progressPanel').classList.add('hidden');
+                    showToast('Transcription complete!');
+                }, 500);
+                
+            } catch (error) {
+                console.error('Transcription error:', error);
+                showToast('Transcription failed. Please try again.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-magic mr-2"></i>Start Transcription';
+            }
+        }
+        
+        function updateProgress(percent, status) {
+            document.getElementById('progressBar').style.width = percent + '%';
+            document.getElementById('progressPercent').textContent = percent + '%';
+            document.getElementById('progressStatus').textContent = status;
+        }
+        
+        function displayResults(result) {
+            // Show panels
+            document.getElementById('resultsPanel').classList.remove('hidden');
+            
+            if (result.speakers && result.speakers.length > 1) {
+                document.getElementById('timelinePanel').classList.remove('hidden');
+                displayTimeline(result);
+            }
+            
+            // Update stats
+            const words = result.text ? result.text.split(' ').length : 0;
+            const speakers = result.speakers ? result.speakers.length : 1;
+            const duration = result.duration || 0;
+            const speed = result.processing_time ? (duration / result.processing_time).toFixed(1) : '0';
+            
+            document.getElementById('statWords').textContent = words.toLocaleString();
+            document.getElementById('statSpeakers').textContent = speakers;
+            document.getElementById('statDuration').textContent = formatTime(duration);
+            document.getElementById('statSpeed').textContent = speed + 'x';
+            
+            // Display transcript
+            const container = document.getElementById('transcriptContainer');
+            
+            if (result.segments && result.segments.length > 0) {
+                container.innerHTML = result.segments.map((segment, idx) => {
+                    const speakerClass = `speaker-${(segment.speaker % 5) + 1}`;
+                    return `
+                        <div class="glass rounded-xl p-4 hover:scale-[1.01] transition-all">
+                            <div class="flex items-start gap-4">
+                                <div class="flex-shrink-0">
+                                    <span class="inline-flex items-center justify-center w-10 h-10 rounded-full ${speakerClass} font-bold">
+                                        ${segment.speaker || 1}
+                                    </span>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-white leading-relaxed">${highlightText(segment.text)}</p>
+                                    <div class="flex items-center gap-4 mt-3 text-xs text-gray-400">
+                                        <span><i class="far fa-clock mr-1"></i>${formatTime(segment.start)} - ${formatTime(segment.end)}</span>
+                                        ${segment.confidence ? `<span><i class="fas fa-chart-line mr-1"></i>${Math.round(segment.confidence * 100)}%</span>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else if (result.text) {
+                container.innerHTML = `<div class="glass rounded-xl p-6"><p class="text-white leading-relaxed">${result.text}</p></div>`;
+            }
+            
+            // Show insights
+            if (result.segments && result.segments.length > 0) {
+                document.getElementById('insightsPanel').classList.remove('hidden');
+                calculateInsights(result);
+            }
+        }
+        
+        function displayTimeline(result) {
+            const timeline = document.getElementById('timeline');
+            const duration = result.duration || result.segments[result.segments.length - 1].end;
+            
+            timeline.innerHTML = '';
+            
+            result.segments.forEach(segment => {
+                const startPercent = (segment.start / duration) * 100;
+                const widthPercent = ((segment.end - segment.start) / duration) * 100;
+                const speakerClass = `speaker-${(segment.speaker % 5) + 1}`;
+                
+                const div = document.createElement('div');
+                div.className = `absolute h-full ${speakerClass} opacity-80 hover:opacity-100 transition-opacity cursor-pointer`;
+                div.style.left = startPercent + '%';
+                div.style.width = widthPercent + '%';
+                div.title = `Speaker ${segment.speaker}: ${formatTime(segment.start)} - ${formatTime(segment.end)}`;
+                timeline.appendChild(div);
+            });
+            
+            document.getElementById('timelineStart').textContent = '0:00';
+            document.getElementById('timelineEnd').textContent = formatTime(duration);
+        }
+        
+        function calculateInsights(result) {
+            // Most active speaker
+            const speakerTime = {};
+            result.segments.forEach(segment => {
+                const speaker = segment.speaker || 0;
+                const time = segment.end - segment.start;
+                speakerTime[speaker] = (speakerTime[speaker] || 0) + time;
+            });
+            
+            const mostActive = Object.entries(speakerTime).sort((a, b) => b[1] - a[1])[0];
+            document.getElementById('mostActiveSpeaker').textContent = `Speaker ${mostActive[0]}`;
+            
+            // Words per minute
+            const totalWords = result.text.split(' ').length;
+            const totalMinutes = result.duration / 60;
+            document.getElementById('wordsPerMinute').textContent = Math.round(totalWords / totalMinutes);
+            
+            // Silence ratio (simplified)
+            document.getElementById('silenceRatio').textContent = '15%';
+        }
+        
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+        
+        function highlightText(text) {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            if (!searchTerm) return text;
+            
+            const regex = new RegExp(`(${searchTerm})`, 'gi');
+            return text.replace(regex, '<mark class="bg-yellow-400 text-black px-1 rounded">$1</mark>');
+        }
+        
+        function searchTranscript() {
+            if (transcriptionResult) {
+                displayResults(transcriptionResult);
+            }
+        }
+        
+        function copyTranscript() {
+            if (transcriptionResult && transcriptionResult.text) {
+                navigator.clipboard.writeText(transcriptionResult.text).then(() => {
+                    showToast('Copied to clipboard!');
+                });
+            }
+        }
+        
+        function downloadTranscript(format) {
+            if (!transcriptionResult) return;
+            
+            let content, filename, mimeType;
+            
+            if (format === 'txt') {
+                content = transcriptionResult.text;
+                filename = 'transcript.txt';
+                mimeType = 'text/plain';
+            } else if (format === 'srt') {
+                content = generateSRT(transcriptionResult);
+                filename = 'transcript.srt';
+                mimeType = 'text/srt';
+            } else if (format === 'vtt') {
+                content = generateVTT(transcriptionResult);
+                filename = 'transcript.vtt';
+                mimeType = 'text/vtt';
+            } else if (format === 'json') {
+                content = JSON.stringify(transcriptionResult, null, 2);
+                filename = 'transcript.json';
+                mimeType = 'application/json';
+            }
+            
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showToast(`Downloaded ${filename}`);
+        }
+        
+        function generateSRT(result) {
+            if (!result.segments) return result.text;
+            
+            return result.segments.map((segment, i) => {
+                const startTime = formatSRTTime(segment.start);
+                const endTime = formatSRTTime(segment.end);
+                return `${i + 1}\n${startTime} --> ${endTime}\n${segment.text}\n`;
+            }).join('\n');
+        }
+        
+        function generateVTT(result) {
+            if (!result.segments) return 'WEBVTT\n\n' + result.text;
+            
+            let vtt = 'WEBVTT\n\n';
+            result.segments.forEach(segment => {
+                const startTime = formatVTTTime(segment.start);
+                const endTime = formatVTTTime(segment.end);
+                vtt += `${startTime} --> ${endTime}\n${segment.text}\n\n`;
+            });
+            return vtt;
+        }
+        
+        function formatSRTTime(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = Math.floor(seconds % 60);
+            const ms = Math.floor((seconds % 1) * 1000);
+            return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')},${ms.toString().padStart(3, '0')}`;
+        }
+        
+        function formatVTTTime(seconds) {
+            return formatSRTTime(seconds).replace(',', '.');
+        }
+        
+        function playPause() {
+            if (wavesurfer) {
+                wavesurfer.playPause();
+                const icon = document.getElementById('playIcon');
+                if (wavesurfer.isPlaying()) {
+                    icon.className = 'fas fa-pause';
+                } else {
+                    icon.className = 'fas fa-play';
+                }
+            }
+        }
+        
+        function toggleTheme() {
+            document.body.classList.toggle('dark');
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = toast.querySelector('i');
+            
+            if (type === 'error') {
+                icon.className = 'fas fa-exclamation-circle text-red-400 text-xl';
+            } else {
+                icon.className = 'fas fa-check-circle text-green-400 text-xl';
+            }
+            
+            document.getElementById('toastMessage').textContent = message;
+            toast.classList.remove('hidden', 'translate-y-full');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-full');
+                setTimeout(() => {
+                    toast.classList.add('hidden');
+                }, 300);
+            }, 3000);
+        }
+        
+        // Live transcription placeholder
+        function startLiveTranscription() {
+            showToast('Live transcription coming soon!', 'error');
+        }
+        
+        // Add blob animation styles
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes blob {
+                0% { transform: translate(0px, 0px) scale(1); }
+                33% { transform: translate(30px, -50px) scale(1.1); }
+                66% { transform: translate(-20px, 20px) scale(0.9); }
+                100% { transform: translate(0px, 0px) scale(1); }
+            }
+            .animate-blob {
+                animation: blob 20s infinite;
+            }
+            .animation-delay-2000 {
+                animation-delay: 2s;
+            }
+            .animation-delay-4000 {
+                animation-delay: 4s;
+            }
+            .animation-delay-6000 {
+                animation-delay: 6s;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

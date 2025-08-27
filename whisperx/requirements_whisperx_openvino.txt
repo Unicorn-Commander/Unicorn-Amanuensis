@@ -1,0 +1,31 @@
+# WhisperX with OpenVINO for Intel iGPU
+fastapi==0.110.0
+uvicorn==0.27.1
+python-multipart==0.0.9
+
+# WhisperX with alignment and diarization
+whisperx @ git+https://github.com/m-bain/whisperx.git
+faster-whisper>=1.0.0
+
+# OpenVINO for Intel GPU acceleration
+openvino>=2024.0.0
+openvino-dev[pytorch]>=2024.0.0
+
+# Audio processing
+torch>=2.0.0
+torchaudio>=2.0.0
+librosa>=0.10.0
+soundfile>=0.12.0
+ffmpeg-python>=0.2.0
+
+# Speaker diarization
+pyannote.audio>=3.1.0
+speechbrain>=0.5.16
+
+# Word alignment
+phonemizer>=3.2.1
+
+# Utilities
+numpy>=1.24.0
+scipy>=1.10.0
+pandas>=2.0.0

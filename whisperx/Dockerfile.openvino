@@ -1,0 +1,50 @@
+FROM python:3.10-slim
+
+# Install system dependencies including Intel GPU runtime
+RUN apt-get update && apt-get install -y \
+    # Basic tools
+    git \
+    curl \
+    wget \
+    # FFmpeg with hardware acceleration support
+    ffmpeg \
+    # Intel GPU runtime dependencies
+    libva-dev \
+    libva-drm2 \
+    libva-glx2 \
+    vainfo \
+    # OpenCL support  
+    ocl-icd-libopencl1 \
+    clinfo \
+    # Audio processing libraries
+    libsndfile1 \
+    libsox-dev \
+    sox \
+    # Additional libraries for OpenVINO
+    libgomp1 \
+    libnuma1 \
+    libusb-1.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Upgrade pip
+RUN pip install --upgrade pip
+
+# Install OpenVINO and optimized packages
+COPY requirements_openvino.txt .
+RUN pip install --no-cache-dir -r requirements_openvino.txt
+
+# Copy application code
+COPY server_openvino.py ./server.py
+COPY static/ ./static/
+
+# Set environment variables for Intel GPU
+ENV LIBVA_DRIVER_NAME=i965
+
+# Expose port
+EXPOSE 9000
+EXPOSE 9001
+
+# Run the OpenVINO native server
+CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "9000"]

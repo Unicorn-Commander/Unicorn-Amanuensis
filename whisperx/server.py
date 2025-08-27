@@ -1,16 +1,34 @@
 from fastapi import FastAPI, UploadFile, File, Form
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 import whisperx
 import os
 import tempfile
 import torch
 import gc
 import logging
+from pathlib import Path
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="WhisperX STT Service")
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Mount static files if the directory exists
+static_dir = Path(__file__).parent / "static"
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+    logger.info(f"Mounted static files from {static_dir}")
 
 # Model configuration
 MODEL_SIZE = os.environ.get("WHISPER_MODEL", "base")
@@ -90,12 +108,34 @@ async def health():
         "compute_type": COMPUTE_TYPE
     }
 
-@app.get("/")
-async def root():
+@app.get("/", response_class=HTMLResponse)
+async def web_ui():
+    """Serve the web UI"""
+    index_path = static_dir / "index.html"
+    if index_path.exists():
+        return FileResponse(index_path)
+    else:
+        # Fallback to API info if no UI available
+        return JSONResponse({
+            "service": "WhisperX STT",
+            "version": "1.0",
+            "endpoints": {
+                "/v1/audio/transcriptions": "POST - Transcribe audio",
+                "/health": "GET - Health check",
+                "/api": "GET - API information"
+            }
+        })
+
+@app.get("/api")
+async def api_info():
+    """API information endpoint"""
     return {
         "service": "WhisperX STT",
         "version": "1.0",
+        "model": MODEL_SIZE,
+        "device": DEVICE,
         "endpoints": {
+            "/": "GET - Web interface",
             "/v1/audio/transcriptions": "POST - Transcribe audio",
             "/health": "GET - Health check"
         }

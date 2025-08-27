@@ -1,0 +1,59 @@
+FROM ubuntu:22.04
+
+# AMD NPU (XDNA) optimized build
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    python3.10 \
+    python3-pip \
+    python3.10-venv \
+    ffmpeg \
+    git \
+    curl \
+    wget \
+    build-essential \
+    libsndfile1 \
+    # AMD ROCm dependencies (for NPU support)
+    libnuma-dev \
+    libelf-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install AMD XDNA drivers (requires host to have them)
+# Note: The actual NPU drivers need to be installed on the host
+
+WORKDIR /app
+
+# Install Python dependencies
+RUN python3 -m pip install --upgrade pip && \
+    pip3 install --no-cache-dir \
+    torch==2.1.0 \
+    torchaudio==2.1.0 \
+    onnx \
+    onnxruntime
+
+# Install WhisperX and NPU-specific dependencies
+COPY requirements_npu.txt .
+RUN pip3 install --no-cache-dir -r requirements_npu.txt
+
+# Copy NPU runtime and application files
+COPY npu/ npu/
+COPY server_whisperx_npu.py server.py
+COPY templates/ templates/
+COPY *.py ./
+
+# Create necessary directories
+RUN mkdir -p /root/.cache /models
+
+# NPU Configuration
+ENV WHISPER_DEVICE=npu
+ENV NPU_BACKEND=XDNA
+ENV XDNA_VISIBLE_DEVICES=0
+
+EXPOSE 9000
+
+# Health check endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:9000/health || exit 1
+
+CMD ["python3", "-m", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "9000"]

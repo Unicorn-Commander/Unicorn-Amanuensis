@@ -1,0 +1,22 @@
+# OpenVINO Native Implementation - No ctranslate2!
+fastapi==0.110.0
+uvicorn==0.27.1
+python-multipart==0.0.9
+
+# OpenVINO optimized transformers - The magic sauce!
+optimum[openvino]>=1.16.0
+openvino>=2024.0.0
+transformers>=4.35.0
+
+# Audio processing
+torch>=2.0.0
+torchaudio>=2.0.0
+librosa>=0.10.0
+soundfile>=0.12.0
+
+# Speaker diarization
+pyannote.audio>=3.1.0
+
+# Utilities
+numpy>=1.24.0
+scipy>=1.10.0

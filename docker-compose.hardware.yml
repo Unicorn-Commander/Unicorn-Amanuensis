@@ -1,0 +1,116 @@
+version: '3.8'
+
+services:
+  # CPU-only version - lightweight, no GPU drivers
+  unicorn-amanuensis-cpu:
+    build:
+      context: ./whisperx
+      dockerfile: Dockerfile.cpu
+    image: unicorncommander/unicorn-amanuensis:cpu
+    container_name: unicorn-amanuensis
+    ports:
+      - "9000:9000"
+    environment:
+      - WHISPER_MODEL=${WHISPER_MODEL:-base}
+      - WHISPER_DEVICE=cpu
+      - ENABLE_DIARIZATION=true
+      - HF_TOKEN=${HF_TOKEN:-}
+    volumes:
+      - ./cache:/root/.cache
+      - ./models:/models
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    profiles: ["cpu"]
+
+  # NVIDIA GPU version with CUDA
+  unicorn-amanuensis-cuda:
+    build:
+      context: ./whisperx
+      dockerfile: Dockerfile.cuda
+    image: unicorncommander/unicorn-amanuensis:cuda
+    container_name: unicorn-amanuensis
+    ports:
+      - "9000:9000"
+    environment:
+      - WHISPER_MODEL=${WHISPER_MODEL:-large-v3}
+      - WHISPER_DEVICE=cuda
+      - ENABLE_DIARIZATION=true
+      - HF_TOKEN=${HF_TOKEN:-}
+    volumes:
+      - ./cache:/root/.cache
+      - ./models:/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    profiles: ["cuda"]
+
+  # Intel iGPU version with OpenVINO
+  unicorn-amanuensis-igpu:
+    build:
+      context: ./whisperx
+      dockerfile: Dockerfile.igpu
+    image: unicorncommander/unicorn-amanuensis:igpu
+    container_name: unicorn-amanuensis
+    ports:
+      - "9000:9000"
+    environment:
+      - WHISPER_MODEL=${WHISPER_MODEL:-large-v3}
+      - WHISPER_DEVICE=cpu
+      - ENABLE_DIARIZATION=true
+      - HF_TOKEN=${HF_TOKEN:-}
+    volumes:
+      - ./cache:/root/.cache
+      - ./models:/models
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+      - video
+    security_opt:
+      - seccomp:unconfined
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    profiles: ["igpu"]
+
+  # AMD NPU version with XDNA
+  unicorn-amanuensis-npu:
+    build:
+      context: ./whisperx
+      dockerfile: Dockerfile.npu
+    image: unicorncommander/unicorn-amanuensis:npu
+    container_name: unicorn-amanuensis
+    ports:
+      - "9000:9000"
+    environment:
+      - WHISPER_MODEL=${WHISPER_MODEL:-base}
+      - WHISPER_DEVICE=npu
+      - ENABLE_DIARIZATION=true
+      - HF_TOKEN=${HF_TOKEN:-}
+    volumes:
+      - ./cache:/root/.cache
+      - ./models:/models
+      - /sys:/sys:ro
+      - /dev/xdna:/dev/xdna
+    devices:
+      - /dev/xdna:/dev/xdna
+    privileged: true  # NPU requires privileged for now
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    profiles: ["npu"]

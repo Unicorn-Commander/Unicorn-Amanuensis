@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  # WhisperX Speech-to-Text Service with OpenVINO Intel iGPU support
+  whisperx-openvino:
+    build:
+      context: ./whisperx
+      dockerfile: Dockerfile.whisperx_openvino
+    container_name: unicorn-amanuensis-whisperx
+    restart: unless-stopped
+    ports:
+      - "9000:9000"  # API port
+      - "9001:9001"  # Web UI port
+    environment:
+      # Model configuration
+      WHISPER_MODEL: "${WHISPER_MODEL:-large-v3}"
+      WHISPER_DEVICE: "igpu"  # Force Intel iGPU mode
+      COMPUTE_TYPE: "${COMPUTE_TYPE:-int8}"  # int8 for best performance on iGPU
+      WHISPER_BATCH_SIZE: "${BATCH_SIZE:-16}"
+      
+      # Features
+      ENABLE_DIARIZATION: "${ENABLE_DIARIZATION:-true}"
+      MAX_SPEAKERS: "${MAX_SPEAKERS:-10}"
+      HF_TOKEN: "${HF_TOKEN:-}"  # Required for speaker diarization models
+      
+      # API configuration
+      WEB_UI_PORT: "9001"
+      API_PORT: "9000"
+      
+      # OpenVINO optimization
+      OV_CACHE_DIR: "/app/models/cache"
+      
+      # Intel GPU specific
+      NEOReadDebugKeys: "1"
+      OverrideGpuAddressSpace: "48"
+    
+    volumes:
+      - whisperx_models:/app/models
+      - ./whisperx/static:/app/static:ro
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro  # For GUI tools if needed
+    
+    networks:
+      - amanuensis-network
+    
+    # Device mappings for Intel GPU access
+    devices:
+      - /dev/dri:/dev/dri  # Intel GPU access
+    
+    # Add user to required groups for GPU access
+    group_add:
+      - "44"    # video group for /dev/dri/card*
+      - "109"   # render group for /dev/dri/renderD* (may vary)
+    
+    # Security options for GPU access
+    security_opt:
+      - seccomp:unconfined
+    
+    # Resource limits (optional)
+    deploy:
+      resources:
+        limits:
+          memory: 8G  # Adjust based on your system
+        reservations:
+          devices:
+            - capabilities: [gpu]
+              driver: intel
+              count: all
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 300s  # Allow time for model loading
+    
+    # Privileged mode for full GPU access (use cautiously)
+    # privileged: true  # Uncomment if GPU access issues persist
+
+networks:
+  amanuensis-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+
+volumes:
+  whisperx_models:
+    driver: local
