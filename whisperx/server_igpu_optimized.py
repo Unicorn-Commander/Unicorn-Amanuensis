@@ -390,7 +390,24 @@ async def health():
         }
     }
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/")
+async def root():
+    """API root endpoint with service info"""
+    return {
+        "service": "Unicorn Amanuensis",
+        "version": "1.0.0",
+        "model": MODEL_SIZE,
+        "device": f"Intel iGPU ({OV_DEVICE})" if OV_DEVICE else "CPU",
+        "endpoints": {
+            "health": "/health",
+            "web_interface": "/web",
+            "transcription_api": "/v1/audio/transcriptions",
+            "gpu_status": "/gpu-status"
+        },
+        "description": "Professional AI Transcription Suite with Intel iGPU Acceleration"
+    }
+
+@app.get("/web", response_class=HTMLResponse)
 async def web_ui():
     """Serve the web UI"""
     index_path = static_dir / "index.html"
