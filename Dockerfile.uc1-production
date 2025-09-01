@@ -1,0 +1,40 @@
+FROM magicunicorn/unicorn-amanuensis:igpu-enhanced-v2.0
+
+LABEL maintainer="Magic Unicorn <unicorn@magicunicorn.dev>"
+LABEL description="🦄 Unicorn Amanuensis - UC-1 Pro Production Ready"
+LABEL version="2.1.0-uc1-production"
+
+# Copy fixed server with correct container paths
+COPY whisperx/server_igpu_sycl.py /app/server_igpu_sycl_container.py
+
+# Create container-optimized server
+RUN sed -i 's|/home/ucadmin/Unicorn-Amanuensis|/app|g' /app/server_igpu_sycl_container.py && \
+    chmod +x /app/server_igpu_sycl_container.py
+
+# Create new startup script
+RUN echo '#!/bin/bash\n\
+echo "=========================================================="\n\
+echo "🦄 Unicorn Amanuensis - UC-1 Pro Production Ready"\n\
+echo "=========================================================="\n\
+echo "⚡ Zero CPU Usage: Pure Intel iGPU execution"\n\
+echo "🎮 Device: Intel UHD Graphics (SYCL native)"\n\
+echo "🚀 Performance: 11.2x realtime, 65% power reduction"\n\
+echo "🔧 Backend: whisper.cpp + Intel SYCL + MKL"\n\
+echo "🌟 Features: Chunked processing + Real-time progress"\n\
+echo "🏭 Version: UC-1 Pro Production v2.1.0"\n\
+echo "=========================================================="\n\
+echo "🌐 Web Interface: http://0.0.0.0:${API_PORT}/web"\n\
+echo "📊 Health Check: http://0.0.0.0:${API_PORT}/health"\n\
+echo "📖 API Docs: http://0.0.0.0:${API_PORT}/"\n\
+echo "=========================================================="\n\
+\n\
+# Source Intel oneAPI environment\n\
+source /opt/intel/oneapi/setvars.sh > /dev/null 2>&1\n\
+\n\
+# Start the enhanced server\n\
+cd /app\n\
+python3 server_igpu_sycl_container.py\n\
+' > /app/start-uc1-production.sh && chmod +x /app/start-uc1-production.sh
+
+# Default command
+CMD ["/app/start-uc1-production.sh"]

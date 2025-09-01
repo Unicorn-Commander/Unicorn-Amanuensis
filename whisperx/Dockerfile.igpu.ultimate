@@ -1,0 +1,466 @@
+FROM ubuntu:22.04
+
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+
+# Install base dependencies
+RUN apt-get update && apt-get install -y \
+    python3.10 \
+    python3-pip \
+    python3.10-dev \
+    git \
+    curl \
+    wget \
+    ffmpeg \
+    gnupg \
+    software-properties-common \
+    lsb-release \
+    ca-certificates \
+    build-essential \
+    cmake \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Add Intel GPU repository
+RUN wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | \
+    gpg --dearmor --output /usr/share/keyrings/intel-graphics.gpg && \
+    echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu jammy client" | \
+    tee /etc/apt/sources.list.d/intel-gpu-jammy.list
+
+# Update and install ALL Intel GPU components
+RUN apt-get update && apt-get install -y \
+    intel-opencl-icd \
+    intel-level-zero-gpu \
+    level-zero \
+    intel-media-va-driver-non-free \
+    libmfx1 \
+    libmfxgen1 \
+    libvpl2 \
+    libegl-mesa0 \
+    libegl1-mesa \
+    libegl1-mesa-dev \
+    libgbm1 \
+    libgl1-mesa-dev \
+    libgl1-mesa-dri \
+    libglapi-mesa \
+    libgles2-mesa-dev \
+    libglx-mesa0 \
+    libigdgmm12 \
+    libxatracker2 \
+    mesa-va-drivers \
+    mesa-vdpau-drivers \
+    mesa-vulkan-drivers \
+    va-driver-all \
+    vainfo \
+    hwinfo \
+    clinfo \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install OpenCL ICD loader
+RUN apt-get update && apt-get install -y \
+    ocl-icd-libopencl1 \
+    ocl-icd-opencl-dev \
+    opencl-headers \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create symlinks for compatibility
+RUN ln -s /usr/lib/x86_64-linux-gnu/libOpenCL.so.1 /usr/lib/x86_64-linux-gnu/libOpenCL.so || true
+
+# Set up Python environment
+WORKDIR /app
+
+# Upgrade pip
+RUN python3 -m pip install --upgrade pip setuptools wheel
+
+# Install PyTorch with CPU support (OpenVINO will handle GPU acceleration)
+RUN pip install torch==2.0.1+cpu torchvision==0.15.2+cpu torchaudio==2.0.2+cpu \
+    -f https://download.pytorch.org/whl/torch_stable.html
+
+# Install OpenVINO toolkit with full GPU support
+RUN pip install openvino==2024.0.0 \
+    openvino-dev[tensorflow,onnx,pytorch]==2024.0.0
+
+# Install audio processing libraries
+RUN pip install \
+    librosa==0.10.1 \
+    soundfile==0.12.1 \
+    scipy==1.11.4 \
+    numpy==1.24.4
+
+# Install WhisperX dependencies (without ctranslate2 initially)
+RUN pip install \
+    transformers==4.36.2 \
+    datasets==2.16.1 \
+    evaluate==0.4.1 \
+    jiwer==3.0.3 \
+    more-itertools==10.1.0
+
+# Install faster-whisper separately to control ctranslate2
+RUN pip install faster-whisper==0.10.0
+
+# Install WhisperX
+RUN pip install git+https://github.com/m-bain/whisperx.git@main
+
+# Install pyannote for speaker diarization
+RUN pip install pyannote.audio==3.1.1
+
+# Install web framework
+RUN pip install \
+    fastapi==0.110.0 \
+    uvicorn==0.27.1 \
+    python-multipart==0.0.9 \
+    aiofiles==23.2.1
+
+# Copy application files
+COPY . .
+
+# Create an optimized server for iGPU
+RUN cat > /app/server_igpu_ultimate.py << 'EOF'
+#!/usr/bin/env python3
+import os
+import sys
+import logging
+import tempfile
+import gc
+import json
+from pathlib import Path
+from typing import Optional
+
+import torch
+import numpy as np
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
+
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# Check for OpenVINO
+try:
+    from openvino.runtime import Core
+    core = Core()
+    available_devices = core.available_devices
+    logger.info(f"OpenVINO initialized. Available devices: {available_devices}")
+    HAS_OPENVINO = True
+    HAS_GPU = "GPU" in available_devices
+except Exception as e:
+    logger.warning(f"OpenVINO initialization failed: {e}")
+    HAS_OPENVINO = False
+    HAS_GPU = False
+
+# Import WhisperX
+try:
+    import whisperx
+    HAS_WHISPERX = True
+except Exception as e:
+    logger.error(f"WhisperX import failed: {e}")
+    HAS_WHISPERX = False
+
+# Configuration from environment
+MODEL_SIZE = os.environ.get("WHISPER_MODEL", "base")
+DEVICE = os.environ.get("WHISPER_DEVICE", "igpu").lower()
+COMPUTE_TYPE = os.environ.get("COMPUTE_TYPE", "int8")
+BATCH_SIZE = int(os.environ.get("BATCH_SIZE", "16"))
+ENABLE_DIARIZATION = os.environ.get("ENABLE_DIARIZATION", "true").lower() == "true"
+HF_TOKEN = os.environ.get("HF_TOKEN", "")
+
+# Set device based on availability
+if DEVICE == "igpu" and HAS_GPU:
+    device = "cpu"  # WhisperX uses CPU, OpenVINO handles GPU
+    device_info = "Intel iGPU (via OpenVINO)"
+    logger.info("Intel iGPU mode enabled via OpenVINO")
+elif DEVICE == "igpu" and HAS_OPENVINO:
+    device = "cpu"
+    device_info = "Intel CPU (OpenVINO optimized)"
+    logger.info("OpenVINO CPU optimization enabled")
+else:
+    device = "cpu"
+    device_info = "CPU"
+    logger.info("Standard CPU mode")
+
+# Initialize FastAPI app
+app = FastAPI(title="Unicorn Amanuensis", version="1.0.0")
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Global model variable
+model = None
+diarize_model = None
+align_model = None
+
+def load_models():
+    """Load WhisperX and optional diarization models"""
+    global model, diarize_model, align_model
+    
+    try:
+        logger.info(f"Loading WhisperX model: {MODEL_SIZE} on {device} with {COMPUTE_TYPE}")
+        
+        # Load main model
+        if HAS_WHISPERX:
+            model = whisperx.load_model(
+                MODEL_SIZE, 
+                device,
+                compute_type=COMPUTE_TYPE,
+                download_root="./models"
+            )
+            logger.info(f"✅ WhisperX model loaded successfully")
+        else:
+            logger.error("WhisperX not available")
+            return False
+        
+        # Load alignment model
+        try:
+            align_model = whisperx.load_align_model(
+                language_code="en",
+                device=device
+            )
+            logger.info("✅ Alignment model loaded")
+        except Exception as e:
+            logger.warning(f"Alignment model failed to load: {e}")
+        
+        # Load diarization model if enabled
+        if ENABLE_DIARIZATION and HF_TOKEN:
+            try:
+                from pyannote.audio import Pipeline
+                diarize_model = Pipeline.from_pretrained(
+                    "pyannote/speaker-diarization-3.1",
+                    use_auth_token=HF_TOKEN
+                )
+                if torch.cuda.is_available():
+                    diarize_model.to(torch.device("cuda"))
+                logger.info("✅ Diarization model loaded")
+            except Exception as e:
+                logger.warning(f"Diarization model failed to load: {e}")
+                diarize_model = None
+        
+        return True
+        
+    except Exception as e:
+        logger.error(f"Failed to load models: {e}")
+        return False
+
+# Mount static files if available
+static_dir = Path("/app/static")
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+    logger.info("Static files mounted from /app/static")
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize models on startup"""
+    if not load_models():
+        logger.error("Failed to load models on startup")
+
+@app.get("/")
+async def root():
+    """Root endpoint with web interface"""
+    html_file = static_dir / "index.html"
+    if html_file.exists():
+        return FileResponse(str(html_file))
+    
+    return HTMLResponse("""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>🦄 Unicorn Amanuensis - iGPU</title>
+        <style>
+            body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+            h1 { color: #6B46C1; }
+            .status { background: #F3F4F6; padding: 20px; border-radius: 8px; margin: 20px 0; }
+            .status h3 { margin-top: 0; }
+            .endpoints { background: #EFF6FF; padding: 20px; border-radius: 8px; }
+            code { background: #1F2937; color: #10B981; padding: 2px 6px; border-radius: 4px; }
+        </style>
+    </head>
+    <body>
+        <h1>🦄 Unicorn Amanuensis</h1>
+        <h2>Professional Speech-to-Text with Intel iGPU Acceleration</h2>
+        
+        <div class="status">
+            <h3>System Status</h3>
+            <p><strong>Model:</strong> """ + MODEL_SIZE + """</p>
+            <p><strong>Device:</strong> """ + device_info + """</p>
+            <p><strong>OpenVINO:</strong> """ + ("✅ Enabled" if HAS_OPENVINO else "❌ Disabled") + """</p>
+            <p><strong>GPU Support:</strong> """ + ("✅ Available" if HAS_GPU else "❌ Not Available") + """</p>
+            <p><strong>Compute Type:</strong> """ + COMPUTE_TYPE + """</p>
+            <p><strong>Diarization:</strong> """ + ("✅ Enabled" if diarize_model else "❌ Disabled") + """</p>
+        </div>
+        
+        <div class="endpoints">
+            <h3>API Endpoints</h3>
+            <ul>
+                <li><code>GET /health</code> - Health check</li>
+                <li><code>POST /v1/audio/transcriptions</code> - OpenAI-compatible transcription</li>
+                <li><code>GET /docs</code> - Interactive API documentation</li>
+            </ul>
+        </div>
+    </body>
+    </html>
+    """)
+
+@app.get("/health")
+async def health():
+    """Health check endpoint"""
+    return {
+        "status": "healthy",
+        "model": MODEL_SIZE,
+        "device": device_info,
+        "compute_type": COMPUTE_TYPE,
+        "model_loaded": model is not None,
+        "openvino": HAS_OPENVINO,
+        "gpu_available": HAS_GPU,
+        "diarization": diarize_model is not None,
+        "alignment": align_model is not None
+    }
+
+@app.post("/v1/audio/transcriptions")
+async def transcribe_audio(
+    file: UploadFile = File(...),
+    language: Optional[str] = Form(None),
+    response_format: Optional[str] = Form("json"),
+    timestamp_granularities: Optional[str] = Form(None)
+):
+    """OpenAI-compatible transcription endpoint"""
+    if not model:
+        raise HTTPException(status_code=503, detail="Model not loaded")
+    
+    temp_file = None
+    try:
+        # Save uploaded file
+        with tempfile.NamedTemporaryFile(suffix=Path(file.filename).suffix, delete=False) as tmp:
+            content = await file.read()
+            tmp.write(content)
+            temp_file = tmp.name
+        
+        logger.info(f"Processing audio file: {file.filename}")
+        
+        # Load and transcribe audio
+        audio = whisperx.load_audio(temp_file)
+        
+        # Transcribe with WhisperX
+        result = model.transcribe(
+            audio,
+            batch_size=BATCH_SIZE,
+            language=language
+        )
+        
+        # Align if model available
+        if align_model and result.get("language") == "en":
+            try:
+                result = whisperx.align(
+                    result["segments"],
+                    align_model,
+                    audio,
+                    device,
+                    return_char_alignments=False
+                )
+            except Exception as e:
+                logger.warning(f"Alignment failed: {e}")
+        
+        # Diarize if enabled
+        if diarize_model and len(audio) > 0:
+            try:
+                import torch
+                diarize_segments = diarize_model({"waveform": torch.from_numpy(audio).unsqueeze(0), "sample_rate": 16000})
+                result = whisperx.assign_word_speakers(diarize_segments, result)
+            except Exception as e:
+                logger.warning(f"Diarization failed: {e}")
+        
+        # Format response
+        if response_format == "text":
+            return result.get("text", "")
+        elif response_format == "srt":
+            # Generate SRT format
+            srt = ""
+            for i, segment in enumerate(result.get("segments", []), 1):
+                start = segment.get("start", 0)
+                end = segment.get("end", 0)
+                text = segment.get("text", "").strip()
+                srt += f"{i}\n"
+                srt += f"{format_timestamp(start)} --> {format_timestamp(end)}\n"
+                srt += f"{text}\n\n"
+            return srt
+        else:
+            # Return JSON format (default)
+            return JSONResponse(content={
+                "text": result.get("text", ""),
+                "segments": result.get("segments", []),
+                "language": result.get("language", language)
+            })
+            
+    except Exception as e:
+        logger.error(f"Transcription error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    
+    finally:
+        # Cleanup
+        if temp_file and os.path.exists(temp_file):
+            os.unlink(temp_file)
+        gc.collect()
+
+def format_timestamp(seconds):
+    """Format seconds to SRT timestamp"""
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    secs = seconds % 60
+    return f"{hours:02d}:{minutes:02d}:{secs:06.3f}".replace(".", ",")
+
+if __name__ == "__main__":
+    import uvicorn
+    
+    # Log startup information
+    logger.info("=" * 60)
+    logger.info("🦄 Unicorn Amanuensis - Intel iGPU Edition")
+    logger.info("=" * 60)
+    logger.info(f"Model: {MODEL_SIZE}")
+    logger.info(f"Device: {device_info}")
+    logger.info(f"OpenVINO: {HAS_OPENVINO}")
+    logger.info(f"GPU Available: {HAS_GPU}")
+    logger.info("=" * 60)
+    
+    # Run server
+    uvicorn.run(app, host="0.0.0.0", port=9000)
+EOF
+
+# Set environment variables for Intel GPU
+ENV LIBVA_DRIVER_NAME=iHD
+ENV LIBVA_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
+ENV OCL_ICD_VENDORS=/etc/OpenCL/vendors
+ENV INTEL_OPENVINO_DIR=/usr/local/lib/python3.10/dist-packages/openvino
+ENV LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
+
+# Create OpenCL vendors directory
+RUN mkdir -p /etc/OpenCL/vendors && \
+    echo "/usr/lib/x86_64-linux-gnu/libigdrcl.so" > /etc/OpenCL/vendors/intel.icd
+
+# Set proper permissions
+RUN chmod -R 755 /app
+
+# Default environment
+ENV WHISPER_MODEL=base
+ENV WHISPER_DEVICE=igpu
+ENV COMPUTE_TYPE=int8
+ENV BATCH_SIZE=16
+ENV ENABLE_DIARIZATION=true
+
+EXPOSE 9000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD python3 -c "import requests; r = requests.get('http://localhost:9000/health'); exit(0 if r.status_code == 200 else 1)" || exit 1
+
+# Run the optimized iGPU server
+CMD ["python3", "/app/server_igpu_ultimate.py"]

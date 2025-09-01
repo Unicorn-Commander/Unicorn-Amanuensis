@@ -71,10 +71,25 @@ if DEVICE_TYPE == "igpu" and OPENVINO_AVAILABLE:
     available_devices = core.available_devices
     logger.info(f"OpenVINO available devices: {available_devices}")
     
-    # Prefer GPU if available
-    if "GPU" in available_devices:
-        OV_DEVICE = "GPU"
-        logger.info("✅ Using Intel GPU via OpenVINO")
+    # Prefer GPU if available (check for GPU, GPU.0, GPU.1, etc.)
+    gpu_devices = [dev for dev in available_devices if dev.startswith("GPU")]
+    if gpu_devices:
+        # Try to identify iGPU vs discrete GPU
+        igpu_device = None
+        for gpu in gpu_devices:
+            try:
+                gpu_name = core.get_property(gpu, "FULL_DEVICE_NAME")
+                logger.info(f"Found GPU: {gpu} - {gpu_name}")
+                # Intel iGPU usually contains "UHD", "Iris", "HD Graphics" in the name
+                if any(x in gpu_name for x in ["UHD", "Iris", "HD Graphics", "iGPU"]):
+                    igpu_device = gpu
+                    break
+            except:
+                pass
+        
+        # Use iGPU if found, otherwise use first GPU
+        OV_DEVICE = igpu_device if igpu_device else gpu_devices[0]
+        logger.info(f"✅ Using Intel GPU via OpenVINO: {OV_DEVICE}")
     else:
         OV_DEVICE = "CPU"
         logger.warning("Intel GPU not detected, using CPU with OpenVINO optimization")
@@ -152,7 +167,7 @@ def check_intel_gpu_status():
         pass
     
     # Check OpenVINO GPU
-    if OPENVINO_AVAILABLE and OV_DEVICE == "GPU":
+    if OPENVINO_AVAILABLE and OV_DEVICE and OV_DEVICE.startswith("GPU"):
         status["openvino_gpu"] = True
         status["details"]["openvino_device"] = OV_DEVICE
     

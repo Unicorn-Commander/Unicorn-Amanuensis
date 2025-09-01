@@ -1,0 +1,22 @@
+# Core FastAPI and server dependencies
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+python-jose[cryptography]==3.3.0
+
+# Audio processing
+soundfile==0.12.1
+librosa==0.10.1
+
+# HTTP client and CORS
+httpx==0.25.2
+aiofiles==23.2.0
+
+# Optional: WhisperX dependencies (if using hybrid mode)
+# whisperx==3.1.1
+# torch==2.1.0
+# transformers==4.35.2
+# faster-whisper==0.10.0
+
+# System utilities
+psutil==5.9.6

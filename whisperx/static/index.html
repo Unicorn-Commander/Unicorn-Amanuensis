@@ -340,6 +340,78 @@
             to { transform: rotate(360deg); }
         }
 
+        /* Progress Dialog */
+        .progress-dialog {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        .progress-content h3 {
+            margin: 0 0 1rem 0;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+
+        .progress-bar {
+            background: var(--bg-secondary);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue));
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .chunk-results {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            background: var(--bg-secondary);
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+
+        .chunk-result {
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            border-radius: 0.25rem;
+            border-left: 3px solid var(--accent-purple);
+        }
+
+        .chunk-result.stage-info {
+            background: rgba(139, 92, 246, 0.1);
+            border-left-color: var(--accent-blue);
+        }
+
+        .chunk-result.transcription {
+            background: rgba(16, 185, 129, 0.1);
+            border-left-color: var(--accent-green);
+        }
+
+        .chunk-result small {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
         /* Results */
         .result-section {
             margin-top: 1.5rem;
@@ -520,6 +592,27 @@
                     <div class="spinner"></div>
                     <p>Processing transcription...</p>
                 </div>
+                
+                <!-- Progress Dialog for Chunked Processing -->
+                <div class="progress-dialog" id="progressDialog" style="display: none;">
+                    <div class="progress-content">
+                        <h3>🔪 Processing Long Audio</h3>
+                        <p id="progressMessage">Preparing chunked processing...</p>
+                        
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                        </div>
+                        
+                        <div class="progress-stats">
+                            <span id="progressPercent">0%</span>
+                            <span id="chunkProgress">Chunk 0/0</span>
+                        </div>
+                        
+                        <div class="chunk-results" id="chunkResults">
+                            <!-- Chunk results will be added here -->
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="card">
@@ -613,7 +706,7 @@
             }
         });
 
-        // Form Submission
+        // Form Submission with Progress Updates
         document.getElementById('transcribeForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -637,6 +730,9 @@
             
             const startTime = Date.now();
             
+            // Check if audio is likely to be long (>5MB suggests >60s for typical audio)
+            const isLikelyLongAudio = file && file.size > 5 * 1024 * 1024;
+            
             try {
                 const formData = new FormData();
                 
@@ -652,17 +748,50 @@
                 formData.append('response_format', 'verbose_json');
                 formData.append('timestamp_granularities', JSON.stringify(['word', 'segment']));
                 
-                const response = await fetch('/v1/audio/transcriptions', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                // For likely long audio, show progress updates and use chunked endpoint
+                if (isLikelyLongAudio) {
+                    showProgressDialog();
+                    
+                    // Use chunked endpoint for better progress tracking
+                    const response = await fetch('/v1/audio/transcriptions/chunked', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    const processingTime = ((Date.now() - startTime) / 1000).toFixed(1);
+                    
+                    // Show final progress
+                    if (result.config && result.config.chunked) {
+                        const chunks = result.performance?.chunks_processed || 1;
+                        updateProgress(chunks, chunks, 'Transcription complete!', {
+                            chunk_text: result.text.substring(0, 200) + '...'
+                        });
+                        
+                        // Hide progress dialog after showing completion
+                        setTimeout(() => hideProgressDialog(), 2000);
+                    } else {
+                        hideProgressDialog();
+                    }
+                    
+                } else {
+                    // Short audio - use regular endpoint
+                    const response = await fetch('/v1/audio/transcriptions', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    const processingTime = ((Date.now() - startTime) / 1000).toFixed(1);
                 }
-                
-                const result = await response.json();
-                const processingTime = ((Date.now() - startTime) / 1000).toFixed(1);
                 
                 // Display results
                 displayResults(result, processingTime);
@@ -674,6 +803,7 @@
                 
             } catch (error) {
                 console.error('Error:', error);
+                hideProgressDialog();
                 alert('Error during transcription: ' + error.message);
             } finally {
                 document.getElementById('loading').classList.remove('active');
@@ -725,6 +855,66 @@
             const mins = Math.floor(seconds / 60);
             const secs = Math.floor(seconds % 60);
             return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Progress Dialog Functions
+        function showProgressDialog() {
+            const dialog = document.getElementById('progressDialog');
+            dialog.style.display = 'block';
+            
+            // Reset progress
+            updateProgress(0, 0, 'Preparing for chunked processing...');
+            document.getElementById('chunkResults').innerHTML = '';
+        }
+
+        function hideProgressDialog() {
+            document.getElementById('progressDialog').style.display = 'none';
+        }
+
+        function updateProgress(chunk, totalChunks, message, chunkResult = null) {
+            const percent = totalChunks > 0 ? (chunk / totalChunks * 100).toFixed(1) : 0;
+            
+            document.getElementById('progressPercent').textContent = percent + '%';
+            document.getElementById('progressFill').style.width = percent + '%';
+            document.getElementById('chunkProgress').textContent = `Chunk ${chunk}/${totalChunks}`;
+            document.getElementById('progressMessage').textContent = message;
+            
+            // Add detailed chunk result if provided
+            if (chunkResult) {
+                const resultsContainer = document.getElementById('chunkResults');
+                
+                if (chunkResult.stage_info) {
+                    // Add stage information
+                    const stageDiv = document.createElement('div');
+                    stageDiv.className = 'chunk-result stage-info';
+                    stageDiv.innerHTML = `📋 <strong>${chunkResult.stage_info}</strong>`;
+                    if (chunkResult.technical_detail) {
+                        stageDiv.innerHTML += `<br>🔧 ${chunkResult.technical_detail}`;
+                    }
+                    if (chunkResult.efficiency_note) {
+                        stageDiv.innerHTML += `<br>⚡ ${chunkResult.efficiency_note}`;
+                    }
+                    resultsContainer.appendChild(stageDiv);
+                }
+                
+                if (chunkResult.chunk_text) {
+                    // Add transcription result
+                    const chunkDiv = document.createElement('div');
+                    chunkDiv.className = 'chunk-result transcription';
+                    chunkDiv.innerHTML = `<strong>📝 Chunk ${chunk} Transcription:</strong><br>${chunkResult.chunk_text}`;
+                    
+                    if (chunkResult.chunk_performance) {
+                        chunkDiv.innerHTML += `<br><small>⚡ ${chunkResult.chunk_performance}</small>`;
+                    }
+                    if (chunkResult.hardware_status) {
+                        chunkDiv.innerHTML += `<br><small>🎮 ${chunkResult.hardware_status}</small>`;
+                    }
+                    
+                    resultsContainer.appendChild(chunkDiv);
+                }
+                
+                resultsContainer.scrollTop = resultsContainer.scrollHeight;
+            }
         }
 
         function initWaveform(file) {

@@ -1,0 +1,147 @@
+FROM ubuntu:22.04
+
+LABEL maintainer="Magic Unicorn <unicorn@magicunicorn.dev>"
+LABEL description="🦄 Unicorn Amanuensis - Intel iGPU Production (UC-1 Pro)"
+LABEL version="2.0.0-igpu-enhanced"
+
+# Prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    wget \
+    ffmpeg \
+    gnupg \
+    software-properties-common \
+    cmake \
+    build-essential \
+    ca-certificates \
+    python3 \
+    python3-pip \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Add Intel APT repository for oneAPI
+RUN wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | \
+    gpg --dearmor | tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null && \
+    echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | \
+    tee /etc/apt/sources.list.d/oneAPI.list
+
+# Add Intel GPU runtime repository  
+RUN wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | \
+    gpg --dearmor > /usr/share/keyrings/intel-graphics.gpg && \
+    echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu jammy client" > \
+    /etc/apt/sources.list.d/intel-gpu-jammy.list
+
+# Install Intel oneAPI and GPU runtime
+RUN apt-get update && apt-get install -y \
+    intel-oneapi-compiler-dpcpp-cpp \
+    intel-oneapi-mkl-sycl-devel \
+    intel-opencl-icd \
+    intel-level-zero-gpu \
+    level-zero-dev \
+    ocl-icd-libopencl1 \
+    vainfo \
+    clinfo \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up Intel oneAPI environment
+ENV ONEAPI_ROOT=/opt/intel/oneapi
+ENV PATH="${ONEAPI_ROOT}/compiler/latest/bin:${PATH}"
+ENV LD_LIBRARY_PATH="${ONEAPI_ROOT}/compiler/latest/lib:${ONEAPI_ROOT}/mkl/latest/lib:${LD_LIBRARY_PATH}"
+ENV CMAKE_PREFIX_PATH="${ONEAPI_ROOT}/mkl/latest/lib/cmake:${CMAKE_PREFIX_PATH}"
+
+# Set Intel GPU environment variables
+ENV ONEAPI_DEVICE_SELECTOR=level_zero:0
+ENV SYCL_DEVICE_FILTER=gpu
+ENV OMP_NUM_THREADS=1
+ENV MKL_NUM_THREADS=1
+
+WORKDIR /app
+
+# Copy whisper.cpp with Intel SYCL support (pre-built)
+COPY whisper-cpp-igpu /app/whisper-cpp-igpu
+
+# Build whisper.cpp with Intel SYCL if not already built
+RUN cd /app/whisper-cpp-igpu && \
+    if [ ! -f "build_sycl/bin/whisper-cli" ]; then \
+        /opt/intel/oneapi/setvars.sh && \
+        mkdir -p build_sycl && cd build_sycl && \
+        cmake .. \
+            -DGGML_SYCL=ON \
+            -DGGML_SYCL_TARGET=INTEL \
+            -DCMAKE_C_COMPILER=icx \
+            -DCMAKE_CXX_COMPILER=icpx \
+            -DCMAKE_PREFIX_PATH=/opt/intel/oneapi/mkl/latest/lib/cmake \
+            -DCMAKE_BUILD_TYPE=Release && \
+        make -j$(nproc) whisper-cli; \
+    fi
+
+# Download Whisper models if not present
+RUN cd /app/whisper-cpp-igpu && \
+    if [ ! -f "models/ggml-base.bin" ]; then \
+        bash models/download-ggml-model.sh base; \
+    fi && \
+    if [ ! -f "models/ggml-large-v3.bin" ]; then \
+        bash models/download-ggml-model.sh large-v3; \
+    fi
+
+# Copy Python requirements
+COPY requirements.txt /app/
+
+# Install Python dependencies
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+# Copy enhanced server and web interface
+COPY whisperx/server_igpu_sycl.py /app/
+COPY whisperx/static /app/static/
+
+# Copy documentation
+COPY README.md /app/
+COPY CLAUDE.md /app/
+COPY whisper-cpp-igpu/README-Intel-iGPU.md /app/
+COPY whisper-cpp-igpu/INTEL_IGPU_BENCHMARKS.md /app/
+
+# Create models directory
+RUN mkdir -p /app/models
+
+# Set environment variables for production
+ENV PYTHONPATH=/app
+ENV API_PORT=9000
+ENV WHISPER_MODEL=base
+ENV WHISPER_DEVICE=igpu
+
+# Health check for Intel iGPU and server
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:${API_PORT}/health || exit 1
+
+# Create startup script
+RUN echo '#!/bin/bash\n\
+echo "=========================================================="\n\
+echo "🦄 Unicorn Amanuensis - Intel iGPU Production Server"\n\
+echo "=========================================================="\n\
+echo "⚡ Zero CPU Usage: Pure Intel iGPU execution"\n\
+echo "🎮 Device: Intel UHD Graphics (SYCL native)"\n\
+echo "🚀 Performance: 11.2x realtime, 65% power reduction"\n\
+echo "🔧 Backend: whisper.cpp + Intel SYCL + MKL"\n\
+echo "🌟 Features: Chunked processing + Real-time progress"\n\
+echo "=========================================================="\n\
+echo "🌐 Web Interface: http://0.0.0.0:${API_PORT}/web"\n\
+echo "📊 Health Check: http://0.0.0.0:${API_PORT}/health"\n\
+echo "📖 API Docs: http://0.0.0.0:${API_PORT}/"\n\
+echo "=========================================================="\n\
+\n\
+# Source Intel oneAPI environment\n\
+source /opt/intel/oneapi/setvars.sh\n\
+\n\
+# Start the enhanced server\n\
+cd /app\n\
+python3 server_igpu_sycl.py\n\
+' > /app/start-production.sh && chmod +x /app/start-production.sh
+
+# Expose the API port
+EXPOSE ${API_PORT}
+
+# Default command
+CMD ["/app/start-production.sh"]

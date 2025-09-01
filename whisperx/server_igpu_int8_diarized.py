@@ -123,12 +123,15 @@ def load_diarization_model():
         return False
 
 def preprocess_audio(input_path, output_path):
-    """Preprocess audio using Intel QSV hardware acceleration"""
+    """Preprocess audio using Intel iGPU hardware acceleration"""
     try:
-        # Use Intel QSV for hardware acceleration
+        logger.info("🎵 Transcoding audio on Intel iGPU...")
+        
+        # Try Intel QSV first (best for iGPU)
         cmd = [
             'ffmpeg', '-y',
-            '-hwaccel', 'qsv',
+            '-init_hw_device', 'qsv=hw:/dev/dri/renderD128',
+            '-filter_hw_device', 'hw',
             '-i', input_path,
             '-ar', '16000',
             '-ac', '1',
@@ -140,11 +143,13 @@ def preprocess_audio(input_path, output_path):
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
         
         if result.returncode != 0:
-            # Fallback to VAAPI
+            # Fallback to VAAPI (still iGPU)
+            logger.info("Falling back to VAAPI...")
             cmd = [
                 'ffmpeg', '-y',
                 '-hwaccel', 'vaapi',
                 '-hwaccel_device', '/dev/dri/renderD128',
+                '-hwaccel_output_format', 'vaapi',
                 '-i', input_path,
                 '-ar', '16000',
                 '-ac', '1',
@@ -175,9 +180,22 @@ def transcribe_with_diarization(audio_path, enable_diarization=True):
             # Process audio
             inputs = processor(audio, sampling_rate=sr, return_tensors="pt")
             
-            # Generate transcription on iGPU
+            # Generate transcription on iGPU with proper config
             logger.info("🎯 Running INT8 inference on Intel iGPU...")
-            predicted_ids = model.generate(inputs.input_features)
+            
+            # Important: Set generation config for proper transcription
+            # Whisper has a hard limit of 448 tokens total (including start tokens)
+            # We need to leave room for the 4 start tokens
+            max_tokens = min(int(duration * 0.2), 444)  # Max 444 to stay under limit
+            predicted_ids = model.generate(
+                inputs.input_features,
+                max_new_tokens=max_tokens,  # Dynamic based on audio length
+                language="en",  # Force English to avoid detection issues
+                task="transcribe",  # Transcribe, not translate
+                return_timestamps=False,  # Timestamps not supported in OpenVINO yet
+                do_sample=False,  # Deterministic generation
+                num_beams=1  # Faster generation
+            )
             
             # Decode transcription
             transcription = processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]

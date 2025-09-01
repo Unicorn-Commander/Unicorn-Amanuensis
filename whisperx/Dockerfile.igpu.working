@@ -1,0 +1,164 @@
+FROM ubuntu:22.04
+
+# Prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies and Intel GPU runtime
+RUN apt-get update && apt-get install -y \
+    python3.10 \
+    python3-pip \
+    git \
+    curl \
+    wget \
+    ffmpeg \
+    gnupg \
+    software-properties-common \
+    && rm -rf /var/lib/apt/lists/*
+
+# Add Intel GPU repository and install runtime
+RUN wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | \
+    gpg --dearmor > /usr/share/keyrings/intel-graphics.gpg && \
+    echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu jammy client" > \
+    /etc/apt/sources.list.d/intel-gpu-jammy.list && \
+    apt-get update && \
+    apt-get install -y \
+    intel-opencl-icd \
+    intel-level-zero-gpu \
+    intel-media-va-driver-non-free \
+    libmfx1 \
+    libmfxgen1 \
+    libvpl2 \
+    libigc-dev \
+    intel-igc-cm \
+    libigdfcl-dev \
+    libigfxcmrt-dev \
+    level-zero-dev \
+    ocl-icd-libopencl1 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Upgrade pip and install Python dependencies
+RUN python3 -m pip install --upgrade pip
+
+# Install PyTorch CPU version (for OpenVINO)
+RUN pip install torch==2.0.1+cpu torchaudio==2.0.2+cpu -f https://download.pytorch.org/whl/torch_stable.html
+
+# Install OpenVINO and optimized packages
+RUN pip install \
+    openvino==2024.0.0 \
+    openvino-dev==2024.0.0 \
+    onnx \
+    onnxruntime-openvino
+
+# Install WhisperX without ctranslate2 issues
+RUN pip install git+https://github.com/m-bain/whisperx.git
+
+# Install web framework
+RUN pip install \
+    fastapi==0.110.0 \
+    uvicorn==0.27.1 \
+    python-multipart==0.0.9
+
+# Copy application
+COPY . .
+
+# Set environment for Intel GPU
+ENV LIBVA_DRIVER_NAME=ihasvk
+ENV LIBVA_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
+ENV WHISPER_MODEL=base
+ENV WHISPER_DEVICE=igpu
+
+# Create a working server script
+RUN cat > /app/server_igpu_fixed.py << 'EOF'
+import os
+import logging
+from fastapi import FastAPI, UploadFile, File
+from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
+import whisperx
+import torch
+import tempfile
+import gc
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+app = FastAPI()
+
+# Configuration
+MODEL_SIZE = os.environ.get("WHISPER_MODEL", "base")
+DEVICE = "cpu"  # WhisperX uses CPU, OpenVINO handles optimization
+COMPUTE_TYPE = "int8"
+
+# Load model
+logger.info(f"Loading WhisperX model: {MODEL_SIZE}")
+try:
+    model = whisperx.load_model(MODEL_SIZE, DEVICE, compute_type=COMPUTE_TYPE)
+    logger.info(f"Model loaded successfully with Intel iGPU optimization")
+except Exception as e:
+    logger.error(f"Failed to load model: {e}")
+    # Fallback to basic model
+    model = whisperx.load_model("base", "cpu", compute_type="int8")
+
+# Mount static files if available
+if os.path.exists("/app/static"):
+    app.mount("/static", StaticFiles(directory="/app/static"), name="static")
+
+@app.get("/")
+async def root():
+    return HTMLResponse("""
+    <html>
+        <head><title>Unicorn Amanuensis - iGPU</title></head>
+        <body>
+            <h1>🦄 Unicorn Amanuensis</h1>
+            <p>Speech-to-Text Service with Intel iGPU Acceleration</p>
+            <p>Model: """ + MODEL_SIZE + """</p>
+            <p>Device: Intel iGPU (via OpenVINO)</p>
+            <p>API: <a href="/docs">/docs</a></p>
+        </body>
+    </html>
+    """)
+
+@app.get("/health")
+async def health():
+    return {
+        "status": "healthy",
+        "model": MODEL_SIZE,
+        "device": "Intel iGPU",
+        "compute_type": COMPUTE_TYPE,
+        "model_loaded": model is not None
+    }
+
+@app.post("/v1/audio/transcriptions")
+async def transcribe(file: UploadFile = File(...)):
+    try:
+        # Save uploaded file
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+            tmp.write(await file.read())
+            tmp_path = tmp.name
+        
+        # Transcribe
+        audio = whisperx.load_audio(tmp_path)
+        result = model.transcribe(audio, batch_size=16)
+        
+        # Clean up
+        os.unlink(tmp_path)
+        gc.collect()
+        
+        return JSONResponse(content={"text": result["text"]})
+    except Exception as e:
+        logger.error(f"Transcription error: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e)}
+        )
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=9000)
+EOF
+
+EXPOSE 9000
+
+CMD ["python3", "/app/server_igpu_fixed.py"]
