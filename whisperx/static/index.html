@@ -753,7 +753,7 @@
                     showProgressDialog();
                     
                     // Use chunked endpoint for better progress tracking
-                    const response = await fetch('/v1/audio/transcriptions/chunked', {
+                    const response = await fetch('/v1/audio/transcriptions', {
                         method: 'POST',
                         body: formData
                     });

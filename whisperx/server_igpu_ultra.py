@@ -25,7 +25,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 sys.path.append(str(Path(__file__).parent))
-from whisper_igpu_runtime_optimized import WhisperIGPUOptimized
+from whisper_igpu_real import WhisperIGPUReal
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -55,36 +55,36 @@ API_PORT = int(os.environ.get("API_PORT", "9000"))
 DEFAULT_MODEL = os.environ.get("WHISPER_MODEL", "base")
 
 # Global whisper instance - initialized once for maximum performance
-whisper_engine: Optional[WhisperIGPUOptimized] = None
+whisper_engine: Optional[WhisperIGPUReal] = None
 
 def initialize_whisper_engine():
-    """Initialize the Whisper SYCL engine once at startup"""
+    """Initialize the REAL Whisper SYCL engine once at startup"""
     global whisper_engine
     
     if whisper_engine is not None:
         return whisper_engine
         
-    logger.info("🚀 Initializing Unicorn Amanuensis Ultra...")
+    logger.info("🚀 Initializing REAL Unicorn Amanuensis Ultra...")
     logger.info("=" * 60)
-    logger.info("⚡ Zero CPU Usage: Optimized Intel iGPU SYCL pipeline")
+    logger.info("⚡ Real Intel iGPU SYCL Implementation")
     logger.info("🎮 Device: Intel UHD Graphics 770 (32 EUs @ 1550MHz)")
-    logger.info("💫 Backend: Optimized SYCL kernels with 16x16 tiling")
-    logger.info("🎯 Achieved Performance: 80x+ realtime")
+    logger.info("💫 Backend: whisper.cpp with SYCL acceleration")
+    logger.info("🎯 Target Performance: 20-40x realtime")
     logger.info("=" * 60)
     
     start_time = time.time()
     
     try:
-        whisper_engine = WhisperIGPUOptimized(DEFAULT_MODEL)
+        whisper_engine = WhisperIGPUReal(DEFAULT_MODEL)
         init_time = time.time() - start_time
         
-        logger.info(f"✅ Engine initialized in {init_time:.2f}s")
-        logger.info("🦄 Unicorn Amanuensis Ultra ready for production!")
+        logger.info(f"✅ REAL Engine initialized in {init_time:.2f}s")
+        logger.info("🦄 Unicorn Amanuensis Ultra ready for REAL production!")
         
         return whisper_engine
         
     except Exception as e:
-        logger.error(f"❌ Failed to initialize SYCL engine: {e}")
+        logger.error(f"❌ Failed to initialize REAL SYCL engine: {e}")
         import traceback
         logger.error(traceback.format_exc())
         raise
@@ -134,14 +134,19 @@ async def transcribe_with_ultra_sycl(audio_path: str, model_name: str = "base",
         logger.info(f"🎯 Audio duration: {audio_duration:.1f}s")
         logger.info("⚡ Dispatching to Intel iGPU SYCL kernels...")
         
-        # Call our complete SYCL implementation
+        # Call the REAL whisper.cpp SYCL implementation
         transcribe_start = time.time()
-        result = await engine.transcribe_async(preprocessed_path, {
-            'model': model_name,
-            'diarization': enable_diarization,
-            'word_timestamps': True,
-            'language': 'en'  # Can be auto-detected by SYCL
-        })
+        
+        # Use the real transcription method
+        if enable_diarization:
+            result = engine.transcribe_with_diarization(preprocessed_path, 
+                                                       word_timestamps=True,
+                                                       language='auto')
+        else:
+            result = engine.transcribe_file(preprocessed_path, 
+                                           word_timestamps=True,
+                                           language='auto')
+        
         transcribe_time = time.time() - transcribe_start
         
         total_time = time.time() - start_time
@@ -285,23 +290,24 @@ async def openai_transcriptions(
     prompt: str = Form(None),
     response_format: str = Form("json"),
     temperature: float = Form(0),
-    timestamp_granularities: str = Form('["segment"]')
+    timestamp_granularities: str = Form('["segment"]'),
+    diarization: bool = Form(False)  # Accept diarization parameter
 ):
-    """OpenAI-compatible transcription endpoint"""
+    """OpenAI-compatible transcription endpoint with diarization support"""
     
-    # Map OpenAI model names
+    # Map OpenAI model names and also accept direct model names
     model_map = {
         "whisper-1": "base",
         "whisper-large": "large-v3",
         "whisper-large-v3": "large-v3"
     }
     
-    actual_model = model_map.get(model, "base")
+    actual_model = model_map.get(model, model)  # Use model directly if not in map
     
     return await transcribe_endpoint(
         file=file,
         model=actual_model,
-        diarization=False,  # OpenAI format doesn't include diarization
+        diarization=diarization,  # Pass through diarization parameter
         response_format="verbose_json" if response_format != "text" else "text"
     )
 
