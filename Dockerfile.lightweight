@@ -1,0 +1,67 @@
+# 🦄 Unicorn Amanuensis - Lightweight Docker Image
+# For general deployment without Intel GPU requirements
+
+FROM python:3.12-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    wget \
+    curl \
+    git \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Install Python dependencies
+RUN pip install --no-cache-dir \
+    fastapi==0.104.1 \
+    uvicorn[standard]==0.24.0 \
+    python-multipart==0.0.6 \
+    httpx==0.25.0 \
+    librosa==0.10.1 \
+    soundfile==0.12.1 \
+    numpy==1.24.3 \
+    scipy==1.11.3
+
+# Optional: Install Whisper backends (may fail in some environments)
+RUN pip install --no-cache-dir openai-whisper==20230918 || echo "OpenAI Whisper not available"
+RUN pip install --no-cache-dir whisperx==3.1.1 || echo "WhisperX not available"
+
+# Copy application code
+COPY whisperx/server_docker_ready.py ./whisperx/
+COPY whisperx/device_manager.py ./whisperx/
+COPY whisperx/static/ ./whisperx/static/
+
+# Copy documentation
+COPY README.md MODELS.md ./
+
+# Create directories
+RUN mkdir -p /tmp/whisper.cpp/models /app/models /app/cache
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV API_PORT=8000
+ENV WHISPER_MODEL=base
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Create startup script
+RUN echo '#!/bin/bash\n\
+echo "🦄 Unicorn Amanuensis - Lightweight Container"\n\
+echo "🌐 Web Interface: http://0.0.0.0:${API_PORT}/web"\n\
+echo "📊 Health Check: http://0.0.0.0:${API_PORT}/health"\n\
+echo "📖 API Docs: http://0.0.0.0:${API_PORT}/"\n\
+echo "==============================================="\n\
+cd /app && python -m whisperx.server_docker_ready\n\
+' > /app/start.sh && chmod +x /app/start.sh
+
+# Run the server
+CMD ["/app/start.sh"]
