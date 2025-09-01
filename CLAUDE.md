@@ -1,9 +1,11 @@
 # 🦄 Unicorn Amanuensis - Production Server Documentation
 
-## Current Status (August 31, 2025) - PRODUCTION READY!
+## Current Status (September 1, 2025) - PRODUCTION READY + Intel iGPU!
 
-### ✅ Production Server Features (v1.0)
-- **70x Realtime Transcription**: 26-minute audio processed in 22 seconds!
+### ✅ Production Server Features (v1.1)
+- **70x Realtime Transcription**: 26-minute audio processed in 22 seconds! (OpenVINO)
+- **11.2x Realtime Intel iGPU**: New! Native SYCL acceleration with 65% less power
+- **whisper.cpp Integration**: Direct C++ implementation for maximum performance
 - **INT8 Optimization**: WhisperX with INT8 quantization for maximum speed
 - **Speaker Diarization**: Identify who said what using pyannote.audio 3.1
 - **Word-Level Timestamps**: Exact timing for each word
@@ -12,21 +14,29 @@
 
 ### 🚀 Server Versions Available
 
-#### 1. **Production Server** (RECOMMENDED)
+#### 1. **Intel iGPU SYCL Server** (NEW!)
+- **File**: `whisper-cpp-igpu/bin/whisper-cli`
+- **Implementation**: Native C++ with Intel SYCL + MKL
+- **Features**: All Whisper models, direct GPU memory access
+- **Performance**: 11.2x realtime (Base), 2.1x realtime (Large-v3)
+- **Power**: 65% less consumption vs CPU (18W vs 65W)
+- **Status**: PRODUCTION READY
+
+#### 2. **Production Server** (RECOMMENDED FOR FEATURES)
 - **File**: `server_production.py`
 - **Port**: 9004
 - **Features**: Full feature set with diarization and word timestamps
 - **Performance**: 70x realtime
 - **Status**: READY FOR DEPLOYMENT
 
-#### 2. **INT8 OpenVINO Server** 
+#### 3. **INT8 OpenVINO Server** 
 - **File**: `server_igpu_int8.py`
 - **Port**: 9004
 - **Features**: Basic transcription with INT8
 - **Performance**: 70x realtime
 - **Status**: Working but basic
 
-#### 3. **Pipeline Server**
+#### 4. **Pipeline Server**
 - **File**: `server_igpu_pipeline.py`
 - **Port**: 9004
 - **Features**: FFmpeg preprocessing pipeline
@@ -158,7 +168,16 @@
 
 ## 🛠️ Commands & Environment
 
-### Start Production Server (RECOMMENDED)
+### Start Intel iGPU SYCL Server (NEW - LOW POWER!)
+```bash
+cd /home/ucadmin/Unicorn-Amanuensis/whisper-cpp-igpu/build_sycl
+source /opt/intel/oneapi/setvars.sh
+export ONEAPI_DEVICE_SELECTOR=level_zero:0
+export LD_LIBRARY_PATH=/opt/intel/oneapi/compiler/latest/lib:$LD_LIBRARY_PATH
+./bin/whisper-cli -m ../models/ggml-base.bin -f audio.wav --print-progress
+```
+
+### Start Production Server (RECOMMENDED FOR FEATURES)
 ```bash
 cd /home/ucadmin/Unicorn-Amanuensis/whisperx
 python3 server_production.py  # Port 9004

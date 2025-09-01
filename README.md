@@ -23,7 +23,8 @@ In the era of AI, every bit of GPU memory counts. Running Whisper Large v3 on yo
 
 **Unicorn Amanuensis solves this by intelligently leveraging ALL available hardware:**
 
-- 🎮 **Intel iGPU** → Run Whisper Large v3 with OpenVINO optimization (3-5x faster than CPU!)
+- 🎮 **Intel iGPU** → Run Whisper with native SYCL acceleration (11.2x realtime, 65% less power!)
+- 🔥 **whisper.cpp Intel** → New! Native Intel iGPU implementation with SYCL + MKL optimization
 - 🚀 **NVIDIA GPU** → Optional high-performance mode when GPU is available
 - 💎 **AMD NPU** → Utilize Ryzen AI for power-efficient transcription
 - 💪 **CPU** → Universal fallback with optimized performance
@@ -51,12 +52,16 @@ Unicorn Amanuensis is a professional transcription service powered by WhisperX, 
 
 ### 🎵 Professional Transcription
 - **Whisper Large v3** with all the bells and whistles
-- **Speaker Diarization** - Know who said what
+- **Intel iGPU SYCL** - Native GPU acceleration (11.2x realtime)
+- **whisper.cpp Integration** - Direct C++ implementation for maximum performance
+- **Speaker Diarization** - Know who said what  
 - **Word-Level Timestamps** - Perfect sync for subtitles
 - **100+ Languages** - Global language support
 - **VAD Integration** - Smart voice activity detection
 
 ### 🔧 Hardware Optimization
+- **Intel iGPU SYCL** - Native C++ implementation with MKL optimization
+- **whisper.cpp Integration** - Direct Intel GPU access via Level Zero API  
 - **Auto-Detection** - Automatically finds and uses best available hardware
 - **Manual Selection** - Choose which hardware to use via simple script
 - **Hot-Swapping** - Switch between hardware without restarting
