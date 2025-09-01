@@ -1,0 +1,59 @@
+FROM python:3.10-slim
+
+# Install system dependencies for Intel iGPU
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    git \
+    wget \
+    curl \
+    build-essential \
+    libasound2-dev \
+    portaudio19-dev \
+    libportaudio2 \
+    libportaudiocpp0 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy all server files
+COPY . .
+
+# Install Python dependencies for iGPU/OpenVINO
+RUN pip install --no-cache-dir \
+    fastapi==0.110.0 \
+    uvicorn==0.27.1 \
+    python-multipart==0.0.9 \
+    openvino>=2024.0.0 \
+    'optimum[openvino]>=1.16.0' \
+    optimum-intel \
+    transformers>=4.35.0 \
+    torch>=2.0.0 \
+    torchaudio>=2.0.0 \
+    librosa>=0.10.0 \
+    soundfile>=0.12.0 \
+    whisperx==3.4.2 \
+    pyannote.audio>=3.1.0 \
+    numpy==1.26.4 \
+    scipy>=1.10.0 \
+    huggingface-hub
+
+# Fix ctranslate2 library issues
+RUN apt-get update && apt-get install -y patchelf && \
+    find /usr/local/lib/python*/site-packages/ctranslate2.libs/ -name "*.so*" -exec patchelf --clear-execstack {} \; 2>/dev/null || true
+
+# Pre-download diarization models
+RUN python3 -c "from pyannote.audio import Pipeline; Pipeline.from_pretrained('pyannote/speaker-diarization-3.1', use_auth_token=False)" || true
+
+# Set environment variables for Intel iGPU
+ENV LIBVA_DRIVER_NAME=iHD
+ENV LIBVA_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
+ENV GST_VAAPI_ALL_DRIVERS=1
+ENV WHISPER_DEVICE=igpu
+ENV PORT=9003
+
+# Create models directory
+RUN mkdir -p /app/models /app/cache /root/.cache/unicorn-amanuensis
+
+EXPOSE 9003
+
+CMD ["python3", "/app/server_whisperx_igpu.py"]

@@ -1,0 +1,93 @@
+FROM ubuntu:22.04
+
+# Prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies and Intel GPU runtime
+RUN apt-get update && apt-get install -y \
+    python3.10 \
+    python3-pip \
+    git \
+    curl \
+    wget \
+    ffmpeg \
+    gnupg \
+    software-properties-common \
+    && rm -rf /var/lib/apt/lists/*
+
+# Add Intel GPU repository and install runtime
+RUN wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | \
+    gpg --dearmor > /usr/share/keyrings/intel-graphics.gpg && \
+    echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu jammy client" > \
+    /etc/apt/sources.list.d/intel-gpu-jammy.list && \
+    apt-get update && \
+    apt-get install -y \
+    intel-opencl-icd \
+    intel-level-zero-gpu \
+    intel-media-va-driver-non-free \
+    libmfx1 \
+    libmfxgen1 \
+    libvpl2 \
+    libigc-dev \
+    intel-igc-cm \
+    libigdfcl-dev \
+    libigfxcmrt-dev \
+    level-zero-dev \
+    ocl-icd-libopencl1 \
+    vainfo \
+    clinfo \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Upgrade pip and install Python dependencies
+RUN python3 -m pip install --upgrade pip
+
+# Install PyTorch CPU version (for OpenVINO)
+RUN pip install torch==2.0.1+cpu torchaudio==2.0.2+cpu -f https://download.pytorch.org/whl/torch_stable.html
+
+# Install OpenVINO and optimized packages
+RUN pip install \
+    openvino==2024.0.0 \
+    openvino-dev==2024.0.0 \
+    onnx \
+    onnxruntime-openvino
+
+# Install WhisperX 
+RUN pip install git+https://github.com/m-bain/whisperx.git
+
+# Install web framework and additional dependencies
+RUN pip install \
+    fastapi==0.110.0 \
+    uvicorn==0.27.1 \
+    python-multipart==0.0.9 \
+    numpy \
+    scipy
+
+# Pre-download Whisper Large v3 model
+RUN python3 -c "import whisperx; whisperx.load_model('large-v3', 'cpu', compute_type='int8', download_root='/app/models')"
+
+# Copy application files
+COPY whisperx/server_igpu_optimized.py /app/server_igpu_optimized.py
+COPY whisperx/static /app/static
+
+# Set environment for Intel GPU
+ENV LIBVA_DRIVER_NAME=ihasvk
+ENV LIBVA_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
+ENV NEOReadDebugKeys=1
+ENV OverrideGpuAddressSpace=48
+
+# Default model configuration
+ENV WHISPER_MODEL=large-v3
+ENV WHISPER_DEVICE=igpu
+ENV API_PORT=9000
+ENV COMPUTE_TYPE=int8
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=300s --retries=3 \
+    CMD curl -f http://localhost:9000/health || exit 1
+
+EXPOSE 9000
+
+# Run the server
+CMD ["python3", "/app/server_igpu_optimized.py"]

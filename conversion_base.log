@@ -1,0 +1,43 @@
+/home/ucadmin/Unicorn-Amanuensis/openvino_env/lib/python3.12/site-packages/torch/onnx/_internal/registration.py:162: OnnxExporterWarning: Symbolic function 'aten::scaled_dot_product_attention' already registered for opset 14. Replacing the existing function with new function. This is unexpected. Please report it on https://github.com/pytorch/pytorch/issues.
+  warnings.warn(
+Moving the following attributes in the config to the generation config: {'max_length': 448, 'suppress_tokens': [1, 2, 7, 8, 9, 10, 14, 25, 26, 27, 28, 29, 31, 58, 59, 60, 61, 62, 63, 90, 91, 92, 93, 359, 503, 522, 542, 873, 893, 902, 918, 922, 931, 1350, 1853, 1982, 2460, 2627, 3246, 3253, 3268, 3536, 3846, 3961, 4183, 4667, 6585, 6647, 7273, 9061, 9383, 10428, 10929, 11938, 12033, 12331, 12562, 13793, 14157, 14635, 15265, 15618, 16553, 16604, 18362, 18956, 20075, 21675, 22520, 26130, 26161, 26435, 28279, 29464, 31650, 32302, 32470, 36865, 42863, 47425, 49870, 50254, 50258, 50358, 50359, 50360, 50361, 50362], 'begin_suppress_tokens': [220, 50257]}. You are seeing this warning because you've set generation parameters in the model config, as opposed to in the generation config.
+`loss_type=None` was set in the config but it is unrecognised.Using the default loss: `ForCausalLMLoss`.
+/home/ucadmin/Unicorn-Amanuensis/openvino_env/lib/python3.12/site-packages/transformers/models/whisper/modeling_whisper.py:676: TracerWarning: Converting a tensor to a Python boolean might cause the trace to be incorrect. We can't record the data flow of Python values, so this value will be treated as a constant in the future. This means that the trace might not generalize to other inputs!
+  if input_features.shape[-1] != expected_seq_length:
+/home/ucadmin/Unicorn-Amanuensis/openvino_env/lib/python3.12/site-packages/transformers/integrations/sdpa_attention.py:59: TracerWarning: Converting a tensor to a Python boolean might cause the trace to be incorrect. We can't record the data flow of Python values, so this value will be treated as a constant in the future. This means that the trace might not generalize to other inputs!
+  is_causal = query.shape[2] > 1 and attention_mask is None and getattr(module, "is_causal", True)
+🦄 Unicorn Amanuensis - OpenVINO Model Converter
+==================================================
+
+==================================================
+Processing: openai/whisper-base
+==================================================
+🔄 Converting openai/whisper-base to OpenVINO format...
+📂 Output directory: /tmp/whisper-base-openvino
+🤗 Target repository: magicunicorn/whisper-base-openvino
+Loading original model...
+Converting to OpenVINO IR format (this may take a while)...
+/home/ucadmin/Unicorn-Amanuensis/openvino_env/lib/python3.12/site-packages/transformers/cache_utils.py:568: TracerWarning: Converting a tensor to a Python boolean might cause the trace to be incorrect. We can't record the data flow of Python values, so this value will be treated as a constant in the future. This means that the trace might not generalize to other inputs!
+  or not self.key_cache[layer_idx].numel()  # the layer has no cache
+/home/ucadmin/Unicorn-Amanuensis/openvino_env/lib/python3.12/site-packages/optimum/exporters/openvino/model_patcher.py:332: TracerWarning: torch.tensor results are registered as constants in the trace. You can safely ignore this warning if you use this function to create tensors out of constant variables that would be the same every time you call this function. In any other case, this might cause the trace to be incorrect.
+  torch.tensor(0.0, device=mask.device, dtype=dtype),
+/home/ucadmin/Unicorn-Amanuensis/openvino_env/lib/python3.12/site-packages/optimum/exporters/openvino/model_patcher.py:333: TracerWarning: torch.tensor results are registered as constants in the trace. You can safely ignore this warning if you use this function to create tensors out of constant variables that would be the same every time you call this function. In any other case, this might cause the trace to be incorrect.
+  torch.tensor(torch.finfo(torch.float16).min, device=mask.device, dtype=dtype),
+/home/ucadmin/Unicorn-Amanuensis/openvino_env/lib/python3.12/site-packages/transformers/cache_utils.py:552: TracerWarning: Converting a tensor to a Python boolean might cause the trace to be incorrect. We can't record the data flow of Python values, so this value will be treated as a constant in the future. This means that the trace might not generalize to other inputs!
+  not self.key_cache[layer_idx].numel()  # prefers not t.numel() to len(t) == 0 to export the model
+/home/ucadmin/Unicorn-Amanuensis/openvino_env/lib/python3.12/site-packages/transformers/integrations/sdpa_attention.py:64: TracerWarning: Converting a tensor to a Python number might cause the trace to be incorrect. We can't record the data flow of Python values, so this value will be treated as a constant in the future. This means that the trace might not generalize to other inputs!
+  is_causal = is_causal.item()
+Moving the following attributes in the config to the generation config: {'max_length': 448, 'suppress_tokens': [1, 2, 7, 8, 9, 10, 14, 25, 26, 27, 28, 29, 31, 58, 59, 60, 61, 62, 63, 90, 91, 92, 93, 359, 503, 522, 542, 873, 893, 902, 918, 922, 931, 1350, 1853, 1982, 2460, 2627, 3246, 3253, 3268, 3536, 3846, 3961, 4183, 4667, 6585, 6647, 7273, 9061, 9383, 10428, 10929, 11938, 12033, 12331, 12562, 13793, 14157, 14635, 15265, 15618, 16553, 16604, 18362, 18956, 20075, 21675, 22520, 26130, 26161, 26435, 28279, 29464, 31650, 32302, 32470, 36865, 42863, 47425, 49870, 50254, 50258, 50358, 50359, 50360, 50361, 50362], 'begin_suppress_tokens': [220, 50257]}. You are seeing this warning because you've set generation parameters in the model config, as opposed to in the generation config.
+Saving OpenVINO model to /tmp/whisper-base-openvino...
+✅ Model card created
+⚠️  No HuggingFace token provided, skipping upload
+📂 Model saved locally at: /tmp/whisper-base-openvino
+
+==================================================
+📊 Conversion Summary
+==================================================
+
+✅ Successfully converted (1):
+  - openai/whisper-base -> https://huggingface.co/magicunicorn/whisper-base-openvino
+
+✨ Conversion complete!

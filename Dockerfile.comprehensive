@@ -1,0 +1,157 @@
+FROM ubuntu:22.04
+
+LABEL maintainer="Magic Unicorn <unicorn@magicunicorn.dev>"
+LABEL description="Unicorn Amanuensis - Comprehensive Intel iGPU Speech Recognition Suite"
+LABEL version="1.1.0"
+
+# Prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    python3.10 \
+    python3-pip \
+    git \
+    curl \
+    wget \
+    ffmpeg \
+    gnupg \
+    software-properties-common \
+    cmake \
+    build-essential \
+    pkg-config \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Add Intel APT repository for oneAPI
+RUN wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | \
+    gpg --dearmor | tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null && \
+    echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | \
+    tee /etc/apt/sources.list.d/oneAPI.list
+
+# Add Intel GPU runtime repository  
+RUN wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | \
+    gpg --dearmor > /usr/share/keyrings/intel-graphics.gpg && \
+    echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu jammy client" > \
+    /etc/apt/sources.list.d/intel-gpu-jammy.list
+
+# Install Intel oneAPI toolkit and GPU runtime
+RUN apt-get update && apt-get install -y \
+    intel-oneapi-toolkit \
+    intel-oneapi-mkl-sycl-devel \
+    intel-opencl-icd \
+    intel-level-zero-gpu \
+    intel-media-va-driver-non-free \
+    libmfx1 \
+    libmfxgen1 \
+    libvpl2 \
+    libigc-dev \
+    intel-igc-cm \
+    libigdfcl-dev \
+    libigfxcmrt-dev \
+    level-zero-dev \
+    ocl-icd-libopencl1 \
+    vainfo \
+    clinfo \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up Intel oneAPI environment
+ENV ONEAPI_ROOT=/opt/intel/oneapi
+ENV PATH="${ONEAPI_ROOT}/compiler/latest/bin:${PATH}"
+ENV LD_LIBRARY_PATH="${ONEAPI_ROOT}/compiler/latest/lib:${ONEAPI_ROOT}/mkl/latest/lib:${LD_LIBRARY_PATH}"
+ENV CMAKE_PREFIX_PATH="${ONEAPI_ROOT}/mkl/latest/lib/cmake:${CMAKE_PREFIX_PATH}"
+
+WORKDIR /app
+
+# Build whisper.cpp with Intel SYCL support
+COPY whisper-cpp-igpu /app/whisper-cpp-igpu
+RUN cd /app/whisper-cpp-igpu && \
+    /opt/intel/oneapi/setvars.sh && \
+    mkdir -p build_sycl && cd build_sycl && \
+    cmake .. \
+        -DGGML_SYCL=ON \
+        -DGGML_SYCL_TARGET=INTEL \
+        -DCMAKE_C_COMPILER=icx \
+        -DCMAKE_CXX_COMPILER=icpx \
+        -DCMAKE_PREFIX_PATH=/opt/intel/oneapi/mkl/latest/lib/cmake \
+        -DCMAKE_BUILD_TYPE=Release && \
+    make -j$(nproc)
+
+# Download Whisper models for whisper.cpp
+RUN cd /app/whisper-cpp-igpu && \
+    bash models/download-ggml-model.sh base && \
+    bash models/download-ggml-model.sh large-v3
+
+# Upgrade pip and install Python dependencies
+RUN python3 -m pip install --upgrade pip
+
+# Install PyTorch CPU version (for OpenVINO)
+RUN pip install torch==2.0.1+cpu torchaudio==2.0.2+cpu -f https://download.pytorch.org/whl/torch_stable.html
+
+# Install OpenVINO and optimized packages
+RUN pip install \
+    openvino==2024.0.0 \
+    openvino-dev==2024.0.0 \
+    onnx \
+    onnxruntime-openvino
+
+# Install WhisperX 
+RUN pip install git+https://github.com/m-bain/whisperx.git
+
+# Install web framework and additional dependencies
+RUN pip install \
+    fastapi==0.110.0 \
+    uvicorn==0.27.1 \
+    python-multipart==0.0.9 \
+    numpy \
+    scipy \
+    pyannote.audio==3.1.1
+
+# Pre-download WhisperX models (for OpenVINO path)
+RUN python3 -c "import whisperx; whisperx.load_model('large-v3', 'cpu', compute_type='int8', download_root='/app/models')" || true
+
+# Copy all application files
+COPY whisperx /app/whisperx
+COPY README.md /app/
+COPY CLAUDE.md /app/
+
+# Set environment variables for Intel GPU optimization
+ENV LIBVA_DRIVER_NAME=ihasvk
+ENV LIBVA_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
+ENV NEOReadDebugKeys=1
+ENV OverrideGpuAddressSpace=48
+
+# Intel SYCL environment
+ENV ONEAPI_DEVICE_SELECTOR=level_zero:0
+ENV SYCL_DEVICE_FILTER=gpu
+ENV OMP_NUM_THREADS=1
+ENV MKL_NUM_THREADS=1
+
+# Default configuration
+ENV WHISPER_MODEL=base
+ENV WHISPER_DEVICE=igpu
+ENV API_PORT=9000
+ENV COMPUTE_TYPE=int8
+
+# Create startup script that can launch different server types
+RUN echo '#!/bin/bash\n\
+echo "🦄 Unicorn Amanuensis - Intel iGPU Speech Recognition Suite"\n\
+echo "Available Servers:"\n\
+echo "1. Intel SYCL whisper.cpp (ultra-low power): /app/whisper-cpp-igpu/build_sycl/bin/whisper-cli"\n\
+echo "2. OpenVINO Production (feature-rich): python3 /app/whisperx/server_production.py"\n\
+echo "3. OpenVINO INT8 (basic): python3 /app/whisperx/server_igpu_int8_diarized.py"\n\
+echo ""\n\
+echo "Starting default OpenVINO Production Server on port ${API_PORT}..."\n\
+source /opt/intel/oneapi/setvars.sh > /dev/null 2>&1\n\
+cd /app/whisperx\n\
+exec python3 server_production.py\n\
+' > /app/start.sh && chmod +x /app/start.sh
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=300s --retries=3 \
+    CMD curl -f http://localhost:${API_PORT}/health || exit 1
+
+EXPOSE 9000
+
+# Default to production server, but allow override
+CMD ["/app/start.sh"]

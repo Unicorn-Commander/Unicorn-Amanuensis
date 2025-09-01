@@ -1,0 +1,52 @@
+FROM python:3.10-slim
+
+# Install system dependencies for Intel iGPU
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    git \
+    wget \
+    curl \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy application files
+COPY server_openvino_optimized.py /app/server.py
+COPY static /app/static
+COPY templates /app/templates
+
+# Install Python dependencies for OpenVINO
+RUN pip install --no-cache-dir \
+    fastapi==0.110.0 \
+    uvicorn==0.27.1 \
+    python-multipart==0.0.9 \
+    openvino>=2024.0.0 \
+    transformers>=4.35.0 \
+    librosa>=0.10.0 \
+    soundfile>=0.12.0 \
+    numpy==1.26.4 \
+    scipy>=1.10.0
+
+# Copy pre-converted OpenVINO models (or download from HuggingFace)
+COPY --from=models /openvino-models/whisper-base-openvino /app/models/whisper-base-openvino
+COPY --from=models /openvino-models/whisper-large-v3-openvino /app/models/whisper-large-v3-openvino
+
+# Alternative: Download from HuggingFace during build (when models are uploaded)
+# RUN mkdir -p /app/models && \
+#     git clone https://huggingface.co/magicunicorn/whisper-base-openvino /app/models/whisper-base-openvino && \
+#     git clone https://huggingface.co/magicunicorn/whisper-large-v3-openvino /app/models/whisper-large-v3-openvino
+
+# Create cache directory for OpenVINO
+RUN mkdir -p /app/cache
+
+# Set environment variables for Intel iGPU
+ENV LIBVA_DRIVER_NAME=iHD
+ENV LIBVA_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
+ENV GST_VAAPI_ALL_DRIVERS=1
+ENV WHISPER_DEVICE=GPU
+ENV PORT=9003
+
+EXPOSE 9003
+
+CMD ["python3", "/app/server.py"]

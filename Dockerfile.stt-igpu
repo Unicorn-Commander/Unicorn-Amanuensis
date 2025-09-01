@@ -1,0 +1,115 @@
+FROM ubuntu:22.04
+
+# Metadata
+LABEL maintainer="Unicorn Execution Engine"
+LABEL description="Unicorn Amanuensis STT Service - Intel iGPU Optimized"
+LABEL version="2.0.0"
+
+# Prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies and Intel GPU runtime
+RUN apt-get update && apt-get install -y \
+    python3.10 \
+    python3-pip \
+    git \
+    curl \
+    wget \
+    ffmpeg \
+    gnupg \
+    software-properties-common \
+    libsndfile1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Add Intel GPU repository and install runtime
+RUN wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | \
+    gpg --dearmor > /usr/share/keyrings/intel-graphics.gpg && \
+    echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu jammy client" > \
+    /etc/apt/sources.list.d/intel-gpu-jammy.list && \
+    apt-get update && \
+    apt-get install -y \
+    intel-opencl-icd \
+    intel-level-zero-gpu \
+    intel-media-va-driver-non-free \
+    libmfx1 \
+    libmfxgen1 \
+    libvpl2 \
+    libigc-dev \
+    intel-igc-cm \
+    libigdfcl-dev \
+    libigfxcmrt-dev \
+    level-zero-dev \
+    ocl-icd-libopencl1 \
+    vainfo \
+    clinfo \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Upgrade pip
+RUN python3 -m pip install --upgrade pip
+
+# Install PyTorch CPU version (for OpenVINO)
+RUN pip install torch==2.0.1+cpu torchaudio==2.0.2+cpu -f https://download.pytorch.org/whl/torch_stable.html
+
+# Install OpenVINO and dependencies
+RUN pip install --no-cache-dir \
+    openvino==2025.2.0 \
+    openvino-tokenizers \
+    optimum[openvino] \
+    transformers \
+    onnx \
+    onnxruntime-openvino
+
+# Install audio processing libraries
+RUN pip install --no-cache-dir \
+    librosa \
+    soundfile \
+    scipy \
+    numpy
+
+# Install web framework
+RUN pip install --no-cache-dir \
+    fastapi==0.110.0 \
+    uvicorn==0.27.1 \
+    python-multipart==0.0.9
+
+# Pre-download and convert Whisper Large v3 model to OpenVINO format
+RUN python3 -c "from optimum.intel import OVModelForSpeechSeq2Seq; \
+    from transformers import AutoProcessor; \
+    model = OVModelForSpeechSeq2Seq.from_pretrained('openai/whisper-large-v3', \
+        export=True, compile=False); \
+    processor = AutoProcessor.from_pretrained('openai/whisper-large-v3'); \
+    model.save_pretrained('/app/models/whisper-large-v3-ov'); \
+    processor.save_pretrained('/app/models/whisper-large-v3-ov')"
+
+# Copy application files
+COPY whisperx/server_openvino_true.py /app/server.py
+COPY whisperx/static /app/static
+
+# Set environment for Intel GPU
+ENV LIBVA_DRIVER_NAME=ihasvk
+ENV LIBVA_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
+ENV NEOReadDebugKeys=1
+ENV OverrideGpuAddressSpace=48
+
+# Default configuration
+ENV WHISPER_MODEL=/app/models/whisper-large-v3-ov
+ENV WHISPER_DEVICE=GPU.0
+ENV API_PORT=9000
+ENV COMPUTE_TYPE=int8
+
+# Create non-root user
+RUN useradd -m -u 1000 stt && \
+    chown -R stt:stt /app
+
+USER stt
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:9000/health || exit 1
+
+EXPOSE 9000
+
+# Run the server
+CMD ["python3", "/app/server.py"]

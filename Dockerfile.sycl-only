@@ -1,0 +1,118 @@
+FROM ubuntu:22.04
+
+LABEL maintainer="Magic Unicorn <unicorn@magicunicorn.dev>"
+LABEL description="Unicorn Amanuensis - Intel SYCL whisper.cpp (Lightweight)"
+LABEL version="1.1.0-sycl"
+
+# Prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install minimal system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    wget \
+    ffmpeg \
+    gnupg \
+    software-properties-common \
+    cmake \
+    build-essential \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Add Intel APT repository for oneAPI
+RUN wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | \
+    gpg --dearmor | tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null && \
+    echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | \
+    tee /etc/apt/sources.list.d/oneAPI.list
+
+# Add Intel GPU runtime repository  
+RUN wget -qO - https://repositories.intel.com/gpu/intel-graphics.key | \
+    gpg --dearmor > /usr/share/keyrings/intel-graphics.gpg && \
+    echo "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu jammy client" > \
+    /etc/apt/sources.list.d/intel-gpu-jammy.list
+
+# Install Intel oneAPI essentials and GPU runtime
+RUN apt-get update && apt-get install -y \
+    intel-oneapi-compiler-dpcpp-cpp \
+    intel-oneapi-mkl-sycl-devel \
+    intel-opencl-icd \
+    intel-level-zero-gpu \
+    level-zero-dev \
+    ocl-icd-libopencl1 \
+    vainfo \
+    clinfo \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up Intel oneAPI environment
+ENV ONEAPI_ROOT=/opt/intel/oneapi
+ENV PATH="${ONEAPI_ROOT}/compiler/latest/bin:${PATH}"
+ENV LD_LIBRARY_PATH="${ONEAPI_ROOT}/compiler/latest/lib:${ONEAPI_ROOT}/mkl/latest/lib:${LD_LIBRARY_PATH}"
+ENV CMAKE_PREFIX_PATH="${ONEAPI_ROOT}/mkl/latest/lib/cmake:${CMAKE_PREFIX_PATH}"
+
+WORKDIR /app
+
+# Copy and build whisper.cpp with Intel SYCL support
+COPY whisper-cpp-igpu /app/whisper-cpp-igpu
+RUN cd /app/whisper-cpp-igpu && \
+    /opt/intel/oneapi/setvars.sh && \
+    mkdir -p build_sycl && cd build_sycl && \
+    cmake .. \
+        -DGGML_SYCL=ON \
+        -DGGML_SYCL_TARGET=INTEL \
+        -DCMAKE_C_COMPILER=icx \
+        -DCMAKE_CXX_COMPILER=icpx \
+        -DCMAKE_PREFIX_PATH=/opt/intel/oneapi/mkl/latest/lib/cmake \
+        -DCMAKE_BUILD_TYPE=Release && \
+    make -j$(nproc) whisper-cli
+
+# Download essential Whisper models
+RUN cd /app/whisper-cpp-igpu && \
+    bash models/download-ggml-model.sh base && \
+    bash models/download-ggml-model.sh large-v3
+
+# Copy documentation
+COPY whisper-cpp-igpu/README-Intel-iGPU.md /app/
+COPY whisper-cpp-igpu/INTEL_IGPU_BENCHMARKS.md /app/
+
+# Set Intel GPU environment variables
+ENV ONEAPI_DEVICE_SELECTOR=level_zero:0
+ENV SYCL_DEVICE_FILTER=gpu
+ENV OMP_NUM_THREADS=1
+ENV MKL_NUM_THREADS=1
+
+# Create startup script
+RUN echo '#!/bin/bash\n\
+echo "🦄 Unicorn Amanuensis - Intel SYCL whisper.cpp"\n\
+echo "Native Intel iGPU acceleration with 11.2x realtime performance"\n\
+echo "65% lower power consumption than CPU-only inference"\n\
+echo ""\n\
+echo "Usage:"\n\
+echo "  /app/whisper-cpp-igpu/build_sycl/bin/whisper-cli -m MODEL -f AUDIO_FILE"\n\
+echo ""\n\
+echo "Available models:"\n\
+echo "  - /app/whisper-cpp-igpu/models/ggml-base.bin (147MB, 11.2x realtime)"\n\
+echo "  - /app/whisper-cpp-igpu/models/ggml-large-v3.bin (3GB, 2.1x realtime)"\n\
+echo ""\n\
+echo "Example:"\n\
+echo "  /app/whisper-cpp-igpu/build_sycl/bin/whisper-cli -m /app/whisper-cpp-igpu/models/ggml-base.bin -f /audio/input.wav"\n\
+echo ""\n\
+source /opt/intel/oneapi/setvars.sh > /dev/null 2>&1\n\
+cd /app/whisper-cpp-igpu/build_sycl\n\
+\n\
+# If audio file provided, run transcription\n\
+if [ "$1" != "" ]; then\n\
+  echo "Processing: $1"\n\
+  ./bin/whisper-cli -m /app/whisper-cpp-igpu/models/ggml-base.bin -f "$1" --print-progress\n\
+else\n\
+  echo "Mount audio files to /audio/ and run:"\n\
+  echo "docker run -v /path/to/audio:/audio magicunicorn/unicorn-amanuensis:sycl /audio/file.wav"\n\
+  bash\n\
+fi\n\
+' > /app/start-sycl.sh && chmod +x /app/start-sycl.sh
+
+# Health check for SYCL device
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD sycl-ls | grep -q "Intel" || exit 1
+
+# Default command
+CMD ["/app/start-sycl.sh"]
