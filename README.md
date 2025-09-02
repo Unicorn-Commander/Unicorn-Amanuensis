@@ -17,11 +17,21 @@
 
 ---
 
-## 🎯 The Problem We Solve
+## 🎨 Beautiful Themes
 
-In the era of AI, every bit of GPU memory counts. Running Whisper Large v3 on your primary GPU consumes **6-10GB of VRAM** - that's memory you need for LLM inference, image generation, or other AI workloads.
+<div align="center">
+  <img src="docs/images/theme-light.png" alt="Light Theme" width="30%" style="margin: 0 1%;">
+  <img src="docs/images/theme-dark.png" alt="Dark Theme" width="30%" style="margin: 0 1%;">
+  <img src="docs/images/theme-magic.png" alt="Magic Unicorn Theme" width="30%" style="margin: 0 1%;">
+  <br>
+  <i>Light • Dark • Magic Unicorn Themes</i>
+</div>
 
-**Unicorn Amanuensis solves this by intelligently leveraging ALL available hardware:**
+---
+
+## 🎯 What This Delivers
+
+This intelligently leverages ALL available hardware:
 
 - 🎮 **Intel iGPU** → Run Whisper with native SYCL acceleration (11.2x realtime, 65% less power!)
 - 🔥 **whisper.cpp Intel** → New! Native Intel iGPU implementation with SYCL + MKL optimization
