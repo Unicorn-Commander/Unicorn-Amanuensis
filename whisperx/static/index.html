@@ -51,24 +51,25 @@
         }
 
         [data-theme="unicorn"] {
-            --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --bg-secondary: rgba(103, 126, 234, 0.1);
-            --bg-card: rgba(255, 255, 255, 0.92);
-            --text-primary: #1a202c;
-            --text-secondary: #4a5568;
-            --text-muted: #718096;
-            --border-color: rgba(255, 255, 255, 0.3);
-            --accent-purple: #764ba2;
-            --accent-purple-hover: #553c7b;
-            --accent-gold: #ffd700;
-            --accent-blue: #4299e1;
-            --accent-green: #48bb78;
-            --shadow-sm: 0 2px 4px rgba(118, 75, 162, 0.1);
-            --shadow-md: 0 4px 8px rgba(118, 75, 162, 0.15);
-            --shadow-lg: 0 10px 20px rgba(118, 75, 162, 0.2);
-            --input-bg: rgba(255, 255, 255, 0.95);
-            --input-border: rgba(118, 75, 162, 0.3);
-            --input-focus: #764ba2;
+            /* Dark Magic Unicorn theme as requested */
+            --bg-primary: linear-gradient(135deg, #1a0033 0%, #2d1b4e 50%, #4a1b6b 100%);
+            --bg-secondary: rgba(74, 27, 107, 0.3);
+            --bg-card: rgba(45, 27, 78, 0.95);
+            --text-primary: #f1e6ff;
+            --text-secondary: #d4b3ff;
+            --text-muted: #a855f7;
+            --border-color: rgba(168, 85, 247, 0.3);
+            --accent-purple: #c084fc;
+            --accent-purple-hover: #a855f7;
+            --accent-gold: #fbbf24;
+            --accent-blue: #60a5fa;
+            --accent-green: #34d399;
+            --shadow-sm: 0 2px 4px rgba(168, 85, 247, 0.2);
+            --shadow-md: 0 4px 8px rgba(168, 85, 247, 0.3);
+            --shadow-lg: 0 10px 20px rgba(168, 85, 247, 0.4);
+            --input-bg: rgba(45, 27, 78, 0.8);
+            --input-border: rgba(168, 85, 247, 0.4);
+            --input-focus: #c084fc;
         }
 
         /* Base Styles */
@@ -88,12 +89,41 @@
 
         [data-theme="unicorn"] body {
             background: var(--bg-primary);
+            position: relative;
+        }
+
+        /* Magical sparkles for unicorn theme */
+        [data-theme="unicorn"] body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(2px 2px at 20% 30%, #c084fc, transparent),
+                radial-gradient(2px 2px at 40% 70%, #a855f7, transparent),
+                radial-gradient(1px 1px at 90% 40%, #fbbf24, transparent),
+                radial-gradient(1px 1px at 80% 10%, #c084fc, transparent);
+            background-repeat: repeat;
+            background-size: 550px 550px, 350px 350px, 250px 250px, 150px 150px;
+            animation: sparkle 20s linear infinite;
+            pointer-events: none;
+            opacity: 0.6;
+            z-index: 0;
+        }
+
+        @keyframes sparkle {
+            from { transform: translateY(0px); }
+            to { transform: translateY(-550px); }
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 2rem;
+            position: relative;
+            z-index: 1;
         }
 
         /* Header */
@@ -551,10 +581,10 @@
                     <div class="form-group">
                         <label for="model">Model</label>
                         <select id="model">
-                            <option value="large-v3" selected>Large v3 (Most Accurate - iGPU Optimized)</option>
+                            <option value="large-v3">Large v3 (Most Accurate - Slow 0.56x realtime)</option>
                             <option value="medium">Medium (iGPU Optimized)</option>
                             <option value="small">Small (iGPU Optimized)</option>
-                            <option value="base">Base (iGPU Optimized)</option>
+                            <option value="base" selected>Base (Fast 11.2x realtime - iGPU Optimized)</option>
                             <option value="tiny">Tiny (Fastest - iGPU Optimized)</option>
                         </select>
                     </div>

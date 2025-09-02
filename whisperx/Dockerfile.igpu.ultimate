@@ -431,8 +431,10 @@ if __name__ == "__main__":
     logger.info(f"GPU Available: {HAS_GPU}")
     logger.info("=" * 60)
     
-    # Run server
-    uvicorn.run(app, host="0.0.0.0", port=9000)
+    # Run server - use PORT environment variable, default to 9001
+    port = int(os.environ.get("PORT", "9001"))
+    logger.info(f"Starting server on port {port}")
+    uvicorn.run(app, host="0.0.0.0", port=port)
 EOF
 
 # Set environment variables for Intel GPU
@@ -456,11 +458,11 @@ ENV COMPUTE_TYPE=int8
 ENV BATCH_SIZE=16
 ENV ENABLE_DIARIZATION=true
 
-EXPOSE 9000
+EXPOSE 9001
 
-# Health check
+# Health check - uses PORT environment variable
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD python3 -c "import requests; r = requests.get('http://localhost:9000/health'); exit(0 if r.status_code == 200 else 1)" || exit 1
+    CMD python3 -c "import os, requests; port = os.environ.get('PORT', '9001'); r = requests.get(f'http://localhost:{port}/health'); exit(0 if r.status_code == 200 else 1)" || exit 1
 
 # Run the optimized iGPU server
 CMD ["python3", "/app/server_igpu_ultimate.py"]

@@ -1,8 +1,6 @@
-version: '3.8'
-
 services:
   unicorn-amanuensis:
-    image: magicunicorn/unicorn-amanuensis:latest
+    image: unicorn-amanuensis-unified:latest  # Use our new unified container
     container_name: unicorn-amanuensis-uc1-pro
     restart: unless-stopped
     
@@ -10,32 +8,29 @@ services:
     devices:
       - /dev/dri:/dev/dri
     
-    # Intel UHD Graphics 770 optimized environment
+    # Intel UHD Graphics 770 optimized environment for SYCL
     environment:
-      - API_PORT=8000
-      - WHISPER_MODEL=base                    # Optimal model for UC-1 Pro
-      - ONEAPI_DEVICE_SELECTOR=level_zero:gpu # Direct Intel GPU access
-      - SYCL_DEVICE_FILTER=gpu               # Force GPU mode
-      - OMP_NUM_THREADS=1                     # Minimize CPU threads
-      - MKL_NUM_THREADS=1                     # Optimize Intel MKL
-      - WHISPER_DEVICE=igpu                   # Specify Intel iGPU
-      - PYTHONPATH=/app
-      - DEBIAN_FRONTEND=noninteractive
+      - API_PORT=8887                         # Unified server port
+      - WHISPER_MODEL=base                    # Optimal model for UC-1 Pro (11.2x realtime)
+      - ONEAPI_DEVICE_SELECTOR=level_zero:0   # Direct Intel GPU access via Level Zero
+      - SYCL_DEVICE_FILTER=gpu               # Force SYCL GPU mode
+      - LD_LIBRARY_PATH=/opt/intel/oneapi/compiler/latest/lib:$LD_LIBRARY_PATH
     
-    # Port mapping
+    # Port mapping - 8887 is the unified server port
     ports:
-      - "8000:8000"
+      - "8887:8887"
     
     # Volume mounts for UC-1 Pro
     volumes:
-      - ./models:/app/models:cached           # Model cache
+      - /opt/intel/oneapi:/opt/intel/oneapi:ro  # Mount Intel OneAPI libraries
+      - ./models:/app/whisper-cpp-igpu/models:cached  # Model cache
       - ./logs:/app/logs:rw                   # Application logs  
       - /tmp:/tmp:rw                          # Temp processing
       - /dev/shm:/dev/shm                     # Shared memory for performance
     
     # Health check optimized for Intel iGPU
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8887/health"]
       interval: 30s
       timeout: 10s
       retries: 3
