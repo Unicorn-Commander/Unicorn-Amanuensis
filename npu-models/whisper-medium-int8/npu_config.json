@@ -1,0 +1,41 @@
+{
+  "model_name": "whisper-medium-npu-int8",
+  "model_type": "whisper-medium",
+  "quantization": "int8",
+  "target_hardware": "amd_phoenix_npu",
+  "architecture": "xdna1",
+  "model_paths": {
+    "encoder": "encoder_model_quantized.onnx",
+    "decoder": "decoder_model_quantized.onnx",
+    "decoder_with_past": "decoder_with_past_model_quantized.onnx"
+  },
+  "mlir_kernels": {
+    "enabled": true,
+    "kernel_path": "whisper_medium_npu.xclbin",
+    "mel_spectrogram": "aie2",
+    "attention": "aie2",
+    "ffn": "cpu"
+  },
+  "performance": {
+    "expected_rtf": 0.008,
+    "expected_speedup": 125,
+    "estimated_tokens_per_sec": 3500,
+    "power_consumption_watts": 12
+  },
+  "features": {
+    "diarization": true,
+    "word_timestamps": true,
+    "multi_language": true,
+    "streaming": false
+  },
+  "parameters": {
+    "num_parameters": 769000000,
+    "model_size_mb": 1233,
+    "layers": 24,
+    "attention_heads": 16
+  },
+  "source": {
+    "repo": "PraveenJesu/whisper-medium-v2.2.4_onnx_quantized",
+    "downloaded": "2025-10-25"
+  }
+}

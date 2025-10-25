@@ -141,26 +141,80 @@ def preprocess_audio(input_path, output_path):
 
 def transcribe_with_features(audio_path, enable_diarization=True, enable_word_timestamps=True):
     """Transcribe with all features: diarization and word-level timestamps"""
-    
+
     try:
         logger.info(f"🎵 Processing audio: {audio_path}")
-        
+
         # Load audio
         audio, sr = sf.read(audio_path)
         duration = len(audio) / sr
         logger.info(f"📊 Duration: {duration:.1f}s")
-        
+
         start_time = time.time()
-        
+
         # 1. Transcribe with WhisperX (INT8 optimized)
-        logger.info("🎯 Transcribing with INT8 optimization...")
-        with model_lock:
-            result = model.transcribe(
-                audio_path,
-                batch_size=CONFIG["batch_size"],
-                language="en"
-            )
-        
+        # Use chunking for long audio (>60 seconds) to avoid memory issues
+        if duration > 60:
+            logger.info(f"🔪 Long audio detected ({duration:.1f}s), using chunked processing...")
+            chunk_length = CONFIG["chunk_length"]  # 30 seconds
+            chunk_size = chunk_length * sr
+            n_chunks = int(np.ceil(len(audio) / chunk_size))
+            logger.info(f"📦 Processing in {n_chunks} chunks of {chunk_length}s each")
+
+            all_segments = []
+
+            for i in range(n_chunks):
+                chunk_start = i * chunk_size
+                chunk_end = min((i + 1) * chunk_size, len(audio))
+                audio_chunk = audio[chunk_start:chunk_end]
+                chunk_duration = len(audio_chunk) / sr
+                time_offset = chunk_start / sr
+
+                logger.info(f"🎯 Transcribing chunk {i+1}/{n_chunks} ({chunk_duration:.1f}s, offset: {time_offset:.1f}s)...")
+
+                # Save chunk to temp file
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as tmp_chunk:
+                    sf.write(tmp_chunk.name, audio_chunk, sr)
+                    chunk_path = tmp_chunk.name
+
+                try:
+                    # Transcribe chunk
+                    with model_lock:
+                        chunk_result = model.transcribe(
+                            chunk_path,
+                            batch_size=CONFIG["batch_size"],
+                            language="en"
+                        )
+
+                    # Adjust timestamps to account for chunk offset
+                    for segment in chunk_result.get("segments", []):
+                        segment["start"] += time_offset
+                        segment["end"] += time_offset
+                        all_segments.append(segment)
+
+                    logger.info(f"✅ Chunk {i+1}/{n_chunks} done: {len(chunk_result.get('segments', []))} segments")
+
+                finally:
+                    # Clean up chunk file
+                    os.unlink(chunk_path)
+
+            # Combine all segments
+            result = {
+                "segments": all_segments,
+                "language": "en"
+            }
+            logger.info(f"✅ All chunks processed: {len(all_segments)} total segments")
+
+        else:
+            # Short audio - process entire file at once
+            logger.info("🎯 Transcribing with INT8 optimization...")
+            with model_lock:
+                result = model.transcribe(
+                    audio_path,
+                    batch_size=CONFIG["batch_size"],
+                    language="en"
+                )
+
         transcribe_time = time.time() - start_time
         logger.info(f"✅ Transcription done in {transcribe_time:.2f}s")
         

@@ -3,8 +3,8 @@ openai-whisper
 fastapi==0.110.0
 uvicorn==0.27.1
 python-multipart==0.0.9
-# Pin ctranslate2 to working version (4.4.0 has executable stack issues)
-ctranslate2==4.3.1
+# Let WhisperX determine the ctranslate2 version (requires >=4.5.0)
+ctranslate2>=4.5.0
 # OpenVINO for Intel iGPU support (optional)
 openvino>=2023.0.0
 # Let WhisperX determine the torch version

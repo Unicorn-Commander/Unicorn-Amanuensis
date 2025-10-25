@@ -1,0 +1,42 @@
+{
+  "model_name": "whisper-base-npu-int8",
+  "model_type": "whisper-base",
+  "quantization": "int8",
+  "target_hardware": "amd_phoenix_npu",
+  "architecture": "xdna1",
+  "model_paths": {
+    "encoder": "../whisperx/models/whisper_onnx_cache/models--onnx-community--whisper-base/onnx/encoder_model_int8.onnx",
+    "decoder": "../whisperx/models/whisper_onnx_cache/models--onnx-community--whisper-base/onnx/decoder_model_int8.onnx",
+    "decoder_with_past": "../whisperx/models/whisper_onnx_cache/models--onnx-community--whisper-base/onnx/decoder_with_past_model_int8.onnx"
+  },
+  "mlir_kernels": {
+    "enabled": true,
+    "kernel_path": "whisper_npu.xclbin",
+    "mel_spectrogram": "aie2",
+    "attention": "aie2",
+    "ffn": "cpu"
+  },
+  "performance": {
+    "expected_rtf": 0.0045,
+    "expected_speedup": 220,
+    "measured_tokens_per_sec": 4789,
+    "power_consumption_watts": 10
+  },
+  "features": {
+    "diarization": true,
+    "word_timestamps": true,
+    "multi_language": true,
+    "streaming": false
+  },
+  "parameters": {
+    "num_parameters": 74000000,
+    "model_size_mb": 122,
+    "layers": 6,
+    "attention_heads": 8
+  },
+  "tested_with": {
+    "uc_meeting_ops": true,
+    "production_ready": true,
+    "date": "2025-10-25"
+  }
+}

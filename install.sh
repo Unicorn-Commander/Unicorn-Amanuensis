@@ -36,7 +36,10 @@ if command -v python3 &> /dev/null && [ -f "hardware-detect/detect.py" ]; then
     BACKEND="auto"
 else
     # Simple detection
-    if command -v nvidia-smi &> /dev/null && nvidia-smi &> /dev/null 2>&1; then
+    if lspci | grep -i "Phoenix" > /dev/null 2>&1 && [ -e "/dev/accel/accel0" ]; then
+        echo -e "${PURPLE}✓ AMD Phoenix NPU detected${NC}"
+        BACKEND="npu"
+    elif command -v nvidia-smi &> /dev/null && nvidia-smi &> /dev/null 2>&1; then
         echo -e "${GREEN}✓ NVIDIA GPU detected${NC}"
         BACKEND="cuda"
     elif [ -d "/dev/dri" ] && [ -e "/dev/dri/renderD128" ]; then

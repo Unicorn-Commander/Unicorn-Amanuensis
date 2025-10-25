@@ -479,11 +479,7 @@
                     <div class="form-group">
                         <label for="model">Model</label>
                         <select id="model">
-                            <option value="large-v3" selected>Large v3 (Most Accurate - iGPU Optimized)</option>
-                            <option value="medium">Medium (iGPU Optimized)</option>
-                            <option value="small">Small (iGPU Optimized)</option>
-                            <option value="base">Base (iGPU Optimized)</option>
-                            <option value="tiny">Tiny (Fastest - iGPU Optimized)</option>
+                            <option value="">Loading models...</option>
                         </select>
                     </div>
 
@@ -580,10 +576,50 @@
 
     <script src="https://unpkg.com/wavesurfer.js@7"></script>
     <script>
+        // Load available models from server
+        async function loadModels() {
+            try {
+                const response = await fetch('/models');
+                const data = await response.json();
+
+                const modelSelect = document.getElementById('model');
+                modelSelect.innerHTML = '';
+
+                if (data.models && data.models.length > 0) {
+                    data.models.forEach((model, index) => {
+                        const option = document.createElement('option');
+                        option.value = model.id;
+                        option.textContent = `${model.name} - ${model.device} (${model.quantization})`;
+                        if (index === 0) {
+                            option.selected = true;
+                        }
+                        modelSelect.appendChild(option);
+                    });
+
+                    // Show device info in header subtitle
+                    const subtitle = document.querySelector('.logo-text p');
+                    if (subtitle && data.device) {
+                        subtitle.textContent = `Professional AI Transcription Suite - ${data.device} ${data.runtime}`;
+                    }
+                } else {
+                    // Fallback
+                    modelSelect.innerHTML = '<option value="base">Base (AMD Phoenix NPU)</option>';
+                }
+            } catch (error) {
+                console.error('Failed to load models:', error);
+                // Fallback to default
+                const modelSelect = document.getElementById('model');
+                modelSelect.innerHTML = '<option value="base">Base (AMD Phoenix NPU - Bare-Metal)</option>';
+            }
+        }
+
+        // Load models on page load
+        document.addEventListener('DOMContentLoaded', loadModels);
+
         // Theme Switching
         const themeButtons = document.querySelectorAll('.theme-btn');
         const currentTheme = localStorage.getItem('theme') || 'light';
-        
+
         document.documentElement.setAttribute('data-theme', currentTheme);
         themeButtons.forEach(btn => {
             if (btn.dataset.theme === currentTheme) {

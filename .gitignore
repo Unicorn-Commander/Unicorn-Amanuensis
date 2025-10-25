@@ -1,4 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
 
-# Large model files
-cache/
+# Virtual environments
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# Models (downloaded from Hugging Face, not committed)
 models/
+*.onnx
+*.xclbin
+*.bin
+whisperx/models/
+whisperx/whisper-base-onnx/
+whisperx/models/whisper_onnx_cache/
+
+# Cache directories
+.cache/
+__pycache__/
+
+# Docker
+.dockerignore
+
+# OS
+.DS_Store
+Thumbs.db
+npu-models/whisper-large-int8/int8_weights.pb

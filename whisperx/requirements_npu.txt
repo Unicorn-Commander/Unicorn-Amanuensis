@@ -1,0 +1,27 @@
+# Core web framework
+fastapi==0.110.0
+uvicorn==0.27.1
+python-multipart==0.0.9
+
+# ONNX Runtime for model inference (CPU only, no CUDA)
+onnx
+onnxruntime
+
+# Audio processing
+numpy
+scipy
+librosa
+soundfile
+
+# Tokenizer for Whisper
+tiktoken
+transformers
+
+# PyTorch (required for ONNX Whisper NPU whisperx_npu_accelerator)
+torch
+
+# HuggingFace hub for model downloads
+huggingface-hub
+
+# WhisperX for CPU fallback
+git+https://github.com/m-bain/whisperx.git

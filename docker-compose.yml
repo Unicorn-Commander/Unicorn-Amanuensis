@@ -22,6 +22,8 @@ services:
     volumes:
       - whisperx_models:/app/models
       - ./whisperx/static:/app/static:ro
+      - ./whisperx/models:/models:ro
+      - ./whisperx/models/whisper_onnx_cache:/models/whisper_onnx_cache:ro
     networks:
       - amanuensis-network
     healthcheck:
@@ -34,9 +36,11 @@ services:
     devices:
       # For Intel iGPU
       - /dev/dri:/dev/dri
+      # For AMD NPU (Phoenix/Strix)
+      - /dev/accel/accel0:/dev/accel/accel0
     group_add:
       - "44"    # video group
-      - "993"   # render group
+      - "993"   # render group (for both iGPU and NPU)
 
 networks:
   amanuensis-network:

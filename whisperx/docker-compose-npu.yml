@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  amanuensis-npu:
+    image: unicorn-amanuensis-npu:latest
+    container_name: amanuensis-npu
+    ports:
+      - "9000:9000"
+    devices:
+      # AMD NPU device passthrough
+      - /dev/accel/accel0:/dev/accel/accel0
+      - /dev/dri:/dev/dri  # For GPU/NPU access
+    volumes:
+      - ./uploads:/app/uploads
+      - ./models:/app/models
+    environment:
+      - PYTHONUNBUFFERED=1
+      - WHISPER_MODEL=base
+      - WHISPER_MODEL_CACHE=/app/models
+      - WHISPER_NPU_MODEL_PATH=/app/models/whisper-base-onnx-int8
+      - API_PORT=9000
+    restart: unless-stopped
+    networks:
+      - unicorn-network
+
+networks:
+  unicorn-network:
+    external: true

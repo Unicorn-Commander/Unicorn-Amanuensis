@@ -58,9 +58,9 @@ detect_hardware() {
         GPUS_FOUND+=("nvidia")
     fi
     
-    # Check AMD NPU
-    if lspci | grep -i "AMD.*1502" > /dev/null 2>&1; then
-        echo -e "${GREEN}✅ AMD NPU (XDNA) detected${NC}"
+    # Check AMD NPU (Phoenix XDNA1)
+    if lspci | grep -i "Phoenix" > /dev/null 2>&1 && [ -e "/dev/accel/accel0" ]; then
+        echo -e "${GREEN}✅ AMD NPU (Phoenix XDNA1) detected at /dev/accel/accel0${NC}"
         GPUS_FOUND+=("npu")
     fi
     

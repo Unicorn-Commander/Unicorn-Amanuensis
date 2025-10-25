@@ -1,59 +1,64 @@
-FROM ubuntu:22.04
-
-# AMD NPU (XDNA) optimized build
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    python3.10 \
-    python3-pip \
-    python3.10-venv \
-    ffmpeg \
-    git \
-    curl \
-    wget \
-    build-essential \
-    libsndfile1 \
-    # AMD ROCm dependencies (for NPU support)
-    libnuma-dev \
-    libelf-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install AMD XDNA drivers (requires host to have them)
-# Note: The actual NPU drivers need to be installed on the host
+# Docker image for Unicorn Amanuensis with REAL AMD Phoenix NPU support
+FROM python:3.13-slim
 
 WORKDIR /app
 
-# Install Python dependencies
-RUN python3 -m pip install --upgrade pip && \
-    pip3 install --no-cache-dir \
-    torch==2.1.0 \
-    torchaudio==2.1.0 \
-    onnx \
-    onnxruntime
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    wget \
+    curl \
+    git \
+    build-essential \
+    libsndfile1 \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install WhisperX and NPU-specific dependencies
+# Copy requirements
 COPY requirements_npu.txt .
-RUN pip3 install --no-cache-dir -r requirements_npu.txt
 
-# Copy NPU runtime and application files
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements_npu.txt
+
+# Install XRT Python bindings for AMD NPU
+# Note: pyxrt will be mounted from host via docker-compose volume
+# The XRT libs and pyxrt.so will be available from /opt/xilinx/xrt
+
+# Add XRT library path (mounted from host)
+ENV LD_LIBRARY_PATH=/opt/xilinx/xrt/lib:${LD_LIBRARY_PATH}
+ENV PYTHONPATH=/opt/xilinx/xrt/python:${PYTHONPATH}
+
+# Copy custom ONNX + direct IOCTL NPU runtime (SimplifiedNPURuntime)
 COPY npu/ npu/
+
+# Copy REAL working NPU server with SimplifiedNPURuntime + direct IOCTL
 COPY server_whisperx_npu.py server.py
+
+# Copy GUI files (templates and static with unicorn logo!)
 COPY templates/ templates/
-COPY *.py ./
+COPY static/ static/
 
-# Create necessary directories
-RUN mkdir -p /root/.cache /models
+# Create models directory
+RUN mkdir -p /app/models
 
-# NPU Configuration
-ENV WHISPER_DEVICE=npu
-ENV NPU_BACKEND=XDNA
-ENV XDNA_VISIBLE_DEVICES=0
+# NOTE: Models are mounted from host via docker-compose volume
+# Run ./download-models.sh on the host before building to download:
+#   - whisper-base-onnx-int8 (121 MB) - Fast model
+#   - whisper-large-v3-onnx-int8 (1.4 GB) - Best accuracy
+# Models will be available at /app/models/ in the container
 
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV WHISPER_MODEL_CACHE=/app/models
+ENV WHISPER_MODEL=base
+ENV WHISPER_NPU_MODEL_PATH=/app/models/whisper-base-onnx-int8
+ENV API_PORT=9000
+
+# Expose API port
 EXPOSE 9000
 
-# Health check endpoint
+# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:9000/health || exit 1
+  CMD curl -f http://localhost:9000/health || exit 1
 
-CMD ["python3", "-m", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "9000"]
+# Run server
+CMD ["python", "server.py"]

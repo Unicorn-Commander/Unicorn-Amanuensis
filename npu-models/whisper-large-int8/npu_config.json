@@ -1,0 +1,43 @@
+{
+  "model_name": "whisper-large-npu-int8",
+  "model_type": "whisper-large-v2",
+  "quantization": "int8",
+  "target_hardware": "amd_phoenix_npu",
+  "architecture": "xdna1",
+  "model_paths": {
+    "encoder": "encoder_model.onnx",
+    "decoder": "decoder_model.onnx",
+    "decoder_with_past": "decoder_with_past_model.onnx",
+    "int8_weights": "int8_weights.pb"
+  },
+  "mlir_kernels": {
+    "enabled": true,
+    "kernel_path": "whisper_large_npu.xclbin",
+    "mel_spectrogram": "aie2",
+    "attention": "aie2",
+    "ffn": "cpu"
+  },
+  "performance": {
+    "expected_rtf": 0.015,
+    "expected_speedup": 67,
+    "estimated_tokens_per_sec": 2400,
+    "power_consumption_watts": 15
+  },
+  "features": {
+    "diarization": true,
+    "word_timestamps": true,
+    "multi_language": true,
+    "streaming": false
+  },
+  "parameters": {
+    "num_parameters": 1550000000,
+    "model_size_mb": 2400,
+    "layers": 32,
+    "attention_heads": 20
+  },
+  "source": {
+    "repo": "Intel/whisper-large-int8-static-inc",
+    "downloaded": "2025-10-25",
+    "note": "Intel Neural Compressor INT8 quantization"
+  }
+}
