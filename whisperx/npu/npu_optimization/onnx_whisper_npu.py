@@ -16,17 +16,20 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Any
 import onnxruntime as ort
 
-# Add our modules to path
-sys.path.insert(0, '/home/ucadmin/Development/whisper_npu_project')
-sys.path.insert(0, '/home/ucadmin/Development/whisper_npu_project/npu_kernels')
+# Add our modules to path (container paths)
+sys.path.insert(0, '/app/npu')
+sys.path.insert(0, '/app/npu/npu_optimization')
 
-from whisperx_npu_accelerator import NPUAccelerator
+# Import from npu_optimization module
+from npu_optimization.whisperx_npu_accelerator import NPUAccelerator
 try:
-    from matrix_multiply import NPUMatrixMultiplier
+    from npu_optimization.matrix_multiply import NPUMatrixMultiplier
     NPU_KERNELS_AVAILABLE = True
-except ImportError:
+    logger.info("✅ NPU matrix multiplication kernels available")
+except ImportError as e:
     NPUMatrixMultiplier = None
     NPU_KERNELS_AVAILABLE = False
+    logger.info(f"ℹ️  NPU kernels not loaded (using CPU fallback): {e}")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

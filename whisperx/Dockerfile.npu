@@ -3,7 +3,7 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies including Boost for XRT
 RUN apt-get update && apt-get install -y \
     wget \
     curl \
@@ -11,6 +11,9 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     libsndfile1 \
     ffmpeg \
+    libboost-filesystem1.83.0 \
+    libboost-program-options1.83.0 \
+    libboost-system1.83.0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements
