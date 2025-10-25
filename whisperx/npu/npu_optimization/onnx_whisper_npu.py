@@ -16,6 +16,10 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Any
 import onnxruntime as ort
 
+# Configure logging FIRST before any module imports
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Add our modules to path (container paths)
 sys.path.insert(0, '/app/npu')
 sys.path.insert(0, '/app/npu/npu_optimization')
@@ -30,10 +34,6 @@ except ImportError as e:
     NPUMatrixMultiplier = None
     NPU_KERNELS_AVAILABLE = False
     logger.info(f"ℹ️  NPU kernels not loaded (using CPU fallback): {e}")
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 class ONNXWhisperNPU:
     """ONNX Whisper with NPU preprocessing"""

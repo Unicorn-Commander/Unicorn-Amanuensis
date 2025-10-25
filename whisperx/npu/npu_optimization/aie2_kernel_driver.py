@@ -18,30 +18,33 @@ logger = logging.getLogger(__name__)
 
 class AIE2KernelDriver:
     """Driver for compiling and executing MLIR-AIE2 kernels on AMD NPU"""
-    
-    def __init__(self):
+
+    def __init__(self, direct_runtime=None):
         self.mlir_file = Path("mlir_aie2_kernels.mlir")
         self.xclbin_path = None
         self.device = None
-        self.npu_device = None  # Initialize npu_device
+        self.npu_device = direct_runtime  # Use provided runtime or initialize later
         self.buffers = {}
-        
+
         # AIE2 architecture parameters
         self.AIE_TILES = 20
         self.VECTOR_WIDTH = 32  # 32 x INT8 = 256 bits
         self.DMA_CHANNELS = 2
         self.MEM_PER_TILE = 64 * 1024  # 64KB per tile
-        
+
         logger.info("🚀 AIE2 Kernel Driver Initializing...")
-        
-        # Try to initialize direct NPU runtime
-        try:
-            from .direct_npu_runtime import direct_npu_runtime
-            if direct_npu_runtime.initialize():
-                self.npu_device = direct_npu_runtime
-                logger.info("✅ Direct NPU runtime initialized")
-        except Exception as e:
-            logger.warning(f"Could not initialize direct NPU: {e}")
+
+        # Try to initialize direct NPU runtime if not provided
+        if self.npu_device is None:
+            try:
+                from .direct_npu_runtime import direct_npu_runtime
+                if direct_npu_runtime.initialize():
+                    self.npu_device = direct_npu_runtime
+                    logger.info("✅ Direct NPU runtime initialized")
+            except Exception as e:
+                logger.warning(f"Could not initialize direct NPU: {e}")
+        else:
+            logger.info("✅ Using provided direct NPU runtime")
         
     def compile_mlir_to_xclbin(self) -> bool:
         """Compile MLIR kernels to NPU binary"""
