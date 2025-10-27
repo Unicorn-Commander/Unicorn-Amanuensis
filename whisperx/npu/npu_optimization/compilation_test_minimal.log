@@ -1,0 +1,3 @@
+mlir_aie2_minimal.mlir:72:7: error: custom op 'aie.end_bd' is unknown
+      aie.end_bd ^end
+      ^

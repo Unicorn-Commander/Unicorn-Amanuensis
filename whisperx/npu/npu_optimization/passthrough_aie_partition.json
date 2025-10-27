@@ -1,0 +1,24 @@
+{
+    "aie_partition": {
+        "name": "passthrough",
+        "operations_per_cycle": "1024",
+        "partition": {
+            "column_width": "1",
+            "start_columns": ["0"]
+        },
+        "PDIs": [
+            {
+                "uuid": "9fdfeefa-b077-b340-edec-996cb829fce9",
+                "file_name": "passthrough_npu.pdi",
+                "cdo_groups": [
+                    {
+                        "name": "PASSTHROUGH_PDI_0",
+                        "type": "PRIMARY",
+                        "pdi_id": "0x01",
+                        "dpu_kernel_ids": ["0x100"]
+                    }
+                ]
+            }
+        ]
+    }
+}

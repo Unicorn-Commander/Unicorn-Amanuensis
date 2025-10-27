@@ -231,13 +231,58 @@ class ONNXWhisperNPU:
                     # Start tokens for English transcription
                     decoder_input_ids = np.array([[50258, 50259, 50360, 50365]], dtype=np.int64)
 
-                    # Generate tokens (simplified - just 20 tokens for demo)
+                    # Use KV cache for efficient decoding
+                    use_past = self.decoder_with_past_session is not None
+                    past_key_values = None
                     generated_tokens = []
-                    for step in range(20):
-                        decoder_outputs = self.decoder_session.run(None, {
-                            'input_ids': decoder_input_ids,
-                            'encoder_hidden_states': hidden_states
-                        })
+
+                    for step in range(448):  # Full Whisper capacity
+                        # Check if we're about to exceed maximum sequence length
+                        if decoder_input_ids.shape[1] >= 448:
+                            logger.warning(f"⚠️ Reached maximum sequence length (448 tokens), stopping generation")
+                            break
+
+                        if use_past and past_key_values is not None:
+                            # Efficient decoding with KV cache
+                            inputs = {'input_ids': decoder_input_ids[:, -1:]}
+
+                            for i, kv in enumerate(past_key_values):
+                                inputs[f'past_key_values.{i}.decoder.key'] = kv[0]
+                                inputs[f'past_key_values.{i}.decoder.value'] = kv[1]
+                                inputs[f'past_key_values.{i}.encoder.key'] = kv[2]
+                                inputs[f'past_key_values.{i}.encoder.value'] = kv[3]
+
+                            decoder_outputs = self.decoder_with_past_session.run(None, inputs)
+                            logits = decoder_outputs[0]
+
+                            # Update decoder KVs
+                            new_past = []
+                            for i in range(6):
+                                new_past.append((
+                                    decoder_outputs[i*2 + 1],
+                                    decoder_outputs[i*2 + 2],
+                                    past_key_values[i][2],
+                                    past_key_values[i][3]
+                                ))
+                            past_key_values = new_past
+                        else:
+                            # First pass - extract KV cache
+                            decoder_outputs = self.decoder_session.run(None, {
+                                'input_ids': decoder_input_ids,
+                                'encoder_hidden_states': hidden_states
+                            })
+                            logits = decoder_outputs[0]
+
+                            # Extract KV cache from regular decoder
+                            if use_past and len(decoder_outputs) == 25:
+                                past_key_values = []
+                                for i in range(6):
+                                    past_key_values.append((
+                                        decoder_outputs[i*2 + 1],
+                                        decoder_outputs[i*2 + 2],
+                                        decoder_outputs[i*2 + 13],
+                                        decoder_outputs[i*2 + 14]
+                                    ))
 
                         logits = decoder_outputs[0]
                         next_token_id = np.argmax(logits[0, -1, :])
@@ -362,36 +407,87 @@ class ONNXWhisperNPU:
                 # Load Whisper tokenizer
                 from transformers import WhisperTokenizer
                 tokenizer = WhisperTokenizer.from_pretrained("openai/whisper-base")
-                
+
                 # Whisper decoding sequence
                 max_length = 448  # Whisper max sequence length
                 generated_tokens = []
-                
+
                 # Start with language and task tokens for English transcription
                 # 50258 = <|startoftranscript|>, 50259 = <|en|>, 50360 = <|transcribe|>, 50365 = <|notimestamps|>
                 decoder_input_ids = np.array([[50258, 50259, 50360, 50365]], dtype=np.int64)
-                
-                # Generate tokens autoregressively (simplified version)
-                for step in range(20):  # Generate up to 20 tokens for now
-                    decoder_outputs = self.decoder_session.run(None, {
-                        'input_ids': decoder_input_ids,
-                        'encoder_hidden_states': hidden_states
-                    })
-                    
-                    # Get next token
+
+                # Use KV cache for efficient decoding
+                use_past = self.decoder_with_past_session is not None
+                past_key_values = None
+
+                # Generate tokens autoregressively with KV cache
+                for step in range(max_length):  # Generate up to 448 tokens
+                    # Check if we're about to exceed maximum sequence length
+                    if decoder_input_ids.shape[1] >= 448:
+                        logger.warning(f"⚠️ Reached maximum sequence length (448 tokens), stopping generation")
+                        break
+
+                    if use_past and past_key_values is not None:
+                        # Efficient decoding with KV cache - only process last token
+                        inputs = {'input_ids': decoder_input_ids[:, -1:]}
+
+                        # Add past key values (6 layers, each with decoder and encoder keys/values)
+                        for i, kv in enumerate(past_key_values):
+                            inputs[f'past_key_values.{i}.decoder.key'] = kv[0]
+                            inputs[f'past_key_values.{i}.decoder.value'] = kv[1]
+                            inputs[f'past_key_values.{i}.encoder.key'] = kv[2]
+                            inputs[f'past_key_values.{i}.encoder.value'] = kv[3]
+
+                        decoder_outputs = self.decoder_with_past_session.run(None, inputs)
+                        logits = decoder_outputs[0]
+
+                        # Update decoder KVs, keep encoder KVs unchanged
+                        new_past = []
+                        for i in range(6):  # 6 decoder layers
+                            new_past.append((
+                                decoder_outputs[i*2 + 1],  # present.i.decoder.key
+                                decoder_outputs[i*2 + 2],  # present.i.decoder.value
+                                past_key_values[i][2],     # encoder.key (unchanged)
+                                past_key_values[i][3]      # encoder.value (unchanged)
+                            ))
+                        past_key_values = new_past
+                    else:
+                        # First pass - use regular decoder to get initial KV cache
+                        decoder_outputs = self.decoder_session.run(None, {
+                            'input_ids': decoder_input_ids,
+                            'encoder_hidden_states': hidden_states
+                        })
+                        logits = decoder_outputs[0]
+
+                        # Extract past key values from outputs
+                        # Regular decoder outputs: logits + 24 KV tensors
+                        # Indices 1-12: present.0-5.decoder.{key,value}
+                        # Indices 13-24: present.0-5.encoder.{key,value}
+                        if use_past and len(decoder_outputs) == 25:
+                            past_key_values = []
+                            for i in range(6):  # 6 decoder layers
+                                past_key_values.append((
+                                    decoder_outputs[i*2 + 1],   # present.i.decoder.key
+                                    decoder_outputs[i*2 + 2],   # present.i.decoder.value
+                                    decoder_outputs[i*2 + 13],  # present.i.encoder.key
+                                    decoder_outputs[i*2 + 14]   # present.i.encoder.value
+                                ))
+
                     logits = decoder_outputs[0]
+
+                    # Get next token
                     next_token_id = np.argmax(logits[0, -1, :])
-                    
+
                     # Check for end token
                     if next_token_id == 50257:  # <|endoftext|>
                         break
-                    
+
                     # Add to sequence
                     decoder_input_ids = np.concatenate([
-                        decoder_input_ids, 
+                        decoder_input_ids,
                         np.array([[next_token_id]], dtype=np.int64)
                     ], axis=1)
-                    
+
                     generated_tokens.append(next_token_id)
                 
                 # Decode tokens to text

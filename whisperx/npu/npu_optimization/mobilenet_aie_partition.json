@@ -1,0 +1,290 @@
+{
+    "aie_partition": {
+        "name": "",
+        "operations_per_cycle": "16384",
+        "inference_fingerprint": "720578160878515091",
+        "pre_post_fingerprint": "227964083",
+        "kernel_commit_id": "",
+        "partition": {
+            "column_width": "4",
+            "start_columns": [
+                "0",
+                "4"
+            ]
+        },
+        "PDIs": [
+            {
+                "uuid": "7f5ac85a-2023-0008-0005-416198770000",
+                "file_name": "7f5ac85a-2023-0008-0005-416198770000.pdi",
+                "cdo_groups": [
+                    {
+                        "name": "DPU_PDI_0",
+                        "type": "PRE_POST",
+                        "pdi_id": "0xf0",
+                        "dpu_kernel_ids": [
+                            "0x100"
+                        ],
+                        "pre_cdo_groups": [
+                            "0xc0"
+                        ]
+                    }
+                ]
+            },
+            {
+                "uuid": "7f5ac85a-2023-0008-0005-416198770001",
+                "file_name": "7f5ac85a-2023-0008-0005-416198770001.pdi",
+                "cdo_groups": [
+                    {
+                        "name": "DPU_PDI_1",
+                        "type": "PRE_POST",
+                        "pdi_id": "0xf1",
+                        "dpu_kernel_ids": [
+                            "0x101"
+                        ],
+                        "pre_cdo_groups": [
+                            "0xc1"
+                        ]
+                    }
+                ]
+            },
+            {
+                "uuid": "7f5ac85a-2023-0008-0005-416198770002",
+                "file_name": "7f5ac85a-2023-0008-0005-416198770002.pdi",
+                "cdo_groups": [
+                    {
+                        "name": "DPU_PDI_2",
+                        "type": "PRE_POST",
+                        "pdi_id": "0xf2",
+                        "dpu_kernel_ids": [
+                            "0x102"
+                        ],
+                        "pre_cdo_groups": [
+                            "0xc2"
+                        ]
+                    }
+                ]
+            },
+            {
+                "uuid": "7f5ac85a-2023-0008-0005-416198770003",
+                "file_name": "7f5ac85a-2023-0008-0005-416198770003.pdi",
+                "cdo_groups": [
+                    {
+                        "name": "DPU_PDI_3",
+                        "type": "PRE_POST",
+                        "pdi_id": "0xf3",
+                        "dpu_kernel_ids": [
+                            "0x103"
+                        ],
+                        "pre_cdo_groups": [
+                            "0xc3"
+                        ]
+                    }
+                ]
+            },
+            {
+                "uuid": "7f5ac85a-2023-0008-0005-416198770004",
+                "file_name": "7f5ac85a-2023-0008-0005-416198770004.pdi",
+                "cdo_groups": [
+                    {
+                        "name": "DPU_PDI_4",
+                        "type": "PRE_POST",
+                        "pdi_id": "0xf4",
+                        "dpu_kernel_ids": [
+                            "0x104"
+                        ],
+                        "pre_cdo_groups": [
+                            "0xc4"
+                        ]
+                    }
+                ]
+            },
+            {
+                "uuid": "7f5ac85a-2023-0008-0005-416198770005",
+                "file_name": "7f5ac85a-2023-0008-0005-416198770005.pdi",
+                "cdo_groups": [
+                    {
+                        "name": "DPU_PDI_5",
+                        "type": "PRE_POST",
+                        "pdi_id": "0xf5",
+                        "dpu_kernel_ids": [
+                            "0x105"
+                        ],
+                        "pre_cdo_groups": [
+                            "0xc5"
+                        ]
+                    }
+                ]
+            },
+            {
+                "uuid": "7f5ac85a-2023-0008-0005-416198770006",
+                "file_name": "7f5ac85a-2023-0008-0005-416198770006.pdi",
+                "cdo_groups": [
+                    {
+                        "name": "DPU_PDI_6",
+                        "type": "PRE_POST",
+                        "pdi_id": "0xf6",
+                        "dpu_kernel_ids": [
+                            "0x106"
+                        ],
+                        "pre_cdo_groups": [
+                            "0xc6"
+                        ]
+                    }
+                ]
+            },
+            {
+                "uuid": "7f5ac85a-2023-0008-0005-416198770007",
+                "file_name": "7f5ac85a-2023-0008-0005-416198770007.pdi",
+                "cdo_groups": [
+                    {
+                        "name": "DPU_PDI_7",
+                        "type": "PRE_POST",
+                        "pdi_id": "0xf7",
+                        "dpu_kernel_ids": [
+                            "0x107"
+                        ],
+                        "pre_cdo_groups": [
+                            "0xc7"
+                        ]
+                    }
+                ]
+            },
+            {
+                "uuid": "7f5ac85a-2023-0008-0005-416198770008",
+                "file_name": "7f5ac85a-2023-0008-0005-416198770008.pdi",
+                "cdo_groups": [
+                    {
+                        "name": "DPU_PDI_8",
+                        "type": "PRE_POST",
+                        "pdi_id": "0xf8",
+                        "dpu_kernel_ids": [
+                            "0x108"
+                        ],
+                        "pre_cdo_groups": [
+                            "0xc8"
+                        ]
+                    }
+                ]
+            },
+            {
+                "uuid": "7f5ac85a-2023-0008-0005-416198770009",
+                "file_name": "7f5ac85a-2023-0008-0005-416198770009.pdi",
+                "cdo_groups": [
+                    {
+                        "name": "DPU_PDI_9",
+                        "type": "PRE_POST",
+                        "pdi_id": "0xf9",
+                        "dpu_kernel_ids": [
+                            "0x109"
+                        ],
+                        "pre_cdo_groups": [
+                            "0xc9"
+                        ]
+                    }
+                ]
+            },
+            {
+                "uuid": "7f5ac85a-2023-0008-0005-41619877000a",
+                "file_name": "7f5ac85a-2023-0008-0005-41619877000a.pdi",
+                "cdo_groups": [
+                    {
+                        "name": "DPU_PDI_10",
+                        "type": "PRE_POST",
+                        "pdi_id": "0xfa",
+                        "dpu_kernel_ids": [
+                            "0x10a"
+                        ],
+                        "pre_cdo_groups": [
+                            "0xca"
+                        ]
+                    }
+                ]
+            },
+            {
+                "uuid": "7f5ac85a-2023-0008-0005-41619877000b",
+                "file_name": "7f5ac85a-2023-0008-0005-41619877000b.pdi",
+                "cdo_groups": [
+                    {
+                        "name": "DPU_PDI_11",
+                        "type": "PRE_POST",
+                        "pdi_id": "0xfb",
+                        "dpu_kernel_ids": [
+                            "0x10b"
+                        ],
+                        "pre_cdo_groups": [
+                            "0xcb"
+                        ]
+                    }
+                ]
+            },
+            {
+                "uuid": "7f5ac85a-2023-0008-0005-41619877000c",
+                "file_name": "7f5ac85a-2023-0008-0005-41619877000c.pdi",
+                "cdo_groups": [
+                    {
+                        "name": "DPU_PDI_12",
+                        "type": "PRE_POST",
+                        "pdi_id": "0xfc",
+                        "dpu_kernel_ids": [
+                            "0x10c"
+                        ],
+                        "pre_cdo_groups": [
+                            "0xcc"
+                        ]
+                    }
+                ]
+            },
+            {
+                "uuid": "7f5ac85a-2023-0008-0005-41619877000d",
+                "file_name": "7f5ac85a-2023-0008-0005-41619877000d.pdi",
+                "cdo_groups": [
+                    {
+                        "name": "DPU_PDI_13",
+                        "type": "PRE_POST",
+                        "pdi_id": "0xfd",
+                        "dpu_kernel_ids": [
+                            "0x10d"
+                        ],
+                        "pre_cdo_groups": [
+                            "0xcd"
+                        ]
+                    }
+                ]
+            },
+            {
+                "uuid": "7f5ac85a-2023-0008-0005-41619877000e",
+                "file_name": "7f5ac85a-2023-0008-0005-41619877000e.pdi",
+                "cdo_groups": [
+                    {
+                        "name": "DPU_PDI_14",
+                        "type": "PRE_POST",
+                        "pdi_id": "0xfe",
+                        "dpu_kernel_ids": [
+                            "0x10e"
+                        ],
+                        "pre_cdo_groups": [
+                            "0xce"
+                        ]
+                    }
+                ]
+            },
+            {
+                "uuid": "7f5ac85a-2023-0008-0005-41619877000f",
+                "file_name": "7f5ac85a-2023-0008-0005-41619877000f.pdi",
+                "cdo_groups": [
+                    {
+                        "name": "DPU_PDI_15",
+                        "type": "PRE_POST",
+                        "pdi_id": "0xff",
+                        "dpu_kernel_ids": [
+                            "0x10f"
+                        ],
+                        "pre_cdo_groups": [
+                            "0xcf"
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

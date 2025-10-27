@@ -1,0 +1,13 @@
+{
+  "partition": {
+    "name": "QoS",
+    "column_width": 1,
+    "start_columns": [
+      0
+    ],
+    "num_columns": 4,
+    "num_rows": 6,
+    "is_active": true,
+    "operations_per_cycle": 2000
+  }
+}

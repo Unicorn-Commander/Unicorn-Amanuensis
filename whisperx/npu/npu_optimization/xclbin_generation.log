@@ -1,0 +1,32 @@
+
+============================================================
+NPU XCLBIN Generator - Direct xclbinutil Approach
+============================================================
+
+[*] Input files:
+    - MLIR: passthrough_step3.mlir
+    - Kernel ELF: passthrough_kernel_new.o
+    - NPU instructions: passthrough_npu.bin
+
+[*] Output: passthrough.xclbin
+
+
+--- Step 1: Using NPU binary as PDI ---
+[i] NPU devices use instruction sequences, not CDO files
+[✓] Using passthrough_npu.bin directly
+
+--- Step 2: Create JSON metadata ---
+[✓] mem_topology.json created
+[✓] kernels.json created
+[✓] aie_partition.json created
+
+--- Step 3: Package XCLBIN ---
+[*] Package XCLBIN...
+    $ /opt/xilinx/xrt/bin/xclbinutil --add-section BITSTREAM:RAW:passthrough_npu.bin --add-section MEM_TOPOLOGY:JSON:mem_topology.json --add-section IP_LAYOUT:JSON:kernels.json --add-section AIE_PARTITION:JSON:aie_partition.json --key-value SYS:aie_partition_metadata aie_partition.json --force --output passthrough.xclbin
+[!] FAILED: Package XCLBIN
+    stdout: XRT Build Version: 2.20.0 (HEAD)
+       Build Date: 2025-10-08 06:49:15
+          Hash ID: 9b916190ad2865a7e7e497155c66b3b4940f0add
+
+    stderr: ERROR: Expected format [USER | SYS]:<key>:<value> when using adding a key value pair.  Received: SYS:aie_partition_metadata.
+

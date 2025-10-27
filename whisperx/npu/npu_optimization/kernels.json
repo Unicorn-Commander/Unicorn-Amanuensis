@@ -1,0 +1,13 @@
+{
+  "ip_layout": {
+    "m_count": "1",
+    "m_ip_data": [
+      {
+        "m_type": "DNASC",
+        "m_name": "MLIR_AIE",
+        "m_base_address": "0",
+        "properties": "0"
+      }
+    ]
+  }
+}
