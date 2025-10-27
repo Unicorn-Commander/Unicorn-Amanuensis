@@ -177,9 +177,10 @@ All 3 phases compiled successfully on first attempt after initial debugging
 
 ### Immediate (Can be done now):
 1. ✅ **Kernel Compilation**: All 3 phases complete
-2. 🔧 **Install XRT Python Bindings**: `pip install pyxrt` or system package
-3. 🔧 **Test XCLBIN Loading**: Load mel_int8_optimized.xclbin on NPU
-4. 🔧 **Validate Kernel Execution**: Run test audio through NPU kernel
+2. ✅ **XRT Python Bindings**: Available at `/opt/xilinx/xrt/python/pyxrt`
+3. ⚠️ **XCLBIN Loading**: XCLBIN missing platform metadata (see XCLBIN_STATUS.md)
+4. 🔧 **Fix aiecc.py Build**: Use official MLIR-AIE toolchain for proper XCLBIN
+5. 🔧 **Test NPU Execution**: Load corrected XCLBIN and validate kernel execution
 
 ### Short-term (1-2 weeks):
 1. **Optimize Host-Side Integration**: Minimize CPU-NPU data transfers
