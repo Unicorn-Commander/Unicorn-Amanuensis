@@ -17,14 +17,17 @@ mkdir -p "${BUILD_DIR}"
 cd "${KERNEL_DIR}"
 
 echo "Step 1: Compiling C kernels to AIE2 ELF with Peano..."
-# Compile both FFT and main kernel together
+echo "  Using minimal kernel for Phase 2.1 proof-of-concept..."
+echo "  (Full FFT will be added in Phase 2.2)"
+
+# Compile minimal mel kernel (simpler for initial testing)
 ${MLIR_AIE_SOURCE}/ironenv/lib/python3.13/site-packages/llvm-aie/bin/clang++ \
   -O2 -std=c++20 \
   --target=aie2-none-unknown-elf \
-  -c fft_radix2.c mel_simple.c \
+  -c mel_simple_minimal.c \
   -o ${BUILD_DIR}/mel_simple.o
 
-echo "✅ C kernel compiled: ${BUILD_DIR}/mel_simple.o"
+echo "✅ C kernel compiled:"
 ls -lh ${BUILD_DIR}/mel_simple.o
 echo ""
 
@@ -51,28 +54,12 @@ echo "✅ CDO files generated:"
 ls -lh main_aie_cdo_*.bin 2>/dev/null || echo "⚠️ CDO files not found"
 echo ""
 
-echo "Step 4: Creating bootgen BIF file..."
-cat > design.bif <<EOF
-all:
-{
-  main_aie_cdo_elfs.bin
-  main_aie_cdo_init.bin
-  main_aie_cdo_enable.bin
-}
-EOF
+echo "Step 4: Combining CDO files for XDNA..."
+# For XDNA NPU, combine CDO files directly (no PDI needed)
+cat main_aie_cdo_elfs.bin main_aie_cdo_init.bin main_aie_cdo_enable.bin > aie_cdo_combined.bin
 
-echo "✅ BIF file created"
-echo ""
-
-echo "Step 5: Generating PDI (bootgen)..."
-${MLIR_AIE_SOURCE}/build/bin/bootgen \
-  -arch versal \
-  -image design.bif \
-  -o mel_simple.pdi \
-  -w on
-
-echo "✅ PDI generated: ${BUILD_DIR}/mel_simple.pdi"
-ls -lh mel_simple.pdi
+echo "✅ Combined CDO files: ${BUILD_DIR}/aie_cdo_combined.bin"
+ls -lh aie_cdo_combined.bin
 echo ""
 
 echo "Step 6: Creating XCLBIN metadata JSON files..."
@@ -82,10 +69,18 @@ cat > aie_partition.json <<'EOF'
 {
   "aie_partition": {
     "name": "mel_simple_partition",
-    "column_width": 1,
-    "start_columns": [0],
-    "num_columns": 4,
-    "operations_per_cycle": 400000000
+    "partition": {
+      "column_width": 1,
+      "start_columns": [0],
+      "num_columns": 4,
+      "operations_per_cycle": 400000000
+    },
+    "PDI_data": [
+      {
+        "image_type": "CONTROL",
+        "pdi_id": 1
+      }
+    ]
   }
 }
 EOF
@@ -168,14 +163,10 @@ EOF
 echo "✅ XCLBIN metadata JSON files created"
 echo ""
 
-echo "Step 7: Packaging XCLBIN (xclbinutil)..."
+echo "Step 5: Packaging XCLBIN (xclbinutil)..."
+# For Phase 2.1 proof-of-concept: create minimal XCLBIN with just PDI
 /opt/xilinx/xrt/bin/xclbinutil \
-  --add-section AIE_PARTITION:JSON:aie_partition.json \
-  --add-section MEM_TOPOLOGY:JSON:mem_topology.json \
-  --add-section IP_LAYOUT:JSON:ip_layout.json \
-  --add-section CONNECTIVITY:JSON:connectivity.json \
-  --add-section GROUP_CONNECTIVITY:JSON:group_connectivity.json \
-  --add-section PDI:RAW:mel_simple.pdi \
+  --add-section PDI:RAW:aie_cdo_combined.bin \
   --force \
   --output mel_simple.xclbin
 
@@ -183,7 +174,7 @@ echo "✅ XCLBIN packaged: ${BUILD_DIR}/mel_simple.xclbin"
 ls -lh mel_simple.xclbin
 echo ""
 
-echo "Step 8: Verifying XCLBIN structure..."
+echo "Step 6: Verifying XCLBIN structure..."
 file mel_simple.xclbin
 /opt/xilinx/xrt/bin/xclbinutil --info --input mel_simple.xclbin | head -20
 echo ""
@@ -195,7 +186,7 @@ echo ""
 echo "Generated files:"
 echo "  - ${BUILD_DIR}/mel_simple.o (AIE2 ELF kernel)"
 echo "  - ${BUILD_DIR}/mel_simple_lowered.mlir (lowered MLIR)"
-echo "  - ${BUILD_DIR}/mel_simple.pdi (Platform Device Image)"
+echo "  - ${BUILD_DIR}/aie_cdo_combined.bin (Combined CDO files)"
 echo "  - ${BUILD_DIR}/mel_simple.xclbin (NPU executable)"
 echo ""
 echo "Next step: Run test_mel_simple.py to execute on NPU"

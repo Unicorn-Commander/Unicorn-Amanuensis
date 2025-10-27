@@ -8,7 +8,22 @@
 // - Output: magnitude spectrum (not yet mel-filtered)
 
 #include <stdint.h>
-#include <string.h>
+
+// Manual memory operations for AIE2 (no standard library)
+static inline void zero_memory(void* ptr, uint32_t size) {
+    uint8_t* p = (uint8_t*)ptr;
+    for (uint32_t i = 0; i < size; i++) {
+        p[i] = 0;
+    }
+}
+
+static inline void copy_memory(void* dest, const void* src, uint32_t size) {
+    uint8_t* d = (uint8_t*)dest;
+    const uint8_t* s = (const uint8_t*)src;
+    for (uint32_t i = 0; i < size; i++) {
+        d[i] = s[i];
+    }
+}
 
 // Window size for Whisper: 25ms at 16kHz = 400 samples
 // FFT size: 512 (zero-padded)
@@ -68,8 +83,8 @@ void mel_simple_kernel(int16_t* restrict audio_in,
         apply_hann_window(frame_input, windowed_frame, WINDOW_SIZE);
 
         // Step 2: Zero-pad to FFT size (400 → 512)
-        memset(windowed_frame + WINDOW_SIZE, 0,
-               (FFT_SIZE - WINDOW_SIZE) * sizeof(int16_t));
+        zero_memory(windowed_frame + WINDOW_SIZE,
+                   (FFT_SIZE - WINDOW_SIZE) * sizeof(int16_t));
 
         // Step 3: Compute 512-point FFT
         fft_radix2_512(windowed_frame, fft_output);
@@ -81,7 +96,7 @@ void mel_simple_kernel(int16_t* restrict audio_in,
         // Step 5: Write output for this frame
         // Output offset: each frame produces 256 magnitude values
         int32_t* frame_output = spectrum_out + (frame * (FFT_SIZE / 2));
-        memcpy(frame_output, magnitude, (FFT_SIZE / 2) * sizeof(int32_t));
+        copy_memory(frame_output, magnitude, (FFT_SIZE / 2) * sizeof(int32_t));
     }
 }
 

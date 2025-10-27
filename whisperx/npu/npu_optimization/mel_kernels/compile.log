@@ -1,0 +1,31 @@
+=== Phase 2.1: Compiling Simple Mel Spectrogram Kernel ===
+
+Step 1: Compiling C kernels to AIE2 ELF with Peano...
+  Using minimal kernel for Phase 2.1 proof-of-concept...
+  (Full FFT will be added in Phase 2.2)
+clang++: warning: treating 'c' input as 'c++' when in C++ mode, this behavior is deprecated [-Wdeprecated]
+✅ C kernel compiled:
+-rw-rw-r-- 1 ucadmin ucadmin 1.5K Oct 27 15:00 /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/mel_kernels/build/mel_simple.o
+
+Step 2: Lowering MLIR (aie-opt)...
+✅ MLIR lowered: /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/mel_kernels/build/mel_simple_lowered.mlir
+
+Step 3: Generating CDO files (aie-translate)...
+✅ CDO files generated:
+-rw-rw-r-- 1 ucadmin ucadmin 204 Oct 27 15:00 main_aie_cdo_elfs.bin
+-rw-rw-r-- 1 ucadmin ucadmin  44 Oct 27 15:00 main_aie_cdo_enable.bin
+-rw-rw-r-- 1 ucadmin ucadmin 352 Oct 27 15:00 main_aie_cdo_init.bin
+
+Step 4: Combining CDO files for XDNA...
+✅ Combined CDO files: /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/mel_kernels/build/aie_cdo_combined.bin
+-rw-rw-r-- 1 ucadmin ucadmin 600 Oct 27 15:00 aie_cdo_combined.bin
+
+Step 6: Creating XCLBIN metadata JSON files...
+✅ XCLBIN metadata JSON files created
+
+Step 5: Packaging XCLBIN (xclbinutil)...
+XRT Build Version: 2.20.0 (HEAD)
+       Build Date: 2025-10-08 06:49:15
+          Hash ID: 9b916190ad2865a7e7e497155c66b3b4940f0add
+Creating a default 'in-memory' xclbin image.
+Error: There are no PDI nodes in the AIE Partition section.
