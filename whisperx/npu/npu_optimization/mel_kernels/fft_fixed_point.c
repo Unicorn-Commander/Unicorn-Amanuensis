@@ -90,12 +90,18 @@ void fft_radix2_512_fixed(int16_t* input, complex_q15_t* output) {
                 t = cmul_q15(W, odd);
 
                 // Butterfly: even ± t
-                // Note: Addition/subtraction stays in Q15 range
-                // thanks to FFT scaling properties
-                output[idx_even].real = even.real + t.real;
-                output[idx_even].imag = even.imag + t.imag;
-                output[idx_odd].real = even.real - t.real;
-                output[idx_odd].imag = even.imag - t.imag;
+                // CRITICAL FIX: Scale down by 2 at each stage to prevent overflow
+                // FFT naturally grows by 2 per stage, so divide by 2 (>>1) to maintain Q15 range
+                int32_t sum_real = (int32_t)even.real + (int32_t)t.real;
+                int32_t sum_imag = (int32_t)even.imag + (int32_t)t.imag;
+                int32_t diff_real = (int32_t)even.real - (int32_t)t.real;
+                int32_t diff_imag = (int32_t)even.imag - (int32_t)t.imag;
+
+                // Scale down by 2 (with rounding) to prevent overflow
+                output[idx_even].real = (int16_t)((sum_real + 1) >> 1);
+                output[idx_even].imag = (int16_t)((sum_imag + 1) >> 1);
+                output[idx_odd].real = (int16_t)((diff_real + 1) >> 1);
+                output[idx_odd].imag = (int16_t)((diff_imag + 1) >> 1);
             }
         }
     }

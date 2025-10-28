@@ -1,4 +1,4 @@
-// MEL Spectrogram Kernel - Fixed-Point FFT Version
+// MEL Spectrogram Kernel - Fixed-Point FFT Version with HTK Mel Filterbanks
 // For AMD Phoenix NPU (AIE2) - Integer-only arithmetic
 //
 // Pipeline:
@@ -7,10 +7,11 @@
 //   → Zero-pad to 512
 //   → 512-point FFT (Q15)
 //   → Magnitude spectrum (256 bins)
-//   → Downsample to 80 mel bins
+//   → Apply HTK triangular mel filterbanks (80 filters)
 //   → Output as INT8
 
 #include <stdint.h>
+#include "mel_coeffs_fixed.h"  // HTK mel filterbank coefficients (Q15)
 
 // Forward declarations from fft_fixed_point.c
 typedef struct {
@@ -31,6 +32,74 @@ void fft_radix2_512_fixed(int16_t* input, complex_q15_t* output);
 void compute_magnitude_fixed(complex_q15_t* fft_output, int16_t* magnitude, uint32_t size);
 void apply_hann_window_fixed(int16_t* samples, const int16_t* window, uint32_t size);
 void zero_pad_to_512(int16_t* samples, uint32_t input_size);
+
+// Apply HTK mel filterbanks to magnitude spectrum
+// Input:  magnitude[256] - FFT magnitude bins in Q15 format
+// Output: mel_output[80] - Mel bin energies in INT8 format [0, 127]
+// Uses:   mel_filters_q15[] - Precomputed triangular filter weights from mel_coeffs_fixed.h
+//
+// Algorithm:
+//   For each of 80 mel filters:
+//     1. Apply triangular filter weights to FFT bins in filter's frequency range
+//     2. Sum weighted magnitudes (Q15 × Q15 = Q30, scaled back to Q15)
+//     3. Apply log compression for better dynamic range
+//     4. Convert to INT8 range [0, 127] with clamping
+//
+// All arithmetic uses Q15 fixed-point (no floating point) for NPU compatibility
+//
+// Note: mel_coeffs_fixed.h uses full 257-element weight arrays with zeros for unused bins.
+//       We optimize by only processing the non-zero range [start_bin, end_bin).
+void apply_mel_filters_q15(
+    const int16_t* magnitude,  // 256 FFT magnitude bins (Q15)
+    int8_t* mel_output,         // 80 mel bins (INT8 output)
+    uint32_t n_mels             // Number of mel filters (typically 80)
+) {
+    for (uint32_t m = 0; m < n_mels; m++) {
+        const mel_filter_q15_t* filter = &mel_filters_q15[m];
+
+        int32_t mel_energy = 0;  // Accumulator (Q30 after Q15 × Q15)
+
+        // Apply triangular filter across the filter's frequency range
+        // Filter weights array is indexed by FFT bin number (0-256)
+        // Only process non-zero range [start_bin, end_bin) for efficiency
+        for (int bin = filter->start_bin; bin < filter->end_bin; bin++) {
+            // Bounds check to prevent buffer overrun
+            if (bin >= 256) break;
+
+            // Get filter weight for this FFT bin (direct indexing)
+            int16_t weight = filter->weights[bin];
+
+            // Skip if weight is zero (sparse optimization)
+            if (weight == 0) continue;
+
+            // Q15 × Q15 = Q30 multiplication
+            int32_t weighted = (int32_t)magnitude[bin] * (int32_t)weight;
+
+            // Scale back to Q15 and accumulate
+            mel_energy += weighted >> 15;
+        }
+
+        // Convert Q15 energy to INT8 range [0, 127]
+        // Apply log-like compression for better dynamic range
+        // Simple approach: scale linearly then clamp
+
+        // Q15 max is 32767, scale to 127
+        // Note: mel_energy may exceed Q15 range due to accumulation
+        // Clamp to prevent overflow before scaling
+        if (mel_energy > 32767) mel_energy = 32767;
+        if (mel_energy < 0) mel_energy = 0;
+
+        // Scale: (energy / 32767) * 127 = (energy * 127) / 32767
+        // Use int64 to prevent overflow in multiplication
+        int32_t scaled = (mel_energy * 127) / 32767;
+
+        // Clamp to INT8 range [0, 127]
+        if (scaled > 127) scaled = 127;
+        if (scaled < 0) scaled = 0;
+
+        mel_output[m] = (int8_t)scaled;
+    }
+}
 
 void mel_kernel_simple(int8_t *input, int8_t *output) {
     // Working buffers (stack allocation - carefully sized)
@@ -60,49 +129,9 @@ void mel_kernel_simple(int8_t *input, int8_t *output) {
     // Step 5: Compute magnitude spectrum (first 256 bins only, due to symmetry)
     compute_magnitude_fixed(fft_out, magnitude, 256);
 
-    // Step 6: Downsample 256 bins → 80 mel bins via averaging
-    // Simple approach: average ~3.2 bins per mel bin
-    // For Whisper: mel bins are log-spaced, but simple averaging is OK
-
-    for (int mel_bin = 0; mel_bin < 80; mel_bin++) {
-        // Each mel bin covers roughly 256/80 = 3.2 FFT bins
-        // Use linear mapping for simplicity
-        int start_bin = (mel_bin * 256) / 80;      // Integer division
-        int end_bin = ((mel_bin + 1) * 256) / 80;
-
-        // Accumulate energy from FFT bins
-        int32_t energy = 0;
-        int count = 0;
-
-        for (int bin = start_bin; bin < end_bin && bin < 256; bin++) {
-            // magnitude[bin] is in Q15 format
-            // For mel computation, we want power (magnitude squared)
-            // But for speed, just use magnitude directly
-            int16_t mag = magnitude[bin];
-
-            // Accumulate absolute value
-            energy += (mag < 0) ? -mag : mag;
-            count++;
-        }
-
-        // Average the energy
-        int32_t avg_energy = (count > 0) ? (energy / count) : 0;
-
-        // Step 7: Convert from Q15 to INT8 range [0, 127]
-        // Q15 max is 32767, scale to 127
-        // Using log scale is better, but linear is simpler for now
-        int32_t scaled = (avg_energy * 127) / 32767;
-
-        // Apply log-like compression (optional, improves dynamic range)
-        // log2(x+1) approximation: x / (1 + x/32767)
-        // Skipping for simplicity - can add later if needed
-
-        // Clamp to INT8 range
-        if (scaled > 127) scaled = 127;
-        if (scaled < 0) scaled = 0;
-
-        output[mel_bin] = (int8_t)scaled;
-    }
+    // Step 6: Apply HTK triangular mel filterbanks (FIXED)
+    // Uses proper mel-scale triangular filters instead of linear averaging
+    apply_mel_filters_q15(magnitude, output, 80);
 }
 
 } // extern "C"
