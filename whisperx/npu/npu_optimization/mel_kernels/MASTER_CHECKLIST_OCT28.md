@@ -744,6 +744,122 @@ See READY_FOR_COMMIT.md for complete git commands (copy-paste ready)
 - 🔴 **Optimized performance broken** - 46x slower than simple (should be similar/faster)
 - 🔴 **Integration architecture broken** - NPU 16-1816x slower than CPU (should be 10-100x faster)
 
+---
+
+## 🎯 RECOMMENDED PATH FORWARD (October 28, 2025 Evening)
+
+### Strategic Analysis Complete
+
+After comprehensive analysis including:
+- ✅ UC-Meeting-Ops investigation (their "220x" is fake - actually 10-50x CPU)
+- ✅ librosa CPU usage analysis (81ms for 60s = negligible)
+- ✅ GPU/iGPU options (0.09% improvement, not worth it)
+- ✅ 100% NPU long-term strategy (4.5 months to 200-500x)
+
+**Two documented paths created**:
+1. **Path A**: Fix current kernels (5-9 weeks) → THIS MASTER CHECKLIST
+2. **Path B**: 100% NPU vision (4.5 months) → NPU_FIRST_LONG_TERM_STRATEGY.md
+
+### ⭐ RECOMMENDATION: Start Path A (Fix Current Kernels)
+
+**Why Path A First**:
+- ✅ Infrastructure 100% ready (excellent foundation)
+- ✅ Kernels execute on NPU successfully
+- ✅ Just need computation fixes
+- ✅ Path B builds on Path A's success
+- ✅ Faster time to first working NPU mel preprocessing
+
+**Timeline**: 5-9 weeks to production-ready NPU preprocessing
+
+### Path A: Detailed Implementation Plan
+
+**Phase 1 (Weeks 1-2): Fix Kernel Accuracy** 🔴 CRITICAL - START HERE
+- Week 1: FFT validation & fixes
+  - [ ] Validate bit-reversal algorithm against reference
+  - [ ] Fix twiddle factor generation
+  - [ ] Test with known sine waves (100Hz, 1000Hz, 4000Hz)
+  - [ ] Implement proper magnitude calculation (sqrt(real² + imag²))
+  - [ ] Achieve >99% correlation with numpy FFT
+
+- Week 2: Mel filterbank fixes
+  - [ ] Validate HTK formula implementation
+  - [ ] Fix triangular filter coefficients
+  - [ ] Test each of 80 filters individually
+  - [ ] Achieve >95% correlation with librosa
+  - [ ] Test with all 23 test signals
+
+**Success Criteria**:
+- [ ] Simple kernel: >0.72 correlation ✅
+- [ ] Optimized kernel: >0.95 correlation ✅
+- [ ] MSE < 100 for both ✅
+- [ ] Visual spectrograms match librosa ✅
+
+**Estimated Effort**: 60-80 hours
+
+**Phase 2 (Weeks 2-3): Fix Optimized Performance** 🔴 CRITICAL
+- [ ] Profile optimized kernel execution
+- [ ] Identify computational bottleneck
+- [ ] Compare with simple kernel implementation
+- [ ] Fix algorithmic inefficiency
+- [ ] Validate optimized ≤ 120 µs per frame
+
+**Success Criteria**:
+- [ ] Optimized kernel as fast or faster than simple
+- [ ] Accuracy maintained (>0.95 correlation)
+
+**Estimated Effort**: 40-60 hours
+
+**Phase 3 (Weeks 3-5): Batch Processing** 🟡 HIGH
+- [ ] Update MLIR for batch dimension (32-64 frames)
+- [ ] Modify integration layer for batching
+- [ ] One-time buffer allocation
+- [ ] Benchmark batch sizes
+- [ ] Achieve per-frame overhead < 50 µs
+
+**Success Criteria**:
+- [ ] NPU faster than CPU
+- [ ] Overall performance > 100x realtime
+
+**Estimated Effort**: 80-100 hours
+
+**Phase 4-5 (Weeks 6-7): Integration & Production**
+- See MASTER_STATUS_POST_VALIDATION_OCT28.md for complete details
+
+**TOTAL TIMELINE**: 5-9 weeks to production-ready NPU mel preprocessing
+
+### Next Immediate Action
+
+**START: Week 1, Day 1 - FFT Debugging**
+1. Create FFT validation test suite
+2. Generate reference outputs with numpy.fft
+3. Compare NPU FFT output bit-by-bit
+4. Fix bit-reversal errors
+5. Fix twiddle factor computation
+
+**Command to begin**:
+```bash
+cd /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/mel_kernels
+python3 create_fft_validation_suite.py
+```
+
+### Why This Approach Wins
+
+**Short-term (5-9 weeks)**:
+- Working NPU mel preprocessing (500-1000x realtime)
+- Proven infrastructure operational
+- Clear path to success
+
+**Long-term (4.5 months)**:
+- Builds to 100% NPU (encoder + decoder)
+- 200-500x realtime full pipeline
+- Unique capability, 5-10W power
+
+**Both paths documented**:
+- Path A details: This checklist
+- Path B (100% NPU): NPU_FIRST_LONG_TERM_STRATEGY.md
+- AMD alternatives: AMD_ACCELERATION_OPTIONS.md
+- UC-Meeting-Ops truth: UC_MEETING_OPS_ANALYSIS.md
+
 ### Confidence Level: Infrastructure High (100%), Computation Low (0%)
 
 **What We Know Works**:

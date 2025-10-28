@@ -1,38 +1,45 @@
 # 🦄 Unicorn Amanuensis - Production Server Documentation
 
-## Current Status (October 27, 2025) - MEL KERNEL EXECUTING ON NPU! 🎉🚀
+## Current Status (October 28, 2025) - NPU Infrastructure Complete, Computation Needs Fixing 🔧
 
-### 🎉🎉🎉 BREAKTHROUGH: NPU Infrastructure 100% Complete! (October 27, 2025 20:15)
-- **✅ MEL KERNEL EXECUTING**: Custom kernel running on AMD Phoenix NPU!
+### ✅ NPU Infrastructure 100% Complete + ⚠️ Computation Issues Found (October 28, 2025)
+
+**INFRASTRUCTURE COMPLETE** ✅:
+- **✅ MEL KERNELS EXECUTING**: Both simple and optimized kernels run on AMD Phoenix NPU
 - **✅ Hardware Context**: Successfully created with correct metadata
-- **✅ Kernel Execution**: ERT_CMD_STATE_COMPLETED on actual NPU hardware
-- **✅ DMA Transfers**: Buffer management working perfectly
+- **✅ Kernel Execution**: ERT_CMD_STATE_COMPLETED on actual NPU hardware (both kernels)
+- **✅ DMA Transfers**: Buffer management working (103-122 µs overhead)
 - **✅ Build Pipeline**: Fully automated 3-second builds
-- **✅ EMBEDDED_METADATA**: Critical discovery - XRT requires XML metadata to recognize DPU kernels!
+- **✅ Testing Suite**: 80+ files, 23 test signals, 3 parallel validation teams
+- **✅ Documentation**: 30+ KB comprehensive analysis
 
-**🏆 Major Achievement**: Complete MEL kernel infrastructure operational on NPU! Ready for computation implementation!
+**COMPUTATION ISSUES FOUND** ⚠️:
+- **❌ Accuracy**: Both kernels produce NaN correlation (expected >0.72 simple, >0.95 optimized)
+- **❌ Performance**: Optimized kernel 46x slower than simple (regression)
+- **❌ Integration**: NPU 16-1816x slower than CPU (per-frame overhead)
 
-**Key Discovery**: The "No valid DPU kernel found" error was caused by missing `EMBEDDED_METADATA` section in XCLBIN. XRT requires this XML metadata to recognize kernels as DPU. Issue resolved by including proper kernel signature XML.
+**🏆 Major Achievement**: Complete NPU infrastructure validated! Excellent foundation for fixing computation.
 
-### 📋 NPU Infrastructure Status
+### 📋 NPU Infrastructure Status (Post-Validation)
 - ✅ **Peano Compiler Integration**: 100% - AIE2 C++ compilation working
 - ✅ **MLIR Lowering Pipeline**: 100% - All aie-opt passes operational
-- ✅ **CDO Generation**: 100% - aie-translate producing valid CDOs
-- ✅ **PDI Creation**: 100% - bootgen generating valid firmware images
-- ✅ **XCLBIN Packaging**: 100% - Complete package with EMBEDDED_METADATA
-- ✅ **XRT Registration**: 100% - XCLBIN loads and registers on NPU
-- ✅ **Hardware Context**: 100% - Successfully created with proper metadata
-- ✅ **Kernel Execution**: 100% - Executes successfully on NPU hardware
+- ✅ **XCLBIN Packaging**: 100% - Both kernels build successfully (0.455-0.856s)
+- ✅ **XRT Runtime**: 100% - Kernels load and execute on NPU
+- ✅ **DMA Transfers**: 100% - Efficient buffer management
+- ✅ **Validation Framework**: 100% - Comprehensive testing suite operational
+- ⚠️ **FFT Computation**: 0% - Produces uncorrelated output (needs fixing)
+- ⚠️ **Mel Filterbank**: 0% - NaN correlation with librosa (needs fixing)
+- ⚠️ **Batch Processing**: 0% - Per-frame overhead (architecture redesign needed)
 
-**Overall Infrastructure**: **100% Complete** - All systems operational, ready for kernel implementation!
+**Overall Status**: **Infrastructure 100% ✅, Computation 0% ❌**
 
 **Key Files**:
-- `mel_kernels/build_mel_complete.sh` - Automated 3-second build pipeline
-- `mel_kernels/build/mel_int8_final.xclbin` - Working 6753-byte XCLBIN with EMBEDDED_METADATA
-- `mel_kernels/NPU_MEL_KERNEL_BREAKTHROUGH_OCT27.md` - Complete breakthrough documentation
-- `mel_kernels/CURRENT_STATUS_OCT27.md` - Current status and next steps
+- `mel_kernels/MASTER_CHECKLIST_OCT28.md` - Complete status + Path A recommendation
+- `mel_kernels/MASTER_STATUS_POST_VALIDATION_OCT28.md` - 30KB validation analysis
+- `mel_kernels/build_fixed/mel_fixed_new.xclbin` - Simple kernel (executes, 4.68% correlation)
+- `mel_kernels/build_optimized/mel_optimized_new.xclbin` - Optimized kernel (executes, 4.68% correlation)
 
-**Next Step**: Implement MEL spectrogram computation in C++ kernel for 220x realtime target!
+**Path Forward**: 5-9 weeks to fix computation (FFT → mel filters → batch processing)
 
 ### 🎉 AMD Ryzen AI NPU Support (Verified October 2025)
 - **XRT 2.20.0 Installed**: Full AMD NPU runtime support
