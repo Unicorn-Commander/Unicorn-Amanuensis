@@ -1,0 +1,49 @@
+======================================================================
+MEL Kernel - Pattern A (Loop in Core)
+======================================================================
+
+Step 1: Compile C kernel (NO main, pure function)...
+clang++: warning: treating 'c' input as 'c++' when in C++ mode, this behavior is deprecated [-Wdeprecated]
+✅ C kernel compiled: 996 bytes
+
+Step 2: Fix MLIR (elf_file → link_with)...
+✅ MLIR corrected
+
+Step 3: Lower MLIR...
+✅ MLIR lowered: 4957 bytes
+
+Step 4: Extract core and compile...
+✅ Core extracted: 787 bytes
+
+Step 5: Generate CDO...
+mel_loop_physical.mlir:20:17: error: 'aie.core' op Expected lowered ELF file to be given as attribute `elf_file` for this core. Compile cores first.
+    %core_0_2 = aie.core(%tile_0_2) {
+                ^
+mel_loop_physical.mlir:20:17: note: see current operation: 
+%14 = "aie.core"(%1) <{link_with = "mel_kernel_simple.o", stack_size = 1024 : i32}> ({
+  %22 = "arith.constant"() <{value = 0 : index}> : () -> index
+  %23 = "arith.constant"() <{value = 1 : index}> : () -> index
+  %24 = "arith.constant"() <{value = 4294967295 : index}> : () -> index
+  %25 = "arith.constant"() <{value = 4294967294 : index}> : () -> index
+  %26 = "arith.constant"() <{value = 2 : index}> : () -> index
+  "scf.for"(%22, %25, %26) ({
+  ^bb0(%arg2: index):
+    "aie.use_lock"(%11) <{action = 2 : i32, value = 1 : i32}> : (index) -> ()
+    "aie.use_lock"(%6) <{action = 2 : i32, value = 1 : i32}> : (index) -> ()
+    "func.call"(%8, %4) <{callee = @mel_kernel_simple}> : (memref<800xi8>, memref<80xi8>) -> ()
+    "aie.use_lock"(%10) <{action = 1 : i32, value = 1 : i32}> : (index) -> ()
+    "aie.use_lock"(%7) <{action = 1 : i32, value = 1 : i32}> : (index) -> ()
+    "aie.use_lock"(%11) <{action = 2 : i32, value = 1 : i32}> : (index) -> ()
+    "aie.use_lock"(%6) <{action = 2 : i32, value = 1 : i32}> : (index) -> ()
+    "func.call"(%9, %5) <{callee = @mel_kernel_simple}> : (memref<800xi8>, memref<80xi8>) -> ()
+    "aie.use_lock"(%10) <{action = 1 : i32, value = 1 : i32}> : (index) -> ()
+    "aie.use_lock"(%7) <{action = 1 : i32, value = 1 : i32}> : (index) -> ()
+    "scf.yield"() : () -> ()
+  }) : (index, index, index) -> ()
+  "aie.use_lock"(%11) <{action = 2 : i32, value = 1 : i32}> : (index) -> ()
+  "aie.use_lock"(%6) <{action = 2 : i32, value = 1 : i32}> : (index) -> ()
+  "func.call"(%8, %4) <{callee = @mel_kernel_simple}> : (memref<800xi8>, memref<80xi8>) -> ()
+  "aie.use_lock"(%10) <{action = 1 : i32, value = 1 : i32}> : (index) -> ()
+  "aie.use_lock"(%7) <{action = 1 : i32, value = 1 : i32}> : (index) -> ()
+  "aie.end"() : () -> ()
+}) : (index) -> index

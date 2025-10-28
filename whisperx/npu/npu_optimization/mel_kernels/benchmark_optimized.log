@@ -1,0 +1,59 @@
+/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/mel_kernels/benchmark_accuracy.py:197: ConstantInputWarning: An input array is constant; the correlation coefficient is not defined.
+  corr, p_value = pearsonr(npu_float, cpu_mel)
+/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/mel_kernels/benchmark_accuracy.py:223: RuntimeWarning: divide by zero encountered in log10
+  snr = 10 * np.log10(signal_power / noise_power)
+======================================================================
+NPU Mel Spectrogram Accuracy Benchmark
+======================================================================
+
+Initializing NPU...
+✅ NPU initialized: build_optimized/mel_optimized_new.xclbin
+Found 23 test files
+
+  Testing: beating_1000_1100hz... Corr: -10.35%, MSE: 3198.2918, SNR: -1.4 dB
+  Testing: brown_noise... Corr: 12.13%, MSE: 2726.5740, SNR: -2.4 dB
+  Testing: chirp_1000_4000hz... Corr: 13.73%, MSE: 4622.5241, SNR: -0.1 dB
+  Testing: chirp_100_1000hz... Corr: -10.68%, MSE: 5057.7415, SNR: -1.2 dB
+  Testing: chirp_100_4000hz... Corr: -1.72%, MSE: 5824.5220, SNR: 0.8 dB
+  Testing: clipping_1000hz... Corr: -6.78%, MSE: 3491.9049, SNR: -0.6 dB
+  Testing: dc_offset... Corr: 21.32%, MSE: 1845.0963, SNR: -0.8 dB
+  Testing: harmonics_100_200_300hz... Corr: 0.69%, MSE: 3772.9138, SNR: -0.8 dB
+  Testing: impulse... Corr: 14.06%, MSE: 3495.5263, SNR: 0.3 dB
+  Testing: pink_noise... Corr: 10.50%, MSE: 3719.4844, SNR: -0.3 dB
+  Testing: quiet_1000hz... Corr: 20.21%, MSE: 2402.3383, SNR: 0.1 dB
+  Testing: silence... Corr: nan%, MSE: 6.0500, SNR: -inf dB
+  Testing: step... Corr: -45.50%, MSE: 6899.2704, SNR: -5.5 dB
+  Testing: tone_1000hz... Corr: -2.31%, MSE: 3345.0417, SNR: -1.4 dB
+  Testing: tone_100hz... Corr: -29.09%, MSE: 3959.5623, SNR: -2.5 dB
+  Testing: tone_2000hz... Corr: -29.70%, MSE: 3366.6616, SNR: -3.1 dB
+  Testing: tone_250hz... Corr: 7.53%, MSE: 3160.9411, SNR: -3.0 dB
+  Testing: tone_3000hz... Corr: -5.40%, MSE: 2711.6978, SNR: -3.7 dB
+  Testing: tone_4000hz... Corr: -5.39%, MSE: 2598.2120, SNR: -5.7 dB
+  Testing: tone_500hz... Corr: 5.81%, MSE: 2902.5042, SNR: -0.5 dB
+  Testing: tone_6000hz... Corr: 26.08%, MSE: 2847.9274, SNR: -5.0 dB
+  Testing: two_tones_440_880hz... Corr: -13.17%, MSE: 4338.5890, SNR: -1.4 dB
+  Testing: white_noise... Corr: -4.49%, MSE: 5414.5696, SNR: 1.3 dB
+
+======================================================================
+Benchmark Complete!
+======================================================================
+
+✅ Results saved: benchmark_results_optimized/benchmark_results.json
+
+Aggregate Statistics:
+----------------------------------------------------------------------
+  Correlation:  Mean=nan%, Min=nan%, Max=nan%
+  MSE:          Mean=3552.5193, Min=6.0500, Max=6899.2704
+  SNR (dB):     Mean=-inf, Min=-inf, Max=1.3
+
+Verdict:
+----------------------------------------------------------------------
+  ❌ FAIL: NEEDS IMPROVEMENT (nan% correlation)
+
+
+✨ Benchmark complete!
+
+Next steps:
+  1. Review: benchmark_results/benchmark_results.json
+  2. Generate visuals: python3 visual_comparison.py
+  3. Create report: python3 accuracy_report.py

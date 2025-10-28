@@ -1,0 +1,33 @@
+{
+  "aie_partition": {
+    "name": "QoS",
+    "operations_per_cycle": "2048",
+    "inference_fingerprint": "23423",
+    "pre_post_fingerprint": "12345",
+    "partition": {
+      "column_width": 4,
+      "start_columns": [
+        0
+      ]
+    },
+    "PDIs": [
+      {
+        "uuid": "0df51375-ece7-453e-8675-ad9fdd2726b4",
+        "file_name": "/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/mel_kernels/build_optimized/mel_optimized.mlir.prj/main.pdi",
+        "cdo_groups": [
+          {
+            "name": "DPU",
+            "type": "PRIMARY",
+            "pdi_id": "0x01",
+            "dpu_kernel_ids": [
+              "0x901"
+            ],
+            "pre_cdo_groups": [
+              "0xC1"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

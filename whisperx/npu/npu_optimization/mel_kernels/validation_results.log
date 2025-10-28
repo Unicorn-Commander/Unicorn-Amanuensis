@@ -1,0 +1,90 @@
+/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/mel_kernels/run_accuracy_validation.py:170: ConstantInputWarning: An input array is constant; the correlation coefficient is not defined.
+  corr, p_value = pearsonr(npu_float, cpu_mel)
+/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/mel_kernels/run_accuracy_validation.py:195: RuntimeWarning: divide by zero encountered in log10
+  snr = 10 * np.log10(signal_power / noise_power)
+======================================================================
+MEL KERNEL ACCURACY VALIDATION
+Simple Kernel vs Optimized Kernel
+======================================================================
+
+Initializing Simple Kernel...
+  XCLBIN: build_fixed/mel_fixed_new.xclbin
+  Insts:  build_fixed/insts_new.bin
+✅ Simple Kernel initialized!
+
+Initializing Optimized Kernel...
+  XCLBIN: build_optimized/mel_optimized_new.xclbin
+  Insts:  build_optimized/insts_optimized_new.bin
+✅ Optimized Kernel initialized!
+
+Found 23 test files
+
+Testing: beating_1000_1100hz
+  Simple:   9.17% | Optimized:   4.10%
+Testing: brown_noise
+  Simple:  11.44% | Optimized:  28.96%
+Testing: chirp_1000_4000hz
+  Simple:  -7.55% | Optimized:   9.97%
+Testing: chirp_100_1000hz
+  Simple:   9.75% | Optimized:   1.33%
+Testing: chirp_100_4000hz
+  Simple:  12.50% | Optimized: -18.84%
+Testing: clipping_1000hz
+  Simple:   4.22% | Optimized:   1.50%
+Testing: dc_offset
+  Simple:   9.12% | Optimized:  19.16%
+Testing: harmonics_100_200_300hz
+  Simple:   8.51% | Optimized:  -1.12%
+Testing: impulse
+  Simple:  16.75% | Optimized:   3.35%
+Testing: pink_noise
+  Simple:   3.73% | Optimized:   4.47%
+Testing: quiet_1000hz
+  Simple:  10.54% | Optimized:  21.75%
+Testing: silence
+  Simple:    nan% | Optimized:    nan%
+Testing: step
+  Simple:  11.69% | Optimized: -38.94%
+Testing: tone_1000hz
+  Simple:  14.22% | Optimized:  -5.34%
+Testing: tone_100hz
+  Simple: -19.93% | Optimized: -16.86%
+Testing: tone_2000hz
+  Simple:   0.60% | Optimized: -25.84%
+Testing: tone_250hz
+  Simple:   9.45% | Optimized:  15.10%
+Testing: tone_3000hz
+  Simple:  -0.29% | Optimized:  -9.27%
+Testing: tone_4000hz
+  Simple:  -6.59% | Optimized:  -2.18%
+Testing: tone_500hz
+  Simple:  11.57% | Optimized:  10.02%
+Testing: tone_6000hz
+  Simple:  31.71% | Optimized:  17.77%
+Testing: two_tones_440_880hz
+  Simple:   9.28% | Optimized: -23.47%
+Testing: white_noise
+  Simple:   8.80% | Optimized:  10.46%
+
+======================================================================
+VALIDATION COMPLETE!
+======================================================================
+
+✅ Results saved!
+
+AGGREGATE STATISTICS:
+======================================================================
+
+SIMPLE KERNEL (Linear Downsampling):
+  Correlation: nan% (min: nan%, max: nan%)
+  MSE:         1674.8498
+
+OPTIMIZED KERNEL (Triangular Mel Filters):
+  Correlation: nan% (min: nan%, max: nan%)
+  MSE:         3593.6847
+
+VERDICT:
+======================================================================
+❌ FAIL: Optimized kernel achieves nan% correlation (target: >95%)
+📈 Improvement: nanx better correlation
+

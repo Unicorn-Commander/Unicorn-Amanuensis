@@ -1,0 +1,20 @@
+Unable to parse module assembly:
+error: "-":27:19: 'aie.core' op When `elf_file` attribute is specified, core body must be empty (consist of exactly one `aie.end` op).
+ note: "-":27:19: see current operation: 
+  %2 = "aie.core"(%1) <{elf_file = "mel_kernel_simple.o", stack_size = 1024 : i32}> ({
+    %7 = "arith.constant"() <{value = 0 : index}> : () -> index
+    %8 = "arith.constant"() <{value = 1 : index}> : () -> index
+    %9 = "arith.constant"() <{value = 4294967295 : index}> : () -> index
+    "scf.for"(%7, %9, %8) ({
+    ^bb0(%arg2: index):
+      %10 = "aie.objectfifo.acquire"() <{objFifo_name = @of_in, port = 1 : i32, size = 1 : i32}> : () -> !aie.objectfifosubview<memref<800xi8>>
+      %11 = "aie.objectfifo.subview.access"(%10) <{index = 0 : i32}> : (!aie.objectfifosubview<memref<800xi8>>) -> memref<800xi8>
+      %12 = "aie.objectfifo.acquire"() <{objFifo_name = @of_out, port = 0 : i32, size = 1 : i32}> : () -> !aie.objectfifosubview<memref<80xi8>>
+      %13 = "aie.objectfifo.subview.access"(%12) <{index = 0 : i32}> : (!aie.objectfifosubview<memref<80xi8>>) -> memref<80xi8>
+      "func.call"(%11, %13) <{callee = @mel_kernel_simple}> : (memref<800xi8>, memref<80xi8>) -> ()
+      "aie.objectfifo.release"() <{objFifo_name = @of_in, port = 1 : i32, size = 1 : i32}> : () -> ()
+      "aie.objectfifo.release"() <{objFifo_name = @of_out, port = 0 : i32, size = 1 : i32}> : () -> ()
+      "scf.yield"() : () -> ()
+    }) : (index, index, index) -> ()
+    "aie.end"() : () -> ()
+  }) : (index) -> index

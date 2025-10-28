@@ -1,0 +1,86 @@
+=== MEL Kernel Compilation - ResNet Pattern ===
+
+✅ C kernel: mel_kernel_simple_correct.o
+-rw-rw-r-- 1 ucadmin ucadmin 1.1K Oct 28 02:34 mel_kernel_simple_correct.o
+
+=== Running aiecc.py ===
+
+Traceback (most recent call last):
+  File "/home/ucadmin/mlir-aie-fresh/mlir-aie/venv313/bin/aiecc.py", line 7, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "/home/ucadmin/mlir-aie-fresh/mlir-aie/venv313/lib/python3.13/site-packages/mlir_aie/python/aie/compiler/aiecc/main.py", line 1907, in main
+    run(module_str)
+    ~~~^^^^^^^^^^^^
+  File "/home/ucadmin/mlir-aie-fresh/mlir-aie/venv313/lib/python3.13/site-packages/mlir_aie/python/aie/compiler/aiecc/main.py", line 1881, in run
+    asyncio.run(runner.run_flow())
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 719, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/home/ucadmin/mlir-aie-fresh/mlir-aie/venv313/lib/python3.13/site-packages/mlir_aie/python/aie/compiler/aiecc/main.py", line 1687, in run_flow
+    await self.run_flow_for_device(
+    ...<8 lines>...
+    )
+  File "/home/ucadmin/mlir-aie-fresh/mlir-aie/venv313/lib/python3.13/site-packages/mlir_aie/python/aie/compiler/aiecc/main.py", line 1793, in run_flow_for_device
+    await asyncio.gather(*processes)
+  File "/home/ucadmin/mlir-aie-fresh/mlir-aie/venv313/lib/python3.13/site-packages/mlir_aie/python/aie/compiler/aiecc/main.py", line 1170, in process_xclbin_gen
+    await self.do_call(task, ["xclbinutil"] + flag +
+    ...<2 lines>...
+                              "--force", "--quiet", "--output", opts.xclbin_name.format(device_name)])
+  File "/home/ucadmin/mlir-aie-fresh/mlir-aie/venv313/lib/python3.13/site-packages/mlir_aie/python/aie/compiler/aiecc/main.py", line 582, in do_call
+    proc = await asyncio.create_subprocess_exec(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        *command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/usr/lib/python3.13/asyncio/subprocess.py", line 224, in create_subprocess_exec
+    transport, protocol = await loop.subprocess_exec(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        stderr=stderr, **kwds)
+        ^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 1788, in subprocess_exec
+    transport = await self._make_subprocess_transport(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        protocol, popen_args, False, stdin, stdout, stderr,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        bufsize, **kwargs)
+        ^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/unix_events.py", line 213, in _make_subprocess_transport
+    transp = _UnixSubprocessTransport(self, protocol, args, shell,
+                                    stdin, stdout, stderr, bufsize,
+                                    waiter=waiter, extra=extra,
+                                    **kwargs)
+  File "/usr/lib/python3.13/asyncio/base_subprocess.py", line 39, in __init__
+    self._start(args=args, shell=shell, stdin=stdin, stdout=stdout,
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                stderr=stderr, bufsize=bufsize, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/unix_events.py", line 855, in _start
+    self._proc = subprocess.Popen(
+                 ~~~~~~~~~~~~~~~~^
+        args, shell=shell, stdin=stdin, stdout=stdout, stderr=stderr,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        universal_newlines=False, bufsize=bufsize, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/subprocess.py", line 1039, in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                        pass_fds, cwd, env,
+                        ^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+                        gid, gids, uid, umask,
+                        ^^^^^^^^^^^^^^^^^^^^^^
+                        start_new_session, process_group)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/subprocess.py", line 1969, in _execute_child
+    raise child_exception_type(errno_num, err_msg, err_filename)
+FileNotFoundError: [Errno 2] No such file or directory: 'xclbinutil'

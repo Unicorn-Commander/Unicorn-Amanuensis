@@ -1,0 +1,20 @@
+======================================================================
+MEL Kernel with FFT - Build Pipeline
+======================================================================
+
+Step 1: Compile FFT module...
+✅ FFT module compiled: 8032 bytes
+
+Step 2: Compile MEL kernel with FFT...
+clang++: warning: treating 'c' input as 'c++' when in C++ mode, this behavior is deprecated [-Wdeprecated]
+✅ MEL kernel compiled: 6040 bytes
+
+Step 3: Create combined object archive...
+✅ Combined archive created: 14416 bytes
+
+Step 4: Compile MLIR to XCLBIN...
+Using aiecc.py for compilation...
+Traceback (most recent call last):
+  File "/home/ucadmin/mlir-aie-fresh/mlir-aie/venv313/bin/aiecc.py", line 3, in <module>
+    from aie.compiler.aiecc.main import main
+ModuleNotFoundError: No module named 'aie'

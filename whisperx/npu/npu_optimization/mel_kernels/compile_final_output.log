@@ -1,0 +1,11 @@
+=== MEL Kernel Compilation - ResNet Pattern ===
+
+✅ C kernel: mel_kernel_simple_correct.o
+-rw-rw-r-- 1 ucadmin ucadmin 1.1K Oct 28 02:34 mel_kernel_simple_correct.o
+
+=== Running aiecc.py ===
+ld.lld: error: mel_kernel_simple.o is incompatible with /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/mel_kernels/mel_with_loop_linkwith.mlir.prj/main_input.o
+clang: error: ld.lld command failed with exit code 1 (use -v to see invocation)
+
+Error encountered while running: /home/ucadmin/mlir-aie-fresh/mlir-aie/venv313/lib/python3.13/site-packages/llvm-aie/bin/clang -O2 --target=aie2-none-unknown-elf /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/mel_kernels/mel_with_loop_linkwith.mlir.prj/main_input.o -Wl,--gc-sections -Wl,--orphan-handling=error -Wl,-T,/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/mel_kernels/mel_with_loop_linkwith.mlir.prj/main_core_0_2.ld.script -o /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/mel_kernels/mel_with_loop_linkwith.mlir.prj/main_core_0_2.elf
+
