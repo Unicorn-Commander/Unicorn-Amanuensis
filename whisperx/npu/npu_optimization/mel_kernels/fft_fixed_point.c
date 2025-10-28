@@ -5,6 +5,10 @@
 #include <stdint.h>
 #include "fft_coeffs_fixed.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define FFT_SIZE 512
 #define LOG2_SIZE 9
 #define Q15_SCALE 32767  // 2^15 - 1 (max Q15 value)
@@ -183,3 +187,7 @@ void zero_pad_to_512(int16_t* samples, uint32_t input_size) {
         samples[i] = 0;
     }
 }
+
+#ifdef __cplusplus
+}
+#endif

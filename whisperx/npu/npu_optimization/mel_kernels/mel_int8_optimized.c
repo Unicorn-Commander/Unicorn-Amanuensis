@@ -232,3 +232,19 @@ void mel_spectrogram_int8_kernel(int16_t* restrict audio_in,    // [num_frames, 
         apply_mel_filterbank_int8(magnitude, frame_mel, MEL_BINS);
     }
 }
+
+// AIE core entry point
+// Memory-mapped buffer addresses from MLIR (aie.buffer declarations)
+#define INPUT_BUFFER_ADDR  0x1000  // 4096 in hex (from MLIR: address = 4096)
+#define OUTPUT_BUFFER_ADDR 0x0400  // 1024 in hex (from MLIR: address = 1024)
+
+int main() {
+    // Map buffers to memory addresses specified in MLIR
+    int16_t* input_buffer = (int16_t*)INPUT_BUFFER_ADDR;   // 400 INT16 samples = 800 bytes
+    int8_t* output_buffer = (int8_t*)OUTPUT_BUFFER_ADDR;   // 80 INT8 mel features
+    
+    // Process one frame
+    mel_spectrogram_int8_kernel(input_buffer, output_buffer, 1);
+    
+    return 0;
+}
