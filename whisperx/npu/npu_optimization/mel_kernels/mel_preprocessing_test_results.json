@@ -1,0 +1,52 @@
+[
+  {
+    "kernel": "simple",
+    "xclbin": "/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/mel_kernels/build_fixed/mel_fixed_new.xclbin",
+    "audio_duration": 11.0,
+    "cpu_time": 0.027979373931884766,
+    "npu_time": 0.44774961471557617,
+    "npu_init_time": 0.1677086353302002,
+    "speedup": 0.06248888443970654,
+    "rtf_cpu": 393.1467525606285,
+    "rtf_npu": 24.567301988607017,
+    "correlation": 0.21912973652336754,
+    "mse": 3188.2783203125,
+    "psnr": 3.0262377858161926,
+    "npu_metrics": {
+      "total_frames": 1098,
+      "npu_time_total": 0.44413065910339355,
+      "cpu_time_total": 0.0,
+      "npu_time_per_frame_ms": 0.40449058206137845,
+      "cpu_time_per_frame_ms": 0.0,
+      "speedup": 0.0,
+      "npu_available": true
+    },
+    "success": true,
+    "error": null
+  },
+  {
+    "kernel": "optimized",
+    "xclbin": "/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/mel_kernels/build_optimized/mel_optimized_new.xclbin",
+    "audio_duration": 11.0,
+    "cpu_time": 0.01139974594116211,
+    "npu_time": 20.714763879776,
+    "npu_init_time": 0.053603410720825195,
+    "speedup": 0.0005503198591750195,
+    "rtf_cpu": 964.9337850838666,
+    "rtf_npu": 0.531022224720572,
+    "correlation": 0.17268831357346473,
+    "mse": 3212.872802734375,
+    "psnr": 2.99286425113678,
+    "npu_metrics": {
+      "total_frames": 1098,
+      "npu_time_total": 20.69882869720459,
+      "cpu_time_total": 0.0,
+      "npu_time_per_frame_ms": 18.851392256106184,
+      "cpu_time_per_frame_ms": 0.0,
+      "speedup": 0.0,
+      "npu_available": true
+    },
+    "success": true,
+    "error": null
+  }
+]
