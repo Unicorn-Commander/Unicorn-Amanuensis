@@ -80,16 +80,15 @@ void apply_mel_filters_q15(
         }
 
         // Convert Q15 energy to INT8 range [0, 127]
-        // Since we're using power spectrum (magnitude squared), values are smaller
-        // Need much less aggressive scaling
+        // Use simpler compression: just scale the full Q15 range
+        // Research shows this should work with proper scaling factor
 
         // Clamp to prevent negative values
         if (mel_energy < 0) mel_energy = 0;
 
-        // Power spectrum values are much smaller than magnitude
-        // Empirical testing shows mel_energy is very small
-        // Use divide by 16 for maximum sensitivity
-        int32_t scaled = mel_energy / 16;  // Maximum sensitivity
+        // Direct linear scaling from Q15 [0, 32767] to INT8 [0, 127]
+        // Formula from research: (mel_energy * 127) / 32767
+        int32_t scaled = (mel_energy * 127) / 32767;
 
         // Clamp to INT8 range [0, 127]
         if (scaled > 127) scaled = 127;
