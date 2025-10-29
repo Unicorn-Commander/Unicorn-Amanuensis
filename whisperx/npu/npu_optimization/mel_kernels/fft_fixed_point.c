@@ -154,12 +154,13 @@ void compute_magnitude_fixed(complex_q15_t* fft_output, int16_t* magnitude, uint
     uint32_t i;
 
     for (i = 0; i < size; i++) {
-        // Use fast approximation for speed
-        magnitude[i] = fast_magnitude_q15(fft_output[i].real, fft_output[i].imag);
+        // Use squared magnitude to match librosa (power=2.0)
+        // This is critical for correct mel spectrogram computation
+        int32_t mag_sq = magnitude_squared_q15(fft_output[i].real, fft_output[i].imag);
+        magnitude[i] = (int16_t)((mag_sq > 32767) ? 32767 : mag_sq);
 
-        // Alternative: Use squared magnitude for better accuracy
-        // int32_t mag_sq = magnitude_squared_q15(fft_output[i].real, fft_output[i].imag);
-        // magnitude[i] = (int16_t)((mag_sq > 32767) ? 32767 : mag_sq);
+        // Old: Used fast approximation (incorrect for power spectrum)
+        // magnitude[i] = fast_magnitude_q15(fft_output[i].real, fft_output[i].imag);
     }
 }
 

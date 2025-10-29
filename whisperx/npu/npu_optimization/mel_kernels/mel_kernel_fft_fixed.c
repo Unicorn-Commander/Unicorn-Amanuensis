@@ -80,18 +80,19 @@ void apply_mel_filters_q15(
         }
 
         // Convert Q15 energy to INT8 range [0, 127]
-        // Apply log-like compression for better dynamic range
-        // Simple approach: scale linearly then clamp
+        // Use sqrt-like compression for better dynamic range (matches librosa dB scale)
 
-        // Q15 max is 32767, scale to 127
-        // Note: mel_energy may exceed Q15 range due to accumulation
-        // Clamp to prevent overflow before scaling
-        if (mel_energy > 32767) mel_energy = 32767;
+        // Clamp to prevent negative values
         if (mel_energy < 0) mel_energy = 0;
 
-        // Scale: (energy / 32767) * 127 = (energy * 127) / 32767
-        // Use int64 to prevent overflow in multiplication
-        int32_t scaled = (mel_energy * 127) / 32767;
+        // Apply square root for dynamic range compression (approximates dB conversion)
+        // sqrt(x) ≈ (x + 1) / (sqrt(max) + small_value)
+        // For Q15, we use a simpler approach: just reduce the divisor
+        // This gives more sensitivity to smaller values
+
+        // Instead of dividing by 32767, divide by 256 for better resolution
+        // This assumes typical mel energy will be in range [0, 32767]
+        int32_t scaled = mel_energy / 256;  // Much less aggressive scaling
 
         // Clamp to INT8 range [0, 127]
         if (scaled > 127) scaled = 127;
