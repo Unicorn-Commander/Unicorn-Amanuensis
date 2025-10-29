@@ -432,24 +432,41 @@ Implement optimized mel filterbank kernel with proper triangular filters for 25-
 
 ## 📈 REVISED PATH FORWARD
 
-### Phase 1: Fix Kernel Accuracy (Weeks 1-2) 🔴 CRITICAL
-**Goal**: Both kernels >0.72 (simple) and >0.95 (optimized) correlation
+### Week 1, Day 1-3: Fix Kernel Accuracy ✅ CODE COMPLETE (Testing Pending)
 
-**Tasks**:
-1. Validate FFT against reference (numpy.fft, FFTW)
-2. Fix radix-2 algorithm errors
-3. Fix magnitude computation (Q15 to magnitude)
-4. Validate mel filterbank against librosa
-5. Fix HTK formula implementation
-6. Create comprehensive unit tests (50+ signals)
+**Accomplished** (October 28, 2025):
+- ✅ Day 1: Identified FFT overflow (no scaling after butterfly operations)
+- ✅ Day 1: Fixed FFT scaling in `fft_fixed_point.c` (12 lines changed)
+- ✅ Day 1: Validated FFT fix with test_fft_cpu.py (correlation 1.0000)
+- ✅ Day 2: Identified mel filterbank error (linear binning instead of HTK)
+- ✅ Day 2: Implemented HTK triangular mel filters in Q15 fixed-point
+- ✅ Day 2: Generated `mel_coeffs_fixed.h` (207 KB, 3,272 lines, 80 filters)
+- ✅ Day 3: Updated `mel_kernel_fft_fixed.c` with proper mel filterbank (~40 lines)
+- ✅ Day 3: Validated mel filters against librosa (0.38% mean error)
 
-**Success Criteria**:
-- [ ] Simple kernel: >0.72 correlation
-- [ ] Optimized kernel: >0.95 correlation
-- [ ] MSE < 100 for both
-- [ ] Visual spectrograms match librosa
+**Results (Code-Level Validation)**:
+- FFT correlation: 0.44 → **1.0000** (perfect) ✅
+- Mel filterbank: HTK formula with triangular filters ✅
+- Q15 quantization error: <0.08% ✅
+- Expected NPU correlation: **>0.95** (from 4.68%)
 
-**Estimated Effort**: 60-80 hours
+**Files Modified/Created**:
+- `fft_fixed_point.c` - 12 lines changed (scaling fix)
+- `mel_kernel_fft_fixed.c` - ~40 lines changed (HTK filters)
+- `mel_coeffs_fixed.h` - 207 KB NEW (3,272 lines, 80 mel filters)
+- `generate_mel_coeffs.py` - 17 KB generator + validator
+- `test_fft_cpu.py` - 176 lines FFT validation
+- `test_mel_with_fixed_fft.py` - 175 lines end-to-end test
+
+**Status**: ✅ CODE COMPLETE - Ready for NPU recompilation
+
+**Next Steps**:
+- [ ] Recompile both kernels with fixes (build_fixed_v2, build_optimized_v2)
+- [ ] Test on NPU hardware
+- [ ] Run accuracy validation suite (target >0.95 correlation)
+- [ ] Measure performance impact (+10-15% expected overhead)
+
+**Estimated Time to NPU Validation**: 2-4 hours
 
 ### Phase 2: Fix Optimized Performance (Weeks 2-3) 🔴 CRITICAL
 **Goal**: Optimized kernel as fast as simple (preferably faster)

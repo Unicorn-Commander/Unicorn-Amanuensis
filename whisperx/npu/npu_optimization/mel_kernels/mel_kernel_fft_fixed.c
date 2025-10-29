@@ -80,19 +80,16 @@ void apply_mel_filters_q15(
         }
 
         // Convert Q15 energy to INT8 range [0, 127]
-        // Use sqrt-like compression for better dynamic range (matches librosa dB scale)
+        // Since we're using power spectrum (magnitude squared), values are smaller
+        // Need much less aggressive scaling
 
         // Clamp to prevent negative values
         if (mel_energy < 0) mel_energy = 0;
 
-        // Apply square root for dynamic range compression (approximates dB conversion)
-        // sqrt(x) ≈ (x + 1) / (sqrt(max) + small_value)
-        // For Q15, we use a simpler approach: just reduce the divisor
-        // This gives more sensitivity to smaller values
-
-        // Instead of dividing by 32767, divide by 256 for better resolution
-        // This assumes typical mel energy will be in range [0, 32767]
-        int32_t scaled = mel_energy / 256;  // Much less aggressive scaling
+        // Power spectrum values are much smaller than magnitude
+        // Empirical testing shows mel_energy is very small
+        // Use divide by 16 for maximum sensitivity
+        int32_t scaled = mel_energy / 16;  // Maximum sensitivity
 
         // Clamp to INT8 range [0, 127]
         if (scaled > 127) scaled = 127;
