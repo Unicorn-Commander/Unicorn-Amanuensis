@@ -1,0 +1,24 @@
+# XDNA2 Runtime Requirements for Unicorn-Amanuensis
+# Whisper-based Speech-to-Text with NPU acceleration
+
+# Core dependencies
+numpy>=1.24.0,<2.0.0
+librosa>=0.10.0       # Audio preprocessing (mel spectrogram)
+soundfile>=0.12.0     # Audio I/O for librosa
+fastapi>=0.104.0      # API server
+uvicorn>=0.24.0       # ASGI server
+pydantic>=2.0.0       # Data validation
+
+# XDNA2 NPU dependencies (system-provided)
+# These must be installed via AMD's packages, not pip:
+# - XRT (Xilinx Runtime) - /opt/xilinx/xrt
+# - MLIR-AIE2 toolchain - ~/mlir-aie
+# - aie.utils.xrt (Python bindings) - part of MLIR-AIE
+
+# Optional: Enhanced features
+python-multipart>=0.0.6   # File uploads
+aiofiles>=23.0.0          # Async file I/O
+
+# Development dependencies (optional)
+pytest>=7.4.0             # Testing
+pytest-asyncio>=0.21.0    # Async tests
