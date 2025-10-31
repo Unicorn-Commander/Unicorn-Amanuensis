@@ -95,14 +95,25 @@ class WhisperXDNA2Runtime:
 
             # Define kernel configurations
             # (name, M, K, N, xclbin, insts)
-            kernel_configs = [
-                ("512x512x512", 512, 512, 512,
-                 "matmul_4tile_int8.xclbin",
-                 "insts_4tile_int8.bin"),
-                ("512x512x2048", 512, 512, 2048,
-                 "matmul_4tile_int8_512x512x2048.xclbin",
-                 "insts_4tile_int8_512x512x2048.bin"),
-            ]
+            # Use 32-tile or 4-tile based on use_4tile flag
+            if self.use_4tile:
+                kernel_configs = [
+                    ("512x512x512", 512, 512, 512,
+                     "matmul_4tile_int8.xclbin",
+                     "insts_4tile_int8.bin"),
+                    ("512x512x2048", 512, 512, 2048,
+                     "matmul_4tile_int8_512x512x2048.xclbin",
+                     "insts_4tile_int8_512x512x2048.bin"),
+                ]
+            else:
+                # 32-tile kernels (100% NPU utilization!)
+                kernel_configs = [
+                    ("512x512x512", 512, 512, 512,
+                     "matmul_32tile_int8.xclbin",
+                     "insts_32tile_int8.bin"),
+                    # Note: 512x512x2048 32-tile kernel hits buffer limits
+                    # Runtime will use chunking automatically
+                ]
 
             logger.info("Loading NPU kernel variants...")
 
@@ -482,6 +493,51 @@ class WhisperXDNA2Runtime:
                 ops = int(2 * M * K * N)
                 gflops = ops / elapsed_total / 1e9
                 logger.debug(f"NPU matmul ({M}x{K}x{N}, {num_chunks} chunks): {elapsed_total*1000:.2f}ms, {gflops:.1f} GFLOPS")
+
+                return C
+
+            elif N > 512 and "512x512x512" in self.matmul_apps:
+                # N dimension too large - chunk it!
+                # Split N into chunks of 512
+                logger.debug(f"Chunking matmul {M}x{K}x{N} into 512-sized N chunks")
+
+                kernel = self.matmul_apps["512x512x512"]
+                app = kernel['app']
+
+                chunk_size = 512
+                num_chunks = N // chunk_size
+
+                if N % chunk_size != 0:
+                    raise ValueError(f"N={N} must be divisible by {chunk_size} for chunking")
+
+                # Process each chunk separately (no accumulation needed for N chunks)
+                C = np.zeros((M, N), dtype=np.int32)
+
+                start_total = time.perf_counter()
+
+                for i in range(num_chunks):
+                    # Extract chunks
+                    # A stays the same (M, K)
+                    B_chunk = B[:, i*chunk_size:(i+1)*chunk_size]  # (K, chunk_size)
+
+                    # Flatten
+                    A_flat = A.flatten().astype(np.int8)
+                    B_flat = B_chunk.flatten().astype(np.int8)
+
+                    # Execute
+                    app.buffers[3].write(A_flat)
+                    app.buffers[4].write(B_flat)
+                    app.run()
+
+                    # Place chunk in output
+                    C_chunk = app.buffers[5].read().reshape(M, chunk_size)
+                    C[:, i*chunk_size:(i+1)*chunk_size] = C_chunk
+
+                elapsed_total = time.perf_counter() - start_total
+
+                ops = int(2 * M * K * N)
+                gflops = ops / elapsed_total / 1e9
+                logger.debug(f"NPU matmul ({M}x{K}x{N}, {num_chunks} N-chunks): {elapsed_total*1000:.2f}ms, {gflops:.1f} GFLOPS")
 
                 return C
 

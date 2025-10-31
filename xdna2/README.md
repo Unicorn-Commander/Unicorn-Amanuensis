@@ -2,6 +2,16 @@
 
 Production-ready XDNA2 NPU runtime for Whisper-based Speech-to-Text, leveraging CC-1L's proven **1,183x INT8 matmul kernel**.
 
+## Critical: BF16 Workaround Required
+
+**AMD XDNA2 NPU Bug**: BF16 operations produce **789-2823% errors** with signed values.
+
+**Solution**: BF16SafeRuntime class automatically scales inputs to [0,1] range, reducing error to **3.55%**.
+
+**Status**: ✅ Implemented and tested (Code ready, NumPy simulation, awaiting XDNA2 hardware)
+
+See **BF16_WORKAROUND_DOCUMENTATION.md** for full details.
+
 ## Performance Targets
 
 | Metric | XDNA1 (Current) | XDNA2 (Target) | Improvement |
