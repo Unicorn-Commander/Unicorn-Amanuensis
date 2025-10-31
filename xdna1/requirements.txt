@@ -1,6 +1,24 @@
+# XDNA1 (Phoenix/Hawk Point) NPU Requirements
+# For AMD Ryzen 7040/8040 series processors
+
+# XRT Python bindings (requires XRT 2.20.0 installed on system)
+# Install XRT first: https://github.com/Unicorn-Commander/unicorn-npu-core
+
+# Core dependencies
+numpy>=1.24.0
+librosa>=0.10.0
+soundfile>=0.12.0
+
+# WhisperX for full transcription pipeline
 git+https://github.com/m-bain/whisperx.git
+
+# FastAPI server (optional)
 fastapi==0.110.0
 uvicorn==0.27.1
 python-multipart==0.0.9
-# Let WhisperX determine the torch version
-# torch and torchaudio will be installed as dependencies
+
+# Performance monitoring (optional)
+tqdm>=4.65.0
+
+# Note: pyxrt is installed with XRT 2.20.0
+# PYTHONPATH must include /opt/xilinx/xrt/python
