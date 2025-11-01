@@ -40,3 +40,9 @@ logs/
 tmp/
 temp/
 *.tmp
+# Whisper model weights (too large for GitHub)
+xdna2/whisper_weights/models--*/
+*.safetensors
+*.bin
+# Large model blobs
+xdna2/whisper_weights/models*/blobs/

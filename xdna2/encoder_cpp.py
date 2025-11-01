@@ -304,6 +304,13 @@ class WhisperEncoderCPP:
         """
         Register NPU callback with XRT application.
 
+        This is the CRITICAL missing piece that wires NPU callback to C++ encoder.
+
+        Steps:
+        1. Register callback with XRT NPU application
+        2. Get callback function pointer from NPUCallbackNative
+        3. Wire callback to each C++ encoder layer
+
         Args:
             npu_app: Loaded NPU application from XRT
 
@@ -315,12 +322,39 @@ class WhisperEncoderCPP:
             return False
 
         try:
+            # Step 1: Register callback with XRT application
+            logger.info("[EncoderCPP] Registering NPU callback with XRT app...")
             success = self.npu_callback.register_with_encoder(npu_app)
-            if success:
-                logger.info("[EncoderCPP] NPU callback registered")
-            return success
+            if not success:
+                logger.error("  Failed to register callback with XRT app")
+                return False
+            logger.info("  XRT app registration successful")
+
+            # Step 2: Get callback function pointer
+            logger.info("[EncoderCPP] Creating callback function...")
+            callback_fn = self.npu_callback.create_callback_function()
+            if not callback_fn:
+                logger.error("  Failed to get callback function pointer")
+                return False
+            logger.info("  Callback function created")
+
+            # Step 3: Wire callback to each C++ encoder layer
+            logger.info("[EncoderCPP] Wiring NPU callback to layers...")
+            for i, layer_handle in enumerate(self.layers):
+                try:
+                    self.runtime.set_npu_callback(layer_handle, callback_fn)
+                    logger.debug(f"  Layer {i}: callback registered")
+                except CPPRuntimeError as e:
+                    logger.error(f"  Failed to set callback for layer {i}: {e}")
+                    return False
+
+            logger.info("[EncoderCPP] NPU callback registered for all layers")
+            return True
+
         except Exception as e:
             logger.error(f"Failed to register NPU callback: {e}")
+            import traceback
+            traceback.print_exc()
             return False
 
     def get_stats(self) -> Dict[str, Any]:

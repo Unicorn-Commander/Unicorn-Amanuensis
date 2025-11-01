@@ -434,6 +434,78 @@ class CPPRuntimeWrapper:
         # Reshape output
         return output_flat.reshape((seq_len, n_state))
 
+    def set_npu_callback(self, layer_handle: int, callback_fn: callable) -> bool:
+        """
+        Register NPU callback function with C++ encoder layer.
+
+        This is the missing link that wires the Python NPU callback to the C++ runtime.
+        The callback_fn should match the NPUCallbackNative signature.
+
+        Args:
+            layer_handle: Handle to encoder layer from create_layer()
+            callback_fn: Python callback function that takes:
+                - user_data (void*)
+                - a_ptr (float*)
+                - b_ptr (float*)
+                - c_ptr (float*)
+                - m, k, n (size_t)
+                Returns: int (0 for success, -1 for error)
+
+        Returns:
+            True if callback registration successful
+
+        Raises:
+            CPPRuntimeError: If callback registration fails
+        """
+        if not self.lib:
+            raise CPPRuntimeError("Library not loaded")
+
+        # Define NPU callback type matching C++ signature:
+        # typedef int (*NPUMatmulCallback)(
+        #     void* user_data,
+        #     const float* A, const float* B, float* C,
+        #     size_t m, size_t k, size_t n
+        # );
+        NPUMatmulCallback = CFUNCTYPE(
+            c_int,           # return type
+            c_void_p,        # user_data
+            POINTER(c_float),  # A matrix
+            POINTER(c_float),  # B matrix
+            POINTER(c_float),  # C matrix
+            c_size_t,        # m
+            c_size_t,        # k
+            c_size_t         # n
+        )
+
+        # Configure C++ function signature
+        self.lib.encoder_layer_set_npu_callback.argtypes = [
+            c_void_p,           # EncoderLayerHandle
+            NPUMatmulCallback,  # callback
+            c_void_p            # user_data
+        ]
+        self.lib.encoder_layer_set_npu_callback.restype = c_int
+
+        # Convert Python callback to C callback
+        c_callback = NPUMatmulCallback(callback_fn)
+
+        # Store callback to prevent garbage collection
+        # This is CRITICAL - Python will garbage collect the callback if we don't keep a reference
+        if not hasattr(self, '_npu_callbacks'):
+            self._npu_callbacks = {}
+        self._npu_callbacks[layer_handle] = c_callback
+
+        # Call C++ function
+        result = self.lib.encoder_layer_set_npu_callback(
+            layer_handle,
+            c_callback,
+            c_void_p(0)  # user_data (NULL for now)
+        )
+
+        if result != 0:
+            raise CPPRuntimeError(f"Failed to set NPU callback (error code {result})")
+
+        return True
+
 
 class EncoderLayer:
     """

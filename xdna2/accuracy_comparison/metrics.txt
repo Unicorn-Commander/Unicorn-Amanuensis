@@ -1,0 +1,11 @@
+PyTorch vs C++ Encoder Accuracy Comparison
+================================================================================
+
+Cosine Similarity:       0.645590
+Mean Absolute Error:     1.289603
+Max Absolute Error:      69.450668
+Mean Relative Error:     381.9698%
+Max Relative Error:      7468126.5625%
+Element Accuracy:        0.63%
+
+Test Result:             FAIL

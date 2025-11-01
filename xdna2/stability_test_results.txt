@@ -1,0 +1,55 @@
+======================================================================
+  STABILITY TEST - 100 ITERATIONS
+======================================================================
+
+Creating 6-layer encoder...
+✅ 6-layer encoder ready
+
+======================================================================
+  RUNNING 100 ITERATIONS
+======================================================================
+
+  Iteration  10: 503.03 ms avg (last 10)
+  Iteration  20: 602.06 ms avg (last 10)
+  Iteration  30: 598.00 ms avg (last 10)
+  Iteration  40: 598.46 ms avg (last 10)
+  Iteration  50: 600.35 ms avg (last 10)
+  Iteration  60: 580.45 ms avg (last 10)
+  Iteration  70: 496.72 ms avg (last 10)
+  Iteration  80: 457.14 ms avg (last 10)
+  Iteration  90: 440.93 ms avg (last 10)
+  Iteration 100: 430.59 ms avg (last 10)
+
+======================================================================
+  STABILITY RESULTS
+======================================================================
+
+Iterations completed:  100/100
+Errors:                0
+Numerical issues:      0
+
+Performance Statistics:
+  Mean:       530.77 ms
+  Median:     567.97 ms
+  Std Dev:    72.89 ms
+  Min:        423.72 ms
+  Max:        611.80 ms
+  Range:      188.09 ms
+
+Realtime Factor:
+  Average:    19.29×
+  Best:       24.17×
+  Worst:      16.74×
+
+Stability Metrics:
+  Coefficient of Variation:  13.73%
+  Consistency:               86.27%
+
+Performance Drift:
+  First 10 iterations:  503.03 ms
+  Last 10 iterations:   430.59 ms
+  Drift:                -14.40%
+
+======================================================================
+  ⚠️  STABILITY ISSUES DETECTED
+======================================================================

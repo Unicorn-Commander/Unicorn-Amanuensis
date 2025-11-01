@@ -103,6 +103,103 @@ total_audio_seconds = 0.0
 total_processing_time = 0.0
 
 
+def load_xrt_npu_application():
+    """
+    Load XRT NPU application for Whisper encoder.
+
+    Attempts to load the xclbin kernel from expected locations.
+    This is part of Bug #6 fix - the missing NPU callback registration.
+
+    Returns:
+        Loaded NPU application object (stub for now)
+
+    Raises:
+        FileNotFoundError: If xclbin not found
+        ImportError: If pyxrt not available
+        Exception: If XRT loading fails
+    """
+    # Check for xclbin files in expected locations
+    xclbin_candidates = [
+        Path(__file__).parent / "cpp" / "build" / "whisper_encoder.xclbin",
+        Path(__file__).parent / "kernels" / "whisper_encoder.xclbin",
+        Path(__file__).parent / "final.xclbin",
+        Path(__file__).parent.parent / "kernels" / "whisper_encoder.xclbin",
+    ]
+
+    xclbin_path = None
+    for candidate in xclbin_candidates:
+        if candidate.exists():
+            xclbin_path = candidate
+            break
+
+    if not xclbin_path:
+        # List tried paths for debugging
+        tried = "\n    ".join(str(c) for c in xclbin_candidates)
+        raise FileNotFoundError(
+            f"Cannot find whisper_encoder.xclbin in expected locations:\n    {tried}\n"
+            f"NPU acceleration requires compiled xclbin kernel."
+        )
+
+    logger.info(f"  Found xclbin: {xclbin_path}")
+
+    # Try to import and use pyxrt (XRT Python bindings)
+    try:
+        import pyxrt
+        logger.info(f"  Loading XRT device...")
+
+        # Load XRT device (device 0)
+        device = pyxrt.device(0)
+        uuid = device.load_xclbin(str(xclbin_path))
+        logger.info(f"  XRT device loaded (UUID: {uuid})")
+
+        # Create kernel handle for matmul
+        # Note: Kernel name may vary based on xclbin build
+        # Try common kernel names
+        kernel_names = ["matmul_bfp16", "matmul_bf16", "matmul", "whisper_matmul"]
+        kernel = None
+        for kname in kernel_names:
+            try:
+                kernel = pyxrt.kernel(device, uuid, kname)
+                logger.info(f"  Loaded kernel: {kname}")
+                break
+            except:
+                continue
+
+        if not kernel:
+            raise RuntimeError(
+                f"Could not load any kernel from {kernel_names}. "
+                f"Check xclbin kernel names."
+            )
+
+        # Create a simple XRT app wrapper
+        class XRTAppStub:
+            """Minimal XRT app wrapper for NPU callback"""
+            def __init__(self, device, kernel):
+                self.device = device
+                self.kernel = kernel
+                self.buffers = {}
+
+            def register_buffer(self, idx, dtype, shape):
+                """Register a buffer for NPU operations"""
+                # In real implementation, would allocate XRT buffer
+                logger.debug(f"  Registering buffer {idx}: {dtype} {shape}")
+                # For now, just track metadata
+                self.buffers[idx] = {'dtype': dtype, 'shape': shape}
+
+            def run(self):
+                """Execute kernel (stub for now)"""
+                logger.debug("  Executing NPU kernel (stub)")
+                pass
+
+        return XRTAppStub(device, kernel)
+
+    except ImportError:
+        raise ImportError(
+            "pyxrt not found. Install with: "
+            "pip install /opt/xilinx/xrt/python/pyxrt-*.whl"
+        )
+
+
 def initialize_encoder():
     """
     Initialize C++ encoder at startup.
@@ -174,6 +271,41 @@ def initialize_encoder():
 
         cpp_encoder.load_weights(weights)
         logger.info("  Weights loaded successfully")
+
+        # ========== NEW: NPU Callback Registration (Bug #6 Fix) ==========
+        if cpp_encoder.use_npu:
+            logger.info("[Init] Loading XRT NPU application...")
+            try:
+                # Try to load XRT app for NPU acceleration
+                npu_app = load_xrt_npu_application()
+                logger.info("  XRT NPU application loaded successfully")
+
+                # Register NPU callback with encoder
+                logger.info("[Init] Registering NPU callback...")
+                if cpp_encoder.register_npu_callback(npu_app):
+                    logger.info("  ✅ NPU callback registered successfully")
+                else:
+                    logger.error("  ❌ NPU callback registration failed")
+                    logger.warning("  Falling back to CPU mode")
+                    cpp_encoder.use_npu = False
+
+            except FileNotFoundError as e:
+                logger.warning(f"XRT app not found: {e}")
+                logger.warning("  NPU acceleration disabled (xclbin not available)")
+                logger.warning("  Continuing in CPU mode")
+                cpp_encoder.use_npu = False
+
+            except ImportError as e:
+                logger.warning(f"XRT libraries not available: {e}")
+                logger.warning("  NPU acceleration disabled (pyxrt not installed)")
+                logger.warning("  Continuing in CPU mode")
+                cpp_encoder.use_npu = False
+
+            except Exception as e:
+                logger.error(f"Failed to load XRT NPU application: {e}")
+                logger.warning("  Falling back to CPU mode")
+                cpp_encoder.use_npu = False
+        # =================================================================
 
         # Initialize conv1d preprocessor (Bug #5 fix)
         logger.info("[Init] Initializing conv1d preprocessor...")

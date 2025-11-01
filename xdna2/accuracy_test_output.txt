@@ -1,0 +1,174 @@
+================================================================================
+  PYTORCH VS C++ ENCODER ACCURACY VALIDATION TEST
+================================================================================
+
+================================================================================
+  LOADING PYTORCH WHISPER BASE ENCODER
+================================================================================
+✅ Transformers library loaded
+
+📥 Loading model: openai/whisper-base
+✅ Model loaded successfully
+✅ Encoder extracted (6 layers)
+
+Encoder Configuration:
+  Layers:        6
+  Attention Heads: 8
+  Hidden Size:   512
+  FFN Dim:       2048
+  Sequence Len:  512
+
+================================================================================
+  PREPARING TEST INPUT (SEED=42)
+================================================================================
+✅ Input shape: (512, 512)
+  Mean: 0.0003
+  Std:  0.9999
+  Min:  -4.4656
+  Max:  4.5621
+
+================================================================================
+  RUNNING PYTORCH ENCODER (6 LAYERS)
+================================================================================
+✅ Layer 0 complete
+✅ Layer 1 complete
+✅ Layer 2 complete
+✅ Layer 3 complete
+✅ Layer 4 complete
+✅ Layer 5 complete
+
+✅ PyTorch encoder complete
+  Output shape: (512, 512)
+  Mean: 0.0321
+  Std:  2.6631
+  Min:  -22.2223
+  Max:  25.9500
+
+================================================================================
+  LOADING C++ ENCODER LIBRARY
+================================================================================
+✅ Loaded: /home/ccadmin/CC-1L/npu-services/unicorn-amanuensis/xdna2/cpp/build/libwhisper_encoder_cpp.so
+✅ C API bindings complete
+
+================================================================================
+  LOADING REAL WHISPER WEIGHTS INTO C++ ENCODER
+================================================================================
+
+Layer 0:
+  ✅ Layer 0 loaded with real Whisper weights
+
+Layer 1:
+  ✅ Layer 1 loaded with real Whisper weights
+
+Layer 2:
+  ✅ Layer 2 loaded with real Whisper weights
+
+Layer 3:
+  ✅ Layer 3 loaded with real Whisper weights
+
+Layer 4:
+  ✅ Layer 4 loaded with real Whisper weights
+
+Layer 5:
+  ✅ Layer 5 loaded with real Whisper weights
+
+✅ All 6 layers loaded with REAL WHISPER BASE WEIGHTS!
+
+================================================================================
+  RUNNING C++ ENCODER (6 LAYERS)
+================================================================================
+✅ Layer 0 complete
+✅ Layer 1 complete
+✅ Layer 2 complete
+✅ Layer 3 complete
+✅ Layer 4 complete
+✅ Layer 5 complete
+
+✅ C++ encoder complete
+  Output shape: (512, 512)
+  Mean: 0.0393
+  Std:  1.5986
+  Min:  -55.1750
+  Max:  69.9376
+
+================================================================================
+  NUMERICAL ACCURACY COMPARISON
+================================================================================
+
+📊 Similarity Metrics:
+  Cosine Similarity:       0.645590
+  Target:                  >0.99
+  Status:                  ❌ FAIL
+
+📊 Absolute Error Metrics:
+  Mean Absolute Error:     1.289603
+  Max Absolute Error:      69.450668
+  Target MAE:              <1.0
+  Status:                  ❌ FAIL
+
+📊 Relative Error Metrics:
+  Mean Relative Error:     381.9698%
+  Max Relative Error:      7468126.5625%
+
+📊 Element-wise Accuracy:
+  Elements < 1% error:     1,642 / 262,144
+  Accuracy:                0.63%
+  Target:                  >99%
+  Status:                  ❌ FAIL
+
+================================================================================
+  DETAILED ANALYSIS
+================================================================================
+
+🔍 Largest discrepancy at position (210, 145):
+  PyTorch:  0.486979
+  C++:      69.937645
+  Diff:     69.450668
+  Rel Err:  14261.5326%
+
+📈 Error Distribution:
+   50.0th percentile:      0.966523
+   90.0th percentile:      2.497728
+   95.0th percentile:      3.222835
+   99.0th percentile:      7.307478
+   99.9th percentile:      20.213595
+
+⚠️  Numerical Stability:
+  PyTorch NaN:             ✅ None
+  C++ NaN:                 ✅ None
+  PyTorch Inf:             ✅ None
+  C++ Inf:                 ✅ None
+
+================================================================================
+  FINAL VERDICT
+================================================================================
+
+❌ ACCURACY VALIDATION: FAIL
+
+⚠️  C++ encoder has accuracy issues:
+   ❌ Cosine similarity too low: 0.645590 (need >0.99)
+   ❌ Mean absolute error too high: 1.289603 (need <1.0)
+   ❌ Element accuracy too low: 0.63% (need >99%)
+
+🔧 Recommendations:
+   1. Check weight transposition (PyTorch uses different memory layout)
+   2. Verify layer norm epsilon matches (PyTorch default: 1e-5)
+   3. Check attention mask implementation
+   4. Verify softmax numerical stability
+   5. Check residual connection ordering
+
+================================================================================
+  SAVING COMPARISON DATA
+================================================================================
+✅ Comparison data saved to: accuracy_comparison
+
+================================================================================
+  TEST COMPLETE
+================================================================================
+
+Result: ❌ FAIL
+Cosine Similarity: 0.645590
+Mean Absolute Error: 1.289603
+Element Accuracy: 0.63%
+
+================================================================================
