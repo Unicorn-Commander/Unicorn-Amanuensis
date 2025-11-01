@@ -298,7 +298,7 @@ class CPPRuntimeWrapper:
         Raises:
             CPPRuntimeError: If weight loading fails
         """
-        # Validate all weights are float32
+        # Validate all weights are float32 (biases can be None for Whisper base model)
         weights = [
             q_weight, k_weight, v_weight, out_weight,
             q_bias, k_bias, v_bias, out_bias,
@@ -306,7 +306,14 @@ class CPPRuntimeWrapper:
             attn_ln_weight, attn_ln_bias, ffn_ln_weight, ffn_ln_bias
         ]
 
+        # Indices of optional weights (biases)
+        optional_indices = {4, 5, 6, 7, 10, 11, 13, 15}  # q_bias, k_bias, v_bias, out_bias, fc1_bias, fc2_bias, attn_ln_bias, ffn_ln_bias
+
         for i, w in enumerate(weights):
+            if w is None:
+                if i not in optional_indices:
+                    raise CPPRuntimeError(f"Weight {i} is None but not optional")
+                continue  # Skip None biases
             if not isinstance(w, np.ndarray):
                 raise CPPRuntimeError(f"Weight {i} is not a numpy array")
             if w.dtype != np.float32:
@@ -325,6 +332,24 @@ class CPPRuntimeWrapper:
         out_weight_flat = out_weight.flatten()
         fc1_weight_flat = fc1_weight.flatten()
         fc2_weight_flat = fc2_weight.flatten()
+
+        # For None biases, use zero arrays (Whisper base model has no K/V biases)
+        if q_bias is None:
+            q_bias = np.zeros(n_state, dtype=np.float32)
+        if k_bias is None:
+            k_bias = np.zeros(n_state, dtype=np.float32)
+        if v_bias is None:
+            v_bias = np.zeros(n_state, dtype=np.float32)
+        if out_bias is None:
+            out_bias = np.zeros(n_state, dtype=np.float32)
+        if fc1_bias is None:
+            fc1_bias = np.zeros(ffn_dim, dtype=np.float32)
+        if fc2_bias is None:
+            fc2_bias = np.zeros(n_state, dtype=np.float32)
+        if attn_ln_bias is None:
+            attn_ln_bias = np.zeros(n_state, dtype=np.float32)
+        if ffn_ln_bias is None:
+            ffn_ln_bias = np.zeros(n_state, dtype=np.float32)
 
         # Call C++ function
         result = self.lib.encoder_layer_load_weights(

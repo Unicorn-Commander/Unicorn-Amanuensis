@@ -208,10 +208,17 @@ class WhisperEncoderCPP:
         """
         prefix = f"encoder.layers.{layer_idx}"
 
-        def get_weight(key: str) -> np.ndarray:
-            """Get weight and convert to float32"""
+        def get_weight(key: str, optional: bool = False) -> np.ndarray:
+            """Get weight and convert to float32
+
+            Args:
+                key: Weight key (e.g. 'self_attn.q_proj.bias')
+                optional: If True, return None if weight not found instead of raising error
+            """
             full_key = f"{prefix}.{key}"
             if full_key not in weights:
+                if optional:
+                    return None
                 raise KeyError(f"Missing weight: {full_key}")
 
             w = weights[full_key]
@@ -222,24 +229,24 @@ class WhisperEncoderCPP:
 
             return w
 
-        # Extract all required weights
+        # Extract all required weights (biases are optional for Whisper base model)
         return {
             'q_weight': get_weight('self_attn.q_proj.weight'),
             'k_weight': get_weight('self_attn.k_proj.weight'),
             'v_weight': get_weight('self_attn.v_proj.weight'),
             'out_weight': get_weight('self_attn.out_proj.weight'),
-            'q_bias': get_weight('self_attn.q_proj.bias'),
-            'k_bias': get_weight('self_attn.k_proj.bias'),
-            'v_bias': get_weight('self_attn.v_proj.bias'),
-            'out_bias': get_weight('self_attn.out_proj.bias'),
+            'q_bias': get_weight('self_attn.q_proj.bias', optional=True),
+            'k_bias': get_weight('self_attn.k_proj.bias', optional=True),
+            'v_bias': get_weight('self_attn.v_proj.bias', optional=True),
+            'out_bias': get_weight('self_attn.out_proj.bias', optional=True),
             'fc1_weight': get_weight('fc1.weight'),
             'fc2_weight': get_weight('fc2.weight'),
-            'fc1_bias': get_weight('fc1.bias'),
-            'fc2_bias': get_weight('fc2.bias'),
+            'fc1_bias': get_weight('fc1.bias', optional=True),
+            'fc2_bias': get_weight('fc2.bias', optional=True),
             'attn_ln_weight': get_weight('self_attn_layer_norm.weight'),
-            'attn_ln_bias': get_weight('self_attn_layer_norm.bias'),
+            'attn_ln_bias': get_weight('self_attn_layer_norm.bias', optional=True),
             'ffn_ln_weight': get_weight('final_layer_norm.weight'),
-            'ffn_ln_bias': get_weight('final_layer_norm.bias'),
+            'ffn_ln_bias': get_weight('final_layer_norm.bias', optional=True),
         }
 
     def forward(self, x: np.ndarray) -> np.ndarray:

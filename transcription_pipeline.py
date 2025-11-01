@@ -134,6 +134,11 @@ class TranscriptionPipeline:
         self.device = device
         self.batch_size = batch_size
 
+        # Extract feature extractor from whisperx model
+        # whisperx.load_model() returns FasterWhisperPipeline
+        # Feature extractor is at: python_decoder.model.feature_extractor
+        self.feature_extractor = python_decoder.model.feature_extractor
+
         # Request queue
         self.request_queue = RequestQueue(max_queue_size=max_queue_size)
 
@@ -407,15 +412,21 @@ class TranscriptionPipeline:
             # Acquire mel buffer
             mel_buffer = self.buffer_manager.acquire('mel')
 
-            # Compute mel with zero-copy optimization
-            mel_np = compute_mel_spectrogram_zerocopy(
+            # Compute mel with zero-copy optimization (with variable-length support)
+            # mel_np will be a SLICE of mel_buffer with the correct size
+            mel_np, actual_frames = compute_mel_spectrogram_zerocopy(
                 audio_buffer[:len(audio)],
-                self.python_decoder.feature_extractor,
+                self.feature_extractor,
                 output=mel_buffer
             )
 
             # Validate mel is C-contiguous
             validate_mel_contiguity(mel_np)
+
+            logger.debug(
+                f"[Stage1] Mel computed: {actual_frames} frames, "
+                f"shape={mel_np.shape}, buffer={mel_buffer.shape}"
+            )
 
             # Return work item for Stage 2
             return WorkItem(

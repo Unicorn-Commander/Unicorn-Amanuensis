@@ -36,6 +36,7 @@ import gc
 import logging
 import numpy as np
 import time
+import asyncio
 from typing import Optional
 from pathlib import Path
 import sys
@@ -85,6 +86,7 @@ MAX_QUEUE_SIZE = int(os.environ.get("MAX_QUEUE_SIZE", "100"))
 # Global instances (initialized at startup)
 cpp_encoder: Optional[WhisperEncoderCPP] = None
 python_decoder = None  # WhisperX decoder (fallback to Python for now)
+feature_extractor = None  # Feature extractor from WhisperX model
 model_a = None  # Alignment model
 metadata = None
 buffer_manager: Optional[GlobalBufferManager] = None
@@ -104,7 +106,7 @@ def initialize_encoder():
     Returns:
         True if successful, False otherwise
     """
-    global cpp_encoder, python_decoder, model_a, metadata
+    global cpp_encoder, python_decoder, feature_extractor, model_a, metadata
 
     try:
         logger.info("="*70)
@@ -140,23 +142,31 @@ def initialize_encoder():
             weights[f"{prefix}.self_attn.v_proj.weight"] = layer.self_attn.v_proj.weight.data.cpu().numpy()
             weights[f"{prefix}.self_attn.out_proj.weight"] = layer.self_attn.out_proj.weight.data.cpu().numpy()
 
-            # Attention biases
-            weights[f"{prefix}.self_attn.q_proj.bias"] = layer.self_attn.q_proj.bias.data.cpu().numpy()
-            weights[f"{prefix}.self_attn.k_proj.bias"] = layer.self_attn.k_proj.bias.data.cpu().numpy()
-            weights[f"{prefix}.self_attn.v_proj.bias"] = layer.self_attn.v_proj.bias.data.cpu().numpy()
-            weights[f"{prefix}.self_attn.out_proj.bias"] = layer.self_attn.out_proj.bias.data.cpu().numpy()
+            # Attention biases (with null checks for Whisper base model)
+            if layer.self_attn.q_proj.bias is not None:
+                weights[f"{prefix}.self_attn.q_proj.bias"] = layer.self_attn.q_proj.bias.data.cpu().numpy()
+            if layer.self_attn.k_proj.bias is not None:
+                weights[f"{prefix}.self_attn.k_proj.bias"] = layer.self_attn.k_proj.bias.data.cpu().numpy()
+            if layer.self_attn.v_proj.bias is not None:
+                weights[f"{prefix}.self_attn.v_proj.bias"] = layer.self_attn.v_proj.bias.data.cpu().numpy()
+            if layer.self_attn.out_proj.bias is not None:
+                weights[f"{prefix}.self_attn.out_proj.bias"] = layer.self_attn.out_proj.bias.data.cpu().numpy()
 
             # FFN weights
             weights[f"{prefix}.fc1.weight"] = layer.fc1.weight.data.cpu().numpy()
             weights[f"{prefix}.fc2.weight"] = layer.fc2.weight.data.cpu().numpy()
-            weights[f"{prefix}.fc1.bias"] = layer.fc1.bias.data.cpu().numpy()
-            weights[f"{prefix}.fc2.bias"] = layer.fc2.bias.data.cpu().numpy()
+            if layer.fc1.bias is not None:
+                weights[f"{prefix}.fc1.bias"] = layer.fc1.bias.data.cpu().numpy()
+            if layer.fc2.bias is not None:
+                weights[f"{prefix}.fc2.bias"] = layer.fc2.bias.data.cpu().numpy()
 
             # LayerNorm
             weights[f"{prefix}.self_attn_layer_norm.weight"] = layer.self_attn_layer_norm.weight.data.cpu().numpy()
-            weights[f"{prefix}.self_attn_layer_norm.bias"] = layer.self_attn_layer_norm.bias.data.cpu().numpy()
+            if layer.self_attn_layer_norm.bias is not None:
+                weights[f"{prefix}.self_attn_layer_norm.bias"] = layer.self_attn_layer_norm.bias.data.cpu().numpy()
             weights[f"{prefix}.final_layer_norm.weight"] = layer.final_layer_norm.weight.data.cpu().numpy()
-            weights[f"{prefix}.final_layer_norm.bias"] = layer.final_layer_norm.bias.data.cpu().numpy()
+            if layer.final_layer_norm.bias is not None:
+                weights[f"{prefix}.final_layer_norm.bias"] = layer.final_layer_norm.bias.data.cpu().numpy()
 
         cpp_encoder.load_weights(weights)
         logger.info("  Weights loaded successfully")
@@ -164,6 +174,8 @@ def initialize_encoder():
         # Keep Python decoder for now (will migrate to C++ later)
         logger.info("[Init] Loading Python decoder (WhisperX)...")
         python_decoder = whisperx.load_model(MODEL_SIZE, DEVICE, compute_type=COMPUTE_TYPE)
+        # Extract feature extractor from model (Bug #1 fix)
+        feature_extractor = python_decoder.model.feature_extractor
         logger.info("  Python decoder loaded")
 
         # Load alignment model
@@ -216,7 +228,7 @@ async def startup_event():
             'count': 10,             # Pre-allocate 10 buffers
             'max_count': 20,         # Max 20 concurrent requests
             'dtype': np.float32,
-            'shape': (80, 3000),     # 80 mels × 3000 frames (30s audio)
+            'shape': (3000, 80),     # 3000 frames × 80 mels (30s audio, transposed for C-contiguous)
             'zero_on_release': False # No need to zero (overwritten each time)
         },
         'audio': {
@@ -465,14 +477,15 @@ async def transcribe(
         # Zero-Copy + Buffer Pool Optimization:
         # Compute mel directly into pooled buffer with C-contiguous (time, channels) layout
         # Eliminates BOTH allocation AND transpose copy (~2ms total savings)
-        mel_np = compute_mel_spectrogram_zerocopy(
+        # Returns a SLICE of mel_buffer with correct size for variable-length audio
+        mel_np, actual_frames = compute_mel_spectrogram_zerocopy(
             audio_buffer[:len(audio)],
-            python_decoder.feature_extractor,
-            output=mel_buffer  # Write directly to pooled buffer
+            feature_extractor,  # Use global feature_extractor (Bug #1 fix)
+            output=mel_buffer  # Write directly to pooled buffer (may be larger than needed)
         )
 
         mel_time = time.perf_counter() - mel_start
-        logger.info(f"    Mel computation: {mel_time*1000:.2f}ms (pooled + zero-copy)")
+        logger.info(f"    Mel computation: {mel_time*1000:.2f}ms ({actual_frames} frames, pooled + zero-copy)")
 
         # Validate mel is ready for C++ encoder (should never fail with zero-copy)
         validate_mel_contiguity(mel_np)

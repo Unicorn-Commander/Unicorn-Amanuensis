@@ -26,7 +26,7 @@ Status: Production-ready
 
 import numpy as np
 import torch
-from typing import Optional, Union
+from typing import Optional, Union, Tuple
 import logging
 
 logger = logging.getLogger(__name__)
@@ -39,42 +39,46 @@ def compute_mel_spectrogram_zerocopy(
     sample_rate: int = 16000,
     n_mels: int = 80,
     expected_time_frames: Optional[int] = None
-) -> np.ndarray:
+) -> Tuple[np.ndarray, int]:
     """
-    Compute mel spectrogram with zero-copy optimization.
+    Compute mel spectrogram with zero-copy optimization and variable-length support.
 
     This function computes mel spectrograms while minimizing data copies:
-    1. If output buffer provided, writes directly to it (zero-copy)
+    1. If output buffer provided, uses a SLICE of it (supports variable-length audio)
     2. If no buffer, allocates C-contiguous array in final layout
     3. Avoids transpose + ascontiguousarray copy pattern
 
     Args:
         audio: Input audio array (float32, 16kHz mono)
         feature_extractor: WhisperX feature extractor instance
-        output: Pre-allocated output buffer (time, n_mels) or None
+        output: Pre-allocated output buffer (time, n_mels) or None (may be larger than needed)
         sample_rate: Audio sample rate (default: 16000)
         n_mels: Number of mel filterbanks (default: 80)
         expected_time_frames: Expected number of time frames (for validation)
 
     Returns:
-        Mel spectrogram in (time, n_mels) layout, C-contiguous, float32
+        Tuple of (mel_output, actual_frames):
+            - mel_output: Mel spectrogram in (time, n_mels) layout, C-contiguous, float32
+                         (this is a VIEW of the output buffer if provided)
+            - actual_frames: Actual number of time frames in the mel spectrogram
 
     Raises:
-        ValueError: If output buffer shape doesn't match
+        ValueError: If output buffer is too small for computed mel
         RuntimeError: If feature extraction fails
 
     Performance:
-        - With buffer pool: ~0ms overhead (perfect zero-copy)
+        - With buffer pool: ~0ms overhead (perfect zero-copy via slicing)
         - Without buffer: ~0.5ms (single copy, not transpose+copy)
         - Standard approach: ~1ms (transpose + ascontiguousarray)
 
     Example:
         # Without buffer pool (still optimized)
-        mel = compute_mel_spectrogram_zerocopy(audio, feature_extractor)
+        mel, n_frames = compute_mel_spectrogram_zerocopy(audio, feature_extractor)
 
-        # With buffer pool (perfect zero-copy)
-        mel_buffer = buffer_manager.acquire('mel')
-        mel = compute_mel_spectrogram_zerocopy(audio, feature_extractor, output=mel_buffer)
+        # With buffer pool (perfect zero-copy with slicing)
+        mel_buffer = buffer_manager.acquire('mel')  # May be (3000, 80) for 30s
+        mel, n_frames = compute_mel_spectrogram_zerocopy(audio, feature_extractor, output=mel_buffer)
+        # mel is now a VIEW of mel_buffer[:n_frames, :] with correct size
         # ... use mel ...
         buffer_manager.release('mel', mel_buffer)
     """
@@ -117,29 +121,39 @@ def compute_mel_spectrogram_zerocopy(
         # Target shape: (time, n_mels) - C-contiguous
         target_shape = (time_frames, n_mels)
 
-        # ZERO-COPY OPTIMIZATION:
-        # If output buffer provided, copy directly into it with transpose
+        # ZERO-COPY OPTIMIZATION WITH VARIABLE-LENGTH SUPPORT:
+        # If output buffer provided, use a SLICE of it (buffer may be larger)
         if output is not None:
-            # Validate output buffer
-            if output.shape != target_shape:
+            # Validate output buffer is large enough
+            if output.shape[0] < time_frames:
                 raise ValueError(
-                    f"Output buffer shape {output.shape} != expected {target_shape}"
+                    f"Output buffer too small: {output.shape[0]} frames < required {time_frames} frames"
+                )
+            if output.shape[1] != n_mels:
+                raise ValueError(
+                    f"Output buffer n_mels mismatch: {output.shape[1]} != required {n_mels}"
                 )
             if not output.flags['C_CONTIGUOUS']:
                 raise ValueError("Output buffer must be C-contiguous")
             if output.dtype != np.float32:
                 raise ValueError(f"Output buffer must be float32, got {output.dtype}")
 
-            # Direct transpose into output buffer (single operation, no intermediate)
-            # This is faster than: temp = mel_data.T; output[:] = temp
-            np.copyto(output, mel_data.T)
+            # Use a SLICE of the buffer (zero-copy view)
+            mel_output = output[:time_frames, :]
+
+            # Verify slice is still C-contiguous (should be for properly allocated buffers)
+            if not mel_output.flags['C_CONTIGUOUS']:
+                raise ValueError("Buffer slice is not C-contiguous (buffer layout issue)")
+
+            # Direct transpose into output buffer slice (single operation, no intermediate)
+            np.copyto(mel_output, mel_data.T)
 
             logger.debug(
-                f"Mel computed to buffer: {target_shape}, "
-                f"{output.nbytes/1024:.1f}KB (zero-copy)"
+                f"Mel computed to buffer slice: {target_shape} (buffer: {output.shape}), "
+                f"{mel_output.nbytes/1024:.1f}KB (zero-copy)"
             )
 
-            return output
+            return mel_output, time_frames
 
         else:
             # No output buffer - allocate C-contiguous array
@@ -155,7 +169,7 @@ def compute_mel_spectrogram_zerocopy(
                 f"{output_alloc.nbytes/1024:.1f}KB (optimized)"
             )
 
-            return output_alloc
+            return output_alloc, time_frames
 
     except Exception as e:
         logger.error(f"Mel computation failed: {e}")

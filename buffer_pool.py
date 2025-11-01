@@ -516,7 +516,7 @@ class GlobalBufferManager:
                     'count': 10,
                     'max_count': 20,
                     'dtype': np.float32,
-                    'shape': (80, 3000)
+                    'shape': (3000, 80)
                 }
             })
         """
@@ -655,7 +655,7 @@ def main():
             'count': 3,
             'max_count': 5,
             'dtype': np.float32,
-            'shape': (80, 3000)
+            'shape': (3000, 80)
         },
         'audio': {
             'size': 480 * 1024,
