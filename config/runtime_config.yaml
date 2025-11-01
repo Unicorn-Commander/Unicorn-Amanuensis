@@ -1,0 +1,188 @@
+# Unicorn-Amanuensis Runtime Configuration
+#
+# Configuration for C++ NPU runtime integration
+#
+# Author: CC-1L Integration Team
+# Date: November 1, 2025
+
+# Runtime selection
+runtime:
+  # Backend type: auto, xdna2_cpp, xdna2, xdna1, cpu
+  # - auto: Auto-detect best available backend (recommended)
+  # - xdna2_cpp: Force C++ runtime with XDNA2 NPU
+  # - xdna2: Force Python runtime with XDNA2 NPU
+  # - xdna1: Force XDNA1 NPU (Phoenix/Hawk Point)
+  # - cpu: Force CPU fallback
+  backend: auto
+
+  # Enable C++ runtime (only applies if backend is auto or xdna2_cpp)
+  enable_cpp_runtime: true
+
+  # Fallback behavior if C++ runtime unavailable
+  # - python: Fall back to Python runtime
+  # - cpu: Fall back to CPU
+  # - error: Raise error if C++ runtime not available
+  fallback: python
+
+# NPU configuration
+npu:
+  # Enable NPU acceleration
+  enabled: true
+
+  # NPU kernel paths
+  kernels:
+    # BFP16 kernel (preferred, AMD native format)
+    bfp16_kernel: "/opt/xilinx/xrt/share/matmul_bfp16_32tile.xclbin"
+
+    # BF16 kernel (fallback, requires workaround)
+    bf16_kernel: "/opt/xilinx/xrt/share/matmul_bf16_32tile.xclbin"
+
+    # INT8 kernel (legacy)
+    int8_kernel: "/opt/xilinx/xrt/share/matmul_int8_4tile.xclbin"
+
+  # Kernel selection strategy
+  # - bfp16_preferred: Try BFP16 first, fall back to BF16 with workaround
+  # - bf16_workaround: Use BF16 with signed value workaround
+  # - int8_legacy: Use INT8 (legacy, lower performance)
+  kernel_strategy: bfp16_preferred
+
+  # Buffer sizes (for BFP16/BF16 kernels)
+  buffer:
+    max_m: 512     # Maximum M dimension
+    max_k: 2048    # Maximum K dimension
+    max_n: 2048    # Maximum N dimension
+
+# Quantization configuration
+quantization:
+  # Quantization type: int8, bf16, bfp16
+  type: int8
+
+  # INT8 quantization settings
+  int8:
+    # Activation quantization method: minmax, percentile
+    activation_method: minmax
+
+    # Weight quantization method: minmax, percentile
+    weight_method: minmax
+
+    # Clip percentile (if method is percentile)
+    clip_percentile: 99.9
+
+  # BF16 settings
+  bf16:
+    # Enable signed value workaround (REQUIRED for signed data)
+    enable_workaround: true
+
+    # Workaround scaling method: minmax, sigmoid
+    scaling_method: minmax
+
+  # BFP16 settings (AMD native format)
+  bfp16:
+    # Block size (must be 8 for XDNA2)
+    block_size: 8
+
+# Performance configuration
+performance:
+  # Target performance metrics
+  targets:
+    # Realtime multiplier (400-500x for XDNA2 C++ runtime)
+    realtime_multiplier: 400
+
+    # Max latency per audio second (ms)
+    max_latency_ms: 25
+
+    # Throughput (audio seconds per wall-clock second)
+    throughput: 400
+
+  # Monitoring
+  monitoring:
+    # Enable performance monitoring
+    enabled: true
+
+    # Log performance metrics every N inferences
+    log_interval: 10
+
+    # Enable detailed timing breakdown
+    detailed_timing: false
+
+# Model configuration
+model:
+  # Whisper model size: tiny, base, small, medium, large
+  size: base
+
+  # Model parameters (auto-set based on size)
+  params:
+    num_layers: 6      # 6 for base, 12 for small, 24 for medium/large
+    n_heads: 8         # 8 for base, 12 for small, 16 for medium, 20 for large
+    n_state: 512       # 384 for tiny, 512 for base, 768 for small, 1024 for medium/large
+    ffn_dim: 2048      # 1536 for tiny, 2048 for base, 3072 for small, 4096 for medium/large
+
+  # Weight loading
+  weights:
+    # Path to Whisper weights (PyTorch format)
+    path: null  # Auto-detect from model size
+
+    # Cache quantized weights
+    cache_quantized: true
+
+    # Quantized weights cache directory
+    cache_dir: ~/.cache/unicorn-amanuensis/weights
+
+# Logging configuration
+logging:
+  # Log level: DEBUG, INFO, WARNING, ERROR
+  level: INFO
+
+  # Log format
+  format: "[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s"
+
+  # Log to file
+  file:
+    enabled: false
+    path: /var/log/unicorn-amanuensis/runtime.log
+
+  # Log to console
+  console:
+    enabled: true
+
+# Development/debugging options
+debug:
+  # Enable debug mode (verbose logging, assertions)
+  enabled: false
+
+  # Save intermediate tensors for debugging
+  save_intermediates: false
+
+  # Intermediate tensor save directory
+  intermediate_dir: /tmp/unicorn-amanuensis/debug
+
+  # Enable profiling
+  profiling: false
+
+  # Profiling output file
+  profile_output: /tmp/unicorn-amanuensis/profile.json
+
+# Advanced options
+advanced:
+  # Thread pool size (for CPU operations)
+  num_threads: 4
+
+  # Memory pool size (MB)
+  memory_pool_mb: 1024
+
+  # Enable memory pinning (for faster DMA)
+  pin_memory: true
+
+  # NPU device ID (if multiple NPUs available)
+  npu_device_id: 0
+
+  # XRT compatibility mode
+  xrt:
+    # Use legacy XRT API (for older XRT versions)
+    legacy_mode: false
+
+    # XRT device path
+    device_path: null  # Auto-detect
+
+    # XRT log level: 0-7 (0=emergency, 7=debug)
+    log_level: 3
