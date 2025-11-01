@@ -35,8 +35,31 @@ logger.info(f"Initializing Unicorn-Amanuensis on {platform.value} backend")
 logger.info(f"Platform info: {platform_info}")
 
 # Import platform-specific server
-if platform == Platform.XDNA2:
-    logger.info("Loading XDNA2 backend...")
+if platform == Platform.XDNA2_CPP:
+    logger.info("Loading XDNA2 C++ backend with NPU encoder...")
+    try:
+        # Import native XDNA2 C++ server (400-500x realtime!)
+        from xdna2 import server as xdna2_server
+        backend_app = xdna2_server.app
+        logger.info("XDNA2 C++ backend loaded successfully!")
+        backend_type = "XDNA2_CPP (C++ encoder + NPU, 400-500x realtime)"
+    except Exception as e:
+        logger.warning(f"XDNA2 C++ backend failed to load: {e}")
+        logger.info("Falling back to Python XDNA2 backend")
+        # Try Python XDNA2 runtime as fallback
+        try:
+            from xdna2.runtime.whisper_xdna2_runtime import create_runtime
+            runtime = create_runtime(model_size="base", use_4tile=True)
+            logger.info("XDNA2 Python backend loaded")
+            backend_type = "XDNA2 (Python runtime, C++ fallback)"
+            from xdna1.server import app as backend_app
+        except Exception as e2:
+            logger.warning(f"XDNA2 Python backend also failed: {e2}")
+            logger.info("Falling back to XDNA1 backend")
+            from xdna1.server import app as backend_app
+            backend_type = "XDNA1 (XDNA2_CPP fallback)"
+elif platform == Platform.XDNA2:
+    logger.info("Loading XDNA2 Python backend...")
     try:
         # Import XDNA2 implementation with CC-1L's 1,183x matmul kernel!
         from xdna2.runtime.whisper_xdna2_runtime import create_runtime

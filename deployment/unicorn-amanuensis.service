@@ -1,0 +1,19 @@
+[Unit]
+Description=Unicorn-Amanuensis Speech-to-Text (XDNA2 C++ NPU)
+Documentation=https://github.com/CognitiveCompanion/CC-1L
+After=network.target
+
+[Service]
+Type=simple
+User=ccadmin
+WorkingDirectory=/home/ccadmin/CC-1L/npu-services/unicorn-amanuensis
+Environment="PATH=/home/ccadmin/mlir-aie/ironenv/bin:/opt/xilinx/xrt/bin:/usr/bin"
+Environment="LD_LIBRARY_PATH=/opt/xilinx/xrt/lib"
+Environment="PYTHONPATH=/opt/xilinx/xrt/python"
+Environment="XILINX_XRT=/opt/xilinx/xrt"
+ExecStart=/home/ccadmin/mlir-aie/ironenv/bin/python3 -m uvicorn api:app --host 0.0.0.0 --port 9050
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

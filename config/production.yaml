@@ -1,0 +1,35 @@
+service:
+  name: "unicorn-amanuensis"
+  version: "2.0-xdna2-cpp"
+  host: "0.0.0.0"
+  port: 9050
+  workers: 4
+  log_level: "INFO"
+
+npu:
+  platform: "XDNA2_CPP"
+  device_id: 0
+  xclbin_path: "~/mlir-aie/programming_examples/basic/matrix_multiplication/whole_array/build/final_512x512x512_64x64x64_8c.xclbin"
+  fallback_enabled: true
+  fallback_order: ["xdna2_cpp", "xdna1", "cpu"]
+
+performance:
+  max_concurrent_requests: 10
+  request_timeout_seconds: 30
+  enable_metrics: true
+
+logging:
+  format: "json"
+  level: "INFO"
+  rotation: "100MB"
+
+whisper:
+  model_size: "base"
+  compute_type: "float16"
+  batch_size: 16
+  device: "cuda"  # Will auto-detect and fallback to CPU
+
+# Week 6 Production Configuration
+# Created: November 1, 2025
+# Target: 400-500x realtime performance
+# Hardware: AMD XDNA2 NPU (50 TOPS)
