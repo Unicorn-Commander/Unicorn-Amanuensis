@@ -190,33 +190,52 @@ if(BUILD_NATIVE_XRT AND HAVE_XRT)
         ${XRT_INCLUDE_DIR}
     )
 
-    # Find XRT libraries (try system lib path and XRT installation)
-    # First try standard find_library, then fall back to known system locations
+    # Find XRT libraries - PREFER XRT-NPU 2.21 over system libxrt1 2.13
+    # This fixes runtime symbol resolution for xrt::kernel C++ API
+    set(XRT_NPU_LIB_SEARCH_PATHS
+        ${XRT_LIB_DIR}                     # /opt/xilinx/xrt/lib (XRT-NPU 2.21) - FIRST!
+        /usr/lib/x86_64-linux-gnu          # System libxrt1 2.13 - fallback
+        /usr/lib
+    )
+
+    # Search XRT-NPU path first (NO_DEFAULT_PATH forces search order)
+    find_library(XRT_CPP_LIBRARY
+        NAMES xrt++
+        PATHS ${XRT_NPU_LIB_SEARCH_PATHS}
+        NO_DEFAULT_PATH
+    )
     find_library(XRT_CORE_LIBRARY
         NAMES xrt_core
-        PATHS ${XRT_LIB_DIR} /usr/lib/x86_64-linux-gnu /usr/lib
+        PATHS ${XRT_NPU_LIB_SEARCH_PATHS}
+        NO_DEFAULT_PATH
     )
     find_library(XRT_COREUTIL_LIBRARY
         NAMES xrt_coreutil
-        PATHS ${XRT_LIB_DIR} /usr/lib/x86_64-linux-gnu /usr/lib
-    )
-    find_library(XRT_CPP_LIBRARY
-        NAMES xrt++
-        PATHS ${XRT_LIB_DIR} /usr/lib/x86_64-linux-gnu /usr/lib
+        PATHS ${XRT_NPU_LIB_SEARCH_PATHS}
+        NO_DEFAULT_PATH
     )
 
-    # If not found, use system installation directly (libxrt1 package)
+    # Fallback to explicit paths if find_library fails
+    if(NOT XRT_CPP_LIBRARY)
+        if(EXISTS "${XRT_LIB_DIR}/libxrt++.so.2")
+            set(XRT_CPP_LIBRARY "${XRT_LIB_DIR}/libxrt++.so.2")
+        else()
+            set(XRT_CPP_LIBRARY "/usr/lib/x86_64-linux-gnu/libxrt++.so.2")
+        endif()
+    endif()
     if(NOT XRT_CORE_LIBRARY)
-        set(XRT_CORE_LIBRARY "/usr/lib/x86_64-linux-gnu/libxrt_core.so.2")
-        message(STATUS "Using system XRT core library: ${XRT_CORE_LIBRARY}")
+        if(EXISTS "${XRT_LIB_DIR}/libxrt_core.so.2")
+            set(XRT_CORE_LIBRARY "${XRT_LIB_DIR}/libxrt_core.so.2")
+        else()
+            set(XRT_CORE_LIBRARY "/usr/lib/x86_64-linux-gnu/libxrt_core.so.2")
+        endif()
     endif()
     if(NOT XRT_COREUTIL_LIBRARY)
-        set(XRT_COREUTIL_LIBRARY "/usr/lib/x86_64-linux-gnu/libxrt_coreutil.so.2")
-        message(STATUS "Using system XRT coreutil library: ${XRT_COREUTIL_LIBRARY}")
-    endif()
-    if(NOT XRT_CPP_LIBRARY)
-        set(XRT_CPP_LIBRARY "/usr/lib/x86_64-linux-gnu/libxrt++.so.2")
-        message(STATUS "Using system XRT C++ library: ${XRT_CPP_LIBRARY}")
+        if(EXISTS "${XRT_LIB_DIR}/libxrt_coreutil.so.2")
+            set(XRT_COREUTIL_LIBRARY "${XRT_LIB_DIR}/libxrt_coreutil.so.2")
+        else()
+            set(XRT_COREUTIL_LIBRARY "/usr/lib/x86_64-linux-gnu/libxrt_coreutil.so.2")
+        endif()
     endif()
 
     # Verify libraries exist
@@ -244,10 +263,17 @@ if(BUILD_NATIVE_XRT AND HAVE_XRT)
         stdc++fs
     )
 
+    # Set RPATH to ensure runtime finds XRT-NPU 2.21 libraries
+    # This fixes the "undefined symbol" error at runtime
     set_target_properties(xrt_native PROPERTIES
         VERSION ${PROJECT_VERSION}
         SOVERSION 1
         PUBLIC_HEADER "${NATIVE_XRT_HEADERS}"
+        # RPATH: Use XRT-NPU lib path for runtime linking
+        INSTALL_RPATH "${XRT_LIB_DIR}"
+        BUILD_RPATH "${XRT_LIB_DIR}"
+        # Prefer RPATH over LD_LIBRARY_PATH
+        INSTALL_RPATH_USE_LINK_PATH TRUE
     )
 
     message(STATUS "Native XRT library: ENABLED")

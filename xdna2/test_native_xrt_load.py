@@ -18,25 +18,29 @@ def test_library_load():
     print("=" * 60)
 
     try:
-        from encoder_cpp_native import WhisperEncoderNative
+        from encoder_cpp_native import XRTNativeRuntime
         print("SUCCESS: encoder_cpp_native module imported")
+        print("SUCCESS: XRTNativeRuntime class available")
         return True
     except Exception as e:
         print(f"FAILED: Could not import module: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 def test_create_instance():
-    """Test 2: Can create WhisperEncoderNative instance"""
+    """Test 2: Can create XRTNativeRuntime instance"""
     print("\n" + "=" * 60)
     print("TEST 2: Instance Creation")
     print("=" * 60)
 
     try:
-        from encoder_cpp_native import WhisperEncoderNative
-        encoder = WhisperEncoderNative(model_size="base", use_4tile=False)
-        print("SUCCESS: WhisperEncoderNative instance created")
+        from encoder_cpp_native import XRTNativeRuntime
+        runtime = XRTNativeRuntime(model_size="base", use_4tile=False)
+        print("SUCCESS: XRTNativeRuntime instance created")
         print(f"  Model size: base")
         print(f"  Use 4-tile: False")
+        print(f"  Version: {runtime.get_version()}")
         return True
     except Exception as e:
         print(f"FAILED: Could not create instance: {e}")
@@ -51,9 +55,9 @@ def test_get_model_dims():
     print("=" * 60)
 
     try:
-        from encoder_cpp_native import WhisperEncoderNative
-        encoder = WhisperEncoderNative(model_size="base", use_4tile=False)
-        dims = encoder.get_model_dims()
+        from encoder_cpp_native import XRTNativeRuntime
+        runtime = XRTNativeRuntime(model_size="base", use_4tile=False)
+        dims = runtime.get_model_dims()
         print("SUCCESS: Got model dimensions")
         print(f"  n_mels: {dims['n_mels']}")
         print(f"  n_ctx: {dims['n_ctx']}")
