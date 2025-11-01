@@ -19,11 +19,13 @@ endif()
 # Build options
 option(BUILD_ENCODER "Build encoder components (requires Eigen3)" ON)
 option(BUILD_TESTS "Build test executables" ON)
+option(BUILD_NATIVE_XRT "Build native XRT library (NO Python dependency)" ON)
 
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "C++ compiler: ${CMAKE_CXX_COMPILER}")
 message(STATUS "Build encoder: ${BUILD_ENCODER}")
 message(STATUS "Build tests: ${BUILD_TESTS}")
+message(STATUS "Build native XRT: ${BUILD_NATIVE_XRT}")
 
 # Find Eigen3 (for encoder implementation) - only if requested
 set(HAVE_EIGEN3 FALSE)
@@ -114,6 +116,17 @@ set(RUNTIME_HEADERS
     include/kernel_loader.hpp
 )
 
+# Native XRT source files (NO Python dependency!)
+set(NATIVE_XRT_SOURCES
+    src/xrt_native.cpp
+    src/xrt_native_c_api.cpp
+)
+
+set(NATIVE_XRT_HEADERS
+    include/xrt_native.hpp
+    include/xrt_native_c_api.h
+)
+
 # Create encoder library (if Eigen3 available)
 if(HAVE_EIGEN3)
     add_library(whisper_encoder_cpp SHARED ${ENCODER_SOURCES})
@@ -158,6 +171,39 @@ set_target_properties(whisper_xdna2_cpp PROPERTIES
     PUBLIC_HEADER "${RUNTIME_HEADERS}"
 )
 
+# Create native XRT library (NO Python dependency!)
+if(BUILD_NATIVE_XRT AND HAVE_XRT)
+    add_library(xrt_native SHARED ${NATIVE_XRT_SOURCES})
+
+    target_include_directories(xrt_native PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${XRT_INCLUDE_DIR}
+    )
+
+    # Find XRT libraries
+    find_library(XRT_CORE_LIBRARY NAMES xrt_core PATHS ${XRT_LIB_DIR} REQUIRED)
+    find_library(XRT_COREUTIL_LIBRARY NAMES xrt_coreutil PATHS ${XRT_LIB_DIR} REQUIRED)
+
+    target_link_libraries(xrt_native
+        ${XRT_CORE_LIBRARY}
+        ${XRT_COREUTIL_LIBRARY}
+        pthread
+        stdc++fs
+    )
+
+    set_target_properties(xrt_native PROPERTIES
+        VERSION ${PROJECT_VERSION}
+        SOVERSION 1
+        PUBLIC_HEADER "${NATIVE_XRT_HEADERS}"
+    )
+
+    message(STATUS "Native XRT library: ENABLED")
+    message(STATUS "  XRT Core: ${XRT_CORE_LIBRARY}")
+    message(STATUS "  XRT Coreutil: ${XRT_COREUTIL_LIBRARY}")
+elseif(BUILD_NATIVE_XRT AND NOT HAVE_XRT)
+    message(WARNING "Native XRT requested but XRT not found - skipping")
+endif()
+
 # Tests (only if Eigen3 available and BUILD_TESTS enabled)
 if(HAVE_EIGEN3 AND BUILD_TESTS)
     enable_testing()
@@ -179,6 +225,13 @@ install(TARGETS whisper_xdna2_cpp
     PUBLIC_HEADER DESTINATION include/whisper_xdna2
 )
 
+if(BUILD_NATIVE_XRT AND HAVE_XRT)
+    install(TARGETS xrt_native
+        LIBRARY DESTINATION lib
+        PUBLIC_HEADER DESTINATION include/whisper_xdna2
+    )
+endif()
+
 # Print summary
 message(STATUS "")
 message(STATUS "===========================================")
@@ -193,6 +246,9 @@ else()
 endif()
 if(HAVE_XRT)
     message(STATUS "NPU/XRT: ENABLED (${XRT_ROOT})")
+    if(BUILD_NATIVE_XRT)
+        message(STATUS "Native XRT: ENABLED (NO Python dependency)")
+    endif()
 else()
     message(STATUS "NPU/XRT: DISABLED (XRT not found)")
 endif()
