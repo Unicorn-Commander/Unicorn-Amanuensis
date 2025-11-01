@@ -54,6 +54,9 @@ from buffer_pool import GlobalBufferManager
 # Import zero-copy mel utilities
 from .mel_utils import compute_mel_spectrogram_zerocopy, validate_mel_contiguity
 
+# Import conv1d preprocessing (Bug #5 fix)
+from .whisper_conv1d import WhisperConv1dPreprocessor
+
 # Import multi-stream pipeline
 from request_queue import RequestQueue, QueuedRequest
 from transcription_pipeline import TranscriptionPipeline
@@ -87,6 +90,7 @@ MAX_QUEUE_SIZE = int(os.environ.get("MAX_QUEUE_SIZE", "100"))
 cpp_encoder: Optional[WhisperEncoderCPP] = None
 python_decoder = None  # WhisperX decoder (fallback to Python for now)
 feature_extractor = None  # Feature extractor from WhisperX model
+conv1d_preprocessor: Optional[WhisperConv1dPreprocessor] = None  # Conv1d preprocessing (Bug #5 fix)
 model_a = None  # Alignment model
 metadata = None
 buffer_manager: Optional[GlobalBufferManager] = None
@@ -106,7 +110,7 @@ def initialize_encoder():
     Returns:
         True if successful, False otherwise
     """
-    global cpp_encoder, python_decoder, feature_extractor, model_a, metadata
+    global cpp_encoder, python_decoder, feature_extractor, conv1d_preprocessor, model_a, metadata
 
     try:
         logger.info("="*70)
@@ -170,6 +174,11 @@ def initialize_encoder():
 
         cpp_encoder.load_weights(weights)
         logger.info("  Weights loaded successfully")
+
+        # Initialize conv1d preprocessor (Bug #5 fix)
+        logger.info("[Init] Initializing conv1d preprocessor...")
+        conv1d_preprocessor = WhisperConv1dPreprocessor(whisper_model)
+        logger.info("  Conv1d preprocessor initialized (mel 80→512)")
 
         # Keep Python decoder for now (will migrate to C++ later)
         logger.info("[Init] Loading Python decoder (WhisperX)...")
@@ -490,6 +499,13 @@ async def transcribe(
         # Validate mel is ready for C++ encoder (should never fail with zero-copy)
         validate_mel_contiguity(mel_np)
 
+        # 2.5. Apply conv1d preprocessing (Bug #5 fix: mel 80→512)
+        logger.info("  [2.5/5] Applying conv1d preprocessing (mel→embeddings)...")
+        conv1d_start = time.perf_counter()
+        embeddings = conv1d_preprocessor.process(mel_np)  # (n_frames, 80) → (n_frames//2, 512)
+        conv1d_time = time.perf_counter() - conv1d_start
+        logger.info(f"    Conv1d time: {conv1d_time*1000:.2f}ms ({mel_np.shape[0]} frames → {embeddings.shape[0]} frames)")
+
         # 3. Run C++ encoder (NPU-accelerated)
         logger.info("  [3/5] Running C++ encoder (NPU)...")
         encoder_start = time.perf_counter()
@@ -497,9 +513,9 @@ async def transcribe(
         # Acquire encoder output buffer from pool
         encoder_buffer = buffer_manager.acquire('encoder_output')
 
-        # Run C++ encoder - write directly to pooled buffer if possible
+        # Run C++ encoder on embeddings (not raw mel!)
         # Note: Current encoder returns allocated buffer, future optimization would write to provided buffer
-        encoder_output = cpp_encoder.forward(mel_np)
+        encoder_output = cpp_encoder.forward(embeddings)  # (n_frames//2, 512) → (n_frames//2, 512)
         encoder_time = time.perf_counter() - encoder_start
 
         realtime_factor = audio_duration / encoder_time if encoder_time > 0 else 0

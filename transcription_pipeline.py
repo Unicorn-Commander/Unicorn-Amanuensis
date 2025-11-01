@@ -44,6 +44,7 @@ from pipeline_workers import PipelineStage, WorkItem
 from buffer_pool import GlobalBufferManager
 from xdna2.mel_utils import compute_mel_spectrogram_zerocopy, validate_mel_contiguity
 from xdna2.encoder_cpp import WhisperEncoderCPP
+from xdna2.whisper_conv1d import WhisperConv1dPreprocessor
 
 logger = logging.getLogger(__name__)
 
@@ -138,6 +139,14 @@ class TranscriptionPipeline:
         # whisperx.load_model() returns FasterWhisperPipeline
         # Feature extractor is at: python_decoder.model.feature_extractor
         self.feature_extractor = python_decoder.model.feature_extractor
+
+        # Initialize conv1d preprocessor (Bug #5 fix)
+        # WhisperX doesn't expose encoder.conv1/conv2, so we load from transformers
+        logger.info("[Pipeline] Loading Whisper model for conv1d weights...")
+        from transformers import WhisperModel
+        whisper_model = WhisperModel.from_pretrained(f"openai/whisper-base")
+        self.conv1d_preprocessor = WhisperConv1dPreprocessor(whisper_model)
+        logger.info("[Pipeline] Conv1d preprocessor initialized")
 
         # Request queue
         self.request_queue = RequestQueue(max_queue_size=max_queue_size)
@@ -478,11 +487,14 @@ class TranscriptionPipeline:
         encoder_buffer = None
 
         try:
+            # Apply conv1d preprocessing (Bug #5 fix: mel 80→512)
+            embeddings = self.conv1d_preprocessor.process(mel)  # (n_frames, 80) → (n_frames//2, 512)
+
             # Acquire encoder output buffer
             encoder_buffer = self.buffer_manager.acquire('encoder_output')
 
-            # Run encoder (C++ + NPU)
-            encoder_output = self.cpp_encoder.forward(mel)
+            # Run encoder (C++ + NPU) on embeddings (not raw mel!)
+            encoder_output = self.cpp_encoder.forward(embeddings)  # (n_frames//2, 512) → (n_frames//2, 512)
 
             # Release mel buffer (no longer needed)
             self.buffer_manager.release('mel', mel_buffer)
