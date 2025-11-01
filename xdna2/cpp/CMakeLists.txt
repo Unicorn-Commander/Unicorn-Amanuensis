@@ -49,21 +49,31 @@ message(STATUS "Python3 found: ${Python3_VERSION}")
 message(STATUS "Python3 include: ${Python3_INCLUDE_DIRS}")
 
 # Find XRT (optional - for NPU acceleration)
-# XRT headers are typically in /opt/xilinx/xrt/include
-# XRT libraries are typically in /opt/xilinx/xrt/lib
+# Try local include directory first, then system installation
 set(XRT_ROOT "/opt/xilinx/xrt" CACHE PATH "XRT installation path")
-set(XRT_INCLUDE_DIR "${XRT_ROOT}/include")
+set(LOCAL_XRT_INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+set(SYSTEM_XRT_INCLUDE "${XRT_ROOT}/include")
 set(XRT_LIB_DIR "${XRT_ROOT}/lib")
 
 set(HAVE_XRT FALSE)
-if(EXISTS "${XRT_INCLUDE_DIR}/xrt/xrt_device.h")
-    message(STATUS "XRT found: ${XRT_ROOT}")
-    message(STATUS "XRT include: ${XRT_INCLUDE_DIR}")
-    message(STATUS "XRT lib: ${XRT_LIB_DIR}")
+# Check local include directory first (contains copied headers from XRT repo)
+if(EXISTS "${LOCAL_XRT_INCLUDE}/xrt/xrt_device.h")
+    message(STATUS "XRT headers found: Local (${LOCAL_XRT_INCLUDE})")
+    set(XRT_INCLUDE_DIR "${LOCAL_XRT_INCLUDE}")
+    set(HAVE_XRT TRUE)
+# Fall back to system installation
+elseif(EXISTS "${SYSTEM_XRT_INCLUDE}/xrt/xrt_device.h")
+    message(STATUS "XRT headers found: System (${SYSTEM_XRT_INCLUDE})")
+    set(XRT_INCLUDE_DIR "${SYSTEM_XRT_INCLUDE}")
     set(HAVE_XRT TRUE)
 else()
-    message(WARNING "XRT not found - NPU acceleration disabled")
-    message(WARNING "Install XRT from: https://github.com/Xilinx/XRT")
+    message(WARNING "XRT headers not found - NPU acceleration disabled")
+    message(WARNING "Searched: ${LOCAL_XRT_INCLUDE} and ${SYSTEM_XRT_INCLUDE}")
+endif()
+
+if(HAVE_XRT)
+    message(STATUS "XRT include: ${XRT_INCLUDE_DIR}")
+    message(STATUS "XRT lib: ${XRT_LIB_DIR}")
 endif()
 
 # Include directories
@@ -180,11 +190,54 @@ if(BUILD_NATIVE_XRT AND HAVE_XRT)
         ${XRT_INCLUDE_DIR}
     )
 
-    # Find XRT libraries
-    find_library(XRT_CORE_LIBRARY NAMES xrt_core PATHS ${XRT_LIB_DIR} REQUIRED)
-    find_library(XRT_COREUTIL_LIBRARY NAMES xrt_coreutil PATHS ${XRT_LIB_DIR} REQUIRED)
+    # Find XRT libraries (try system lib path and XRT installation)
+    # First try standard find_library, then fall back to known system locations
+    find_library(XRT_CORE_LIBRARY
+        NAMES xrt_core
+        PATHS ${XRT_LIB_DIR} /usr/lib/x86_64-linux-gnu /usr/lib
+    )
+    find_library(XRT_COREUTIL_LIBRARY
+        NAMES xrt_coreutil
+        PATHS ${XRT_LIB_DIR} /usr/lib/x86_64-linux-gnu /usr/lib
+    )
+    find_library(XRT_CPP_LIBRARY
+        NAMES xrt++
+        PATHS ${XRT_LIB_DIR} /usr/lib/x86_64-linux-gnu /usr/lib
+    )
+
+    # If not found, use system installation directly (libxrt1 package)
+    if(NOT XRT_CORE_LIBRARY)
+        set(XRT_CORE_LIBRARY "/usr/lib/x86_64-linux-gnu/libxrt_core.so.2")
+        message(STATUS "Using system XRT core library: ${XRT_CORE_LIBRARY}")
+    endif()
+    if(NOT XRT_COREUTIL_LIBRARY)
+        set(XRT_COREUTIL_LIBRARY "/usr/lib/x86_64-linux-gnu/libxrt_coreutil.so.2")
+        message(STATUS "Using system XRT coreutil library: ${XRT_COREUTIL_LIBRARY}")
+    endif()
+    if(NOT XRT_CPP_LIBRARY)
+        set(XRT_CPP_LIBRARY "/usr/lib/x86_64-linux-gnu/libxrt++.so.2")
+        message(STATUS "Using system XRT C++ library: ${XRT_CPP_LIBRARY}")
+    endif()
+
+    # Verify libraries exist
+    if(NOT EXISTS "${XRT_CORE_LIBRARY}")
+        message(FATAL_ERROR "XRT core library not found: ${XRT_CORE_LIBRARY}")
+    endif()
+    if(NOT EXISTS "${XRT_COREUTIL_LIBRARY}")
+        message(FATAL_ERROR "XRT coreutil library not found: ${XRT_COREUTIL_LIBRARY}")
+    endif()
+    if(NOT EXISTS "${XRT_CPP_LIBRARY}")
+        message(FATAL_ERROR "XRT C++ library not found: ${XRT_CPP_LIBRARY}")
+    endif()
+
+    # Link XRT libraries with --no-as-needed to ensure they're included
+    # (symbols are used but linker may not detect them in all cases)
+    target_link_options(xrt_native PRIVATE
+        "LINKER:--no-as-needed"
+    )
 
     target_link_libraries(xrt_native
+        ${XRT_CPP_LIBRARY}
         ${XRT_CORE_LIBRARY}
         ${XRT_COREUTIL_LIBRARY}
         pthread
@@ -198,6 +251,7 @@ if(BUILD_NATIVE_XRT AND HAVE_XRT)
     )
 
     message(STATUS "Native XRT library: ENABLED")
+    message(STATUS "  XRT C++: ${XRT_CPP_LIBRARY}")
     message(STATUS "  XRT Core: ${XRT_CORE_LIBRARY}")
     message(STATUS "  XRT Coreutil: ${XRT_COREUTIL_LIBRARY}")
 elseif(BUILD_NATIVE_XRT AND NOT HAVE_XRT)

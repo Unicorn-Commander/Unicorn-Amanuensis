@@ -1,5 +1,5 @@
 """
-XDNA2 C++ Backend Server
+XDNA2 C++ Backend Server with Multi-Stream Pipeline
 
 Native FastAPI server using C++ NPU encoder for 400-500x realtime performance.
 Drop-in replacement for xdna1/server.py with identical API.
@@ -7,18 +7,23 @@ Drop-in replacement for xdna1/server.py with identical API.
 Key Features:
 - C++ encoder via encoder_cpp.WhisperEncoderCPP
 - NPU callback integration
-- Reuses mel spectrogram preprocessing (Python)
-- Reuses decoder (Python for now)
+- Multi-stream pipelining for concurrent request processing
+- Buffer pool + zero-copy optimization
 - OpenAI-compatible /v1/audio/transcriptions endpoint
 
-Performance Target:
+Performance Target (Sequential):
 - 400-500x realtime (vs 220x Python XDNA1)
-- ~50ms latency for 30s audio
-- 2.3% NPU utilization
+- ~60ms latency for 30s audio
+- 15.6 req/s throughput
 
-Author: CC-1L Integration Team
+Performance Target (Pipeline):
+- 67 req/s throughput (+329%)
+- 15% NPU utilization (+1775%)
+- 10-15 concurrent requests
+
+Author: CC-1L Multi-Stream Pipeline Team
 Date: November 1, 2025
-Status: Week 6 Days 1-2 Implementation
+Status: Week 9 Multi-Stream Implementation
 """
 
 from fastapi import FastAPI, UploadFile, File, Form
@@ -48,13 +53,17 @@ from buffer_pool import GlobalBufferManager
 # Import zero-copy mel utilities
 from .mel_utils import compute_mel_spectrogram_zerocopy, validate_mel_contiguity
 
+# Import multi-stream pipeline
+from request_queue import RequestQueue, QueuedRequest
+from transcription_pipeline import TranscriptionPipeline
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title="Unicorn-Amanuensis XDNA2 C++",
-    description="Speech-to-Text with C++ NPU Encoder (400-500x realtime)",
-    version="2.0.0"
+    title="Unicorn-Amanuensis XDNA2 C++ + Multi-Stream Pipeline",
+    description="Speech-to-Text with C++ NPU Encoder + Concurrent Processing (67 req/s)",
+    version="3.0.0"  # Version bump for pipeline support
 )
 
 # Model configuration
@@ -67,12 +76,19 @@ COMPUTE_TYPE = os.environ.get("COMPUTE_TYPE", "int8")  # CPU-optimized
 BATCH_SIZE = int(os.environ.get("BATCH_SIZE", "16"))
 HF_TOKEN = os.environ.get("HF_TOKEN", "")
 
-# Global encoder instance (initialized at startup)
+# Pipeline configuration
+ENABLE_PIPELINE = os.environ.get("ENABLE_PIPELINE", "true").lower() == "true"
+NUM_LOAD_WORKERS = int(os.environ.get("NUM_LOAD_WORKERS", "4"))
+NUM_DECODER_WORKERS = int(os.environ.get("NUM_DECODER_WORKERS", "4"))
+MAX_QUEUE_SIZE = int(os.environ.get("MAX_QUEUE_SIZE", "100"))
+
+# Global instances (initialized at startup)
 cpp_encoder: Optional[WhisperEncoderCPP] = None
 python_decoder = None  # WhisperX decoder (fallback to Python for now)
 model_a = None  # Alignment model
 metadata = None
 buffer_manager: Optional[GlobalBufferManager] = None
+pipeline: Optional[TranscriptionPipeline] = None  # Multi-stream pipeline
 
 # Performance stats
 startup_time = time.time()
@@ -176,8 +192,8 @@ def initialize_encoder():
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize encoder and buffer pools on service startup"""
-    global buffer_manager
+    """Initialize encoder, buffer pools, and pipeline on service startup"""
+    global buffer_manager, pipeline
 
     # Initialize C++ encoder
     success = initialize_encoder()
@@ -236,23 +252,66 @@ async def startup_event():
     logger.info(f"  Total pool memory: {total_memory / (1024*1024):.1f}MB")
     logger.info("="*70 + "\n")
 
+    # Initialize multi-stream pipeline (if enabled)
+    if ENABLE_PIPELINE:
+        logger.info("="*70)
+        logger.info("  Multi-Stream Pipeline Initialization")
+        logger.info("="*70)
+
+        pipeline = TranscriptionPipeline(
+            cpp_encoder=cpp_encoder,
+            python_decoder=python_decoder,
+            model_a=model_a,
+            metadata=metadata,
+            device=DEVICE,
+            batch_size=BATCH_SIZE,
+            num_load_workers=NUM_LOAD_WORKERS,
+            num_decoder_workers=NUM_DECODER_WORKERS,
+            max_queue_size=MAX_QUEUE_SIZE
+        )
+
+        await pipeline.start()
+
+        logger.info(f"  Mode: PIPELINE (concurrent)")
+        logger.info(f"  Load workers: {NUM_LOAD_WORKERS}")
+        logger.info(f"  Decoder workers: {NUM_DECODER_WORKERS}")
+        logger.info(f"  Max queue size: {MAX_QUEUE_SIZE}")
+        logger.info(f"  Target throughput: 67 req/s (+329%)")
+        logger.info("="*70 + "\n")
+    else:
+        logger.info("="*70)
+        logger.info("  Running in SEQUENTIAL mode (pipeline disabled)")
+        logger.info("  Set ENABLE_PIPELINE=true to enable concurrent processing")
+        logger.info("="*70 + "\n")
+
     logger.info("✅ All systems initialized successfully!")
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    """Graceful shutdown - print buffer pool statistics"""
-    global buffer_manager
+    """Graceful shutdown - stop pipeline and print statistics"""
+    global buffer_manager, pipeline
 
     logger.info("\n" + "="*70)
-    logger.info("  Service Shutdown - Buffer Pool Statistics")
+    logger.info("  Service Shutdown")
     logger.info("="*70)
 
+    # Stop pipeline (if running)
+    if pipeline:
+        logger.info("[Shutdown] Stopping pipeline...")
+        await pipeline.stop(drain_queues=True, timeout=30.0)
+        logger.info("[Shutdown] Pipeline statistics:")
+        await pipeline.print_stats()
+
+    # Print buffer pool statistics
     if buffer_manager:
+        logger.info("[Shutdown] Buffer pool statistics:")
         buffer_manager.print_stats()
         buffer_manager.shutdown()
 
-    logger.info("✅ Shutdown complete\n")
+    logger.info("="*70)
+    logger.info("✅ Shutdown complete")
+    logger.info("="*70 + "\n")
 
 
 @app.post("/v1/audio/transcriptions")
@@ -269,6 +328,7 @@ async def transcribe(
     - C++ encoder for 400-500x realtime performance
     - Buffer pooling for 80% allocation overhead reduction
     - Zero-copy mel computation for minimal data copying
+    - Multi-stream pipeline for +329% throughput (67 req/s)
 
     Args:
         file: Audio file (WAV, MP3, etc.)
@@ -287,10 +347,92 @@ async def transcribe(
             content={"error": "Service not initialized. C++ encoder or buffer pool not available."}
         )
 
+    # Read audio data
+    audio_data = await file.read()
+
+    # PIPELINE MODE: Route through multi-stream pipeline
+    if ENABLE_PIPELINE and pipeline is not None:
+        import uuid as uuid_lib
+        request_id = str(uuid_lib.uuid4())
+
+        try:
+            start_time = time.perf_counter()
+            logger.info(f"[Pipeline Request {request_count + 1}] Processing: {file.filename} (ID: {request_id})")
+
+            # Create queued request
+            from request_queue import QueuedRequest
+            queued_request = QueuedRequest(
+                request_id=request_id,
+                audio_data=audio_data,
+                options={
+                    'diarize': diarize,
+                    'min_speakers': min_speakers,
+                    'max_speakers': max_speakers,
+                    'format': 'json'
+                },
+                priority=0
+            )
+
+            # Submit to pipeline (with 30s timeout)
+            result = await pipeline.transcribe(queued_request, timeout=30.0)
+
+            # Calculate total time
+            total_time = time.perf_counter() - start_time
+
+            # Estimate audio duration (rough approximation: 1 KB ~= 0.03s for 16kHz audio)
+            audio_duration = len(audio_data) / (16000 * 2)  # 16kHz * 2 bytes per sample
+            overall_realtime = audio_duration / total_time if total_time > 0 else 0
+
+            # Update stats
+            request_count += 1
+            total_audio_seconds += audio_duration
+            total_processing_time += total_time
+
+            logger.info(
+                f"[Pipeline Request {request_count}] Complete: {total_time*1000:.1f}ms "
+                f"({overall_realtime:.1f}x realtime)"
+            )
+
+            # Return result (pipeline already has text, segments, words)
+            return {
+                "text": result.get("text", ""),
+                "segments": result.get("segments", []),
+                "language": result.get("language", "en"),
+                "words": result.get("words", []),
+                "performance": {
+                    "audio_duration_s": audio_duration,
+                    "processing_time_s": total_time,
+                    "realtime_factor": overall_realtime,
+                    "mode": "pipeline"
+                }
+            }
+
+        except asyncio.TimeoutError:
+            logger.error(f"[Pipeline Request] Timeout after 30s for request {request_id}")
+            return JSONResponse(
+                status_code=504,
+                content={"error": "Request timeout after 30s"}
+            )
+
+        except Exception as e:
+            logger.error(f"[Pipeline Request] Error for request {request_id}: {e}", exc_info=True)
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "error": "Pipeline processing failed",
+                    "details": str(e)
+                }
+            )
+
+    # SEQUENTIAL MODE: Fallback to original implementation
+    logger.info(
+        f"[Sequential Request {request_count + 1}] Processing: {file.filename} "
+        "(pipeline disabled)"
+    )
+
     # Save uploaded file
     with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
-        content = await file.read()
-        tmp.write(content)
+        tmp.write(audio_data)
         tmp_path = tmp.name
 
     # Buffer pool tracking for cleanup
@@ -412,7 +554,8 @@ async def transcribe(
                 "encoder_realtime_factor": realtime_factor,
                 "mel_time_ms": mel_time * 1000,
                 "decoder_time_ms": decoder_time * 1000,
-                "align_time_ms": align_time * 1000
+                "align_time_ms": align_time * 1000,
+                "mode": "sequential"
             }
         }
 
@@ -454,6 +597,165 @@ async def transcribe(
 
         os.unlink(tmp_path)
         gc.collect()
+
+
+@app.get("/stats/pipeline")
+async def pipeline_stats():
+    """
+    Get multi-stream pipeline statistics.
+
+    Returns comprehensive statistics for all pipeline stages including:
+    - Overall throughput (requests per second)
+    - Queue depth and utilization
+    - Active requests in flight
+    - Per-stage processing times and queue depths
+    - Error rates and timeout rates
+
+    Returns:
+        Pipeline statistics or indication that pipeline is disabled
+    """
+    if not ENABLE_PIPELINE or pipeline is None:
+        return {
+            "enabled": False,
+            "mode": "sequential",
+            "message": "Pipeline disabled. Set ENABLE_PIPELINE=true to enable."
+        }
+
+    try:
+        stats = await pipeline.get_stats()
+
+        # Calculate overall throughput
+        queue_stats = stats.get('queue', {})
+        total_processed = queue_stats.get('total_dequeued', 0)
+
+        # Calculate requests per second (use Stage 3 completion rate)
+        stage3_stats = stats.get('stage3', {})
+        stage3_processed = stage3_stats.get('total_processed', 0)
+        stage3_time = stage3_stats.get('total_time', 0.0)
+
+        if stage3_time > 0:
+            throughput_rps = stage3_processed / stage3_time
+        else:
+            throughput_rps = 0.0
+
+        return {
+            "enabled": True,
+            "mode": "pipeline",
+            "throughput_rps": round(throughput_rps, 2),
+            "queue": {
+                "depth": queue_stats.get('current_size', 0),
+                "max_size": queue_stats.get('max_queue_size', 0),
+                "utilization": queue_stats.get('utilization', 0.0),
+                "total_enqueued": queue_stats.get('total_enqueued', 0),
+                "total_dequeued": queue_stats.get('total_dequeued', 0),
+                "avg_wait_time_ms": queue_stats.get('avg_wait_time', 0.0) * 1000
+            },
+            "active_requests": stats.get('pipeline', {}).get('pending_responses', 0),
+            "stages": {
+                "stage1_load_mel": {
+                    "total_processed": stats.get('stage1', {}).get('total_processed', 0),
+                    "avg_time_ms": stats.get('stage1', {}).get('avg_time', 0.0) * 1000,
+                    "queue_depth": stats.get('stage1', {}).get('input_queue_size', 0),
+                    "workers_active": stats.get('stage1', {}).get('workers_active', 0),
+                    "error_rate": stats.get('stage1', {}).get('error_rate', 0.0)
+                },
+                "stage2_encoder": {
+                    "total_processed": stats.get('stage2', {}).get('total_processed', 0),
+                    "avg_time_ms": stats.get('stage2', {}).get('avg_time', 0.0) * 1000,
+                    "queue_depth": stats.get('stage2', {}).get('input_queue_size', 0),
+                    "workers_active": stats.get('stage2', {}).get('workers_active', 0),
+                    "error_rate": stats.get('stage2', {}).get('error_rate', 0.0)
+                },
+                "stage3_decoder_align": {
+                    "total_processed": stats.get('stage3', {}).get('total_processed', 0),
+                    "avg_time_ms": stats.get('stage3', {}).get('avg_time', 0.0) * 1000,
+                    "queue_depth": stats.get('stage3', {}).get('input_queue_size', 0),
+                    "workers_active": stats.get('stage3', {}).get('workers_active', 0),
+                    "error_rate": stats.get('stage3', {}).get('error_rate', 0.0)
+                }
+            }
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting pipeline stats: {e}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": "Failed to retrieve pipeline statistics",
+                "details": str(e)
+            }
+        )
+
+
+@app.get("/health/pipeline")
+async def pipeline_health():
+    """
+    Check pipeline health status.
+
+    Returns health information for each pipeline stage and overall health status.
+    Useful for monitoring and alerting.
+
+    Returns:
+        Health status with per-stage details
+    """
+    if not ENABLE_PIPELINE or pipeline is None:
+        return {
+            "healthy": False,
+            "mode": "sequential",
+            "reason": "Pipeline disabled. Set ENABLE_PIPELINE=true to enable."
+        }
+
+    try:
+        # Check overall pipeline health
+        is_healthy = pipeline.is_healthy()
+
+        # Get detailed stats for health assessment
+        stats = await pipeline.get_stats()
+
+        # Check each stage
+        stage_health = {}
+
+        for stage_name in ['stage1', 'stage2', 'stage3']:
+            stage_stats = stats.get(stage_name, {})
+            stage_running = stage_stats.get('is_running', False)
+            workers_active = stage_stats.get('workers_active', 0)
+            workers_total = stage_stats.get('workers_total', 0)
+            error_rate = stage_stats.get('error_rate', 0.0)
+
+            stage_healthy = (
+                stage_running and
+                workers_active > 0 and
+                error_rate < 0.5  # Less than 50% error rate
+            )
+
+            stage_health[stage_name] = {
+                "healthy": stage_healthy,
+                "running": stage_running,
+                "workers_active": workers_active,
+                "workers_total": workers_total,
+                "error_rate": error_rate
+            }
+
+        # Overall health is healthy if all stages are healthy
+        all_healthy = all(s["healthy"] for s in stage_health.values())
+
+        return {
+            "healthy": all_healthy and is_healthy,
+            "mode": "pipeline",
+            "stages": stage_health,
+            "message": "All stages healthy" if all_healthy else "One or more stages unhealthy"
+        }
+
+    except Exception as e:
+        logger.error(f"Error checking pipeline health: {e}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "healthy": False,
+                "error": "Health check failed",
+                "details": str(e)
+            }
+        )
 
 
 @app.get("/health")
@@ -565,17 +867,23 @@ async def stats():
 @app.get("/")
 async def root():
     """Root endpoint with service information"""
+    mode = "pipeline" if (ENABLE_PIPELINE and pipeline is not None) else "sequential"
+    target_throughput = "67 req/s (+329%)" if mode == "pipeline" else "15.6 req/s"
+
     return {
-        "service": "Unicorn-Amanuensis XDNA2 C++",
-        "description": "Speech-to-Text with C++ NPU Encoder",
-        "version": "2.0.0",
+        "service": "Unicorn-Amanuensis XDNA2 C++ + Multi-Stream Pipeline",
+        "description": "Speech-to-Text with C++ NPU Encoder + Concurrent Processing",
+        "version": "3.0.0",
         "backend": "C++ encoder (400-500x realtime) + Python decoder",
         "model": MODEL_SIZE,
-        "performance_target": "400-500x realtime",
+        "mode": mode,
+        "performance_target": target_throughput,
         "endpoints": {
             "/v1/audio/transcriptions": "POST - Transcribe audio (OpenAI-compatible)",
             "/health": "GET - Health check with encoder stats",
+            "/health/pipeline": "GET - Pipeline health status",
             "/stats": "GET - Detailed performance statistics",
+            "/stats/pipeline": "GET - Pipeline statistics",
             "/": "GET - This information"
         }
     }
