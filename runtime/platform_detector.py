@@ -87,14 +87,22 @@ class PlatformDetector:
                 timeout=5
             )
 
-            # Look for AMD Strix Point NPU device ID
-            # Device ID: 1502:1502 (Strix Point NPU)
-            if "1502:1502" in result.stdout:
+            # Look for AMD Strix Halo/Strix Point NPU device ID
+            # Device ID: 1022:17f0 (Strix/Krackan/Strix Halo NPU)
+            # This is the XDNA2 NPU (50 TOPS, 32 tiles)
+            if "1022:17f0" in result.stdout:
+                logger.debug("Found XDNA2 NPU device (1022:17f0)")
                 return True
 
-            # Check for XDNA2 runtime
-            xdna2_runtime = os.path.exists("/opt/xilinx/xrt/bin/xbutil")
+            # Also check for /dev/accel/accel0 device
+            if os.path.exists("/dev/accel/accel0"):
+                logger.debug("Found /dev/accel/accel0 device")
+                return True
+
+            # Check for XDNA2 runtime (xrt-smi instead of xbutil on newer XRT)
+            xdna2_runtime = os.path.exists("/opt/xilinx/xrt/bin/xrt-smi")
             if xdna2_runtime:
+                logger.debug("Found XRT runtime with xrt-smi")
                 return True
 
         except Exception as e:
@@ -114,10 +122,11 @@ class PlatformDetector:
             )
 
             # Look for AMD Phoenix/Hawk Point NPU device IDs
-            # Phoenix: 1502:17f0
-            # Hawk Point: Similar device ID range
+            # Phoenix: 1502:17f0 (7040 series)
+            # Note: 1022:17f0 is XDNA2 (Strix Halo), checked separately
             xdna1_ids = ["1502:17f0", "1502:17f1", "1502:17f2"]
             if any(dev_id in result.stdout for dev_id in xdna1_ids):
+                logger.debug(f"Found XDNA1 NPU device")
                 return True
 
         except Exception as e:
