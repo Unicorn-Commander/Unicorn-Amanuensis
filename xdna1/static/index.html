@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🦄 Unicorn-Amanuensis XDNA1 (Phoenix NPU)</title>
+    <link rel="icon" type="image/png" href="/static/unicorn-logo.png">
+    <style>
+        /* Theme Configurations */
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --border-color: #e0e0e0;
+            --accent-color: #2563eb;
+            --success-color: #22c55e;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --border-color: #404040;
+            --accent-color: #3b82f6;
+            --success-color: #22c55e;
+            --warning-color: #fbbf24;
+            --error-color: #f87171;
+            --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        header {
+            background-color: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--card-shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: auto;
+        }
+
+        .logo-text h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .logo-text p {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin: 4px 0 0 0;
+        }
+
+        .theme-switcher {
+            display: flex;
+            gap: 8px;
+            background-color: var(--bg-secondary);
+            padding: 6px;
+            border-radius: 6px;
+        }
+
+        .theme-btn {
+            padding: 8px 12px;
+            border: none;
+            background-color: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .theme-btn.active {
+            background-color: var(--bg-primary);
+            color: var(--accent-color);
+            box-shadow: var(--card-shadow);
+        }
+
+        main {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            border-color: var(--accent-color);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .stat-card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .stat-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        input[type="file"],
+        select,
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        input[type="file"]:focus,
+        select:focus,
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-primary:disabled {
+            background-color: var(--text-secondary);
+            cursor: not-allowed;
+            transform: none;
+            opacity: 0.6;
+        }
+
+        .btn-secondary {
+            background-color: var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background-color: #d0d0d0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background-color: var(--bg-secondary);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--accent-color);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .transcript-container {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 16px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 12px;
+        }
+
+        .transcript-text {
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+
+        .segment {
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .segment:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .segment-time {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .segment-text {
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-left: 8px;
+        }
+
+        .status-success {
+            background-color: rgba(34, 197, 94, 0.2);
+            color: var(--success-color);
+        }
+
+        .status-error {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: var(--error-color);
+        }
+
+        .status-warning {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: var(--warning-color);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .error-message {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--error-color);
+            border-radius: 4px;
+            padding: 12px;
+            color: var(--error-color);
+            margin-top: 12px;
+            font-size: 14px;
+        }
+
+        .success-message {
+            background-color: rgba(34, 197, 94, 0.1);
+            border: 1px solid var(--success-color);
+            border-radius: 4px;
+            padding: 12px;
+            color: var(--success-color);
+            margin-top: 12px;
+            font-size: 14px;
+        }
+
+        .info-message {
+            background-color: rgba(37, 99, 235, 0.1);
+            border: 1px solid var(--accent-color);
+            border-radius: 4px;
+            padding: 12px;
+            color: var(--accent-color);
+            margin-top: 12px;
+            font-size: 14px;
+        }
+
+        footer {
+            background-color: var(--bg-primary);
+            border-top: 1px solid var(--border-color);
+            padding: 20px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 12px;
+            margin-top: 40px;
+        }
+
+        @media (max-width: 768px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+
+            header {
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .loading {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <img src="/static/unicorn-logo.png" alt="Unicorn Logo" class="logo-icon" style="height: 60px; width: auto;">
+                <div class="logo-text">
+                    <h1>Unicorn Amanuensis</h1>
+                    <p>AMD Phoenix XDNA1 NPU Platform • 23.6× Realtime Performance</p>
+                </div>
+            </div>
+            <div class="theme-switcher">
+                <button class="theme-btn active" data-theme="light">☀️</button>
+                <button class="theme-btn" data-theme="dark">🌙</button>
+            </div>
+        </header>
+
+        <main>
+            <!-- Hardware Status Card -->
+            <div class="card" id="hardwareCard" style="grid-column: 1 / -1;">
+                <h2 class="card-title">
+                    <span id="hardwareIcon">🚀</span> Hardware Status
+                </h2>
+                <div id="hardwareStatus" class="stats-grid">
+                    <div class="stat-card loading">
+                        <div class="stat-label">Detecting...</div>
+                        <div class="stat-value" style="font-size: 1rem;">Please wait</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title">
+                    <span>🎙️</span> Upload & Transcribe
+                </h2>
+                <form id="transcribeForm">
+                    <div class="form-group">
+                        <label for="file">Audio File</label>
+                        <input type="file" id="file" accept="audio/*" required>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                            Supported: MP3, WAV, FLAC, OGG, M4A
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="model">Model</label>
+                        <select id="model">
+                            <option value="large-v3">Large v3 (Most Accurate - 0.56× realtime)</option>
+                            <option value="medium">Medium (15.2× realtime - XDNA1 Optimized)</option>
+                            <option value="small">Small (19.8× realtime - XDNA1 Optimized)</option>
+                            <option value="base" selected>Base (23.6× realtime - XDNA1 Optimized)</option>
+                            <option value="tiny">Tiny (Fastest - 31.2× realtime)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="language">Language</label>
+                        <select id="language">
+                            <option value="auto">Auto-detect</option>
+                            <option value="en">English</option>
+                            <option value="es">Spanish</option>
+                            <option value="fr">French</option>
+                            <option value="de">German</option>
+                            <option value="it">Italian</option>
+                            <option value="pt">Portuguese</option>
+                            <option value="zh">Chinese</option>
+                            <option value="ja">Japanese</option>
+                            <option value="ru">Russian</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="task">Task</label>
+                        <select id="task">
+                            <option value="transcribe" selected>Transcribe</option>
+                            <option value="translate">Translate to English</option>
+                        </select>
+                    </div>
+
+                    <div id="statusMessage"></div>
+                    <div id="progressContainer" style="display: none;">
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;" id="progressText">
+                            Processing...
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" class="btn-primary" id="submitBtn">
+                            🚀 Transcribe
+                        </button>
+                        <button type="reset" class="btn-secondary" id="resetBtn">
+                            Clear
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Results Card -->
+            <div class="card" id="resultsCard" style="display: none;">
+                <h2 class="card-title">
+                    <span>📝</span> Transcription Results
+                </h2>
+                <div id="resultsContent">
+                    <div id="emptyState" class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <p>Your transcription will appear here</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Card -->
+            <div class="card" id="statsCard" style="display: none;">
+                <h2 class="card-title">
+                    <span>📊</span> Performance Metrics
+                </h2>
+                <div id="statsContent" class="stats-grid"></div>
+            </div>
+        </main>
+
+        <footer>
+            <p>🦄 Unicorn Amanuensis - Speech-to-Text with AMD Phoenix XDNA1 NPU</p>
+            <p style="margin-top: 8px;">© 2025 Magic Unicorn Unconventional Technology & Stuff Inc.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Hardware Status Management
+        let hardwareStatusInterval = null;
+
+        function getHardwareColor(type) {
+            if (type === 'npu') return { bg: 'rgba(34, 197, 94, 0.2)', border: '#22c55e', text: '#22c55e' };
+            if (type === 'igpu') return { bg: 'rgba(59, 130, 246, 0.2)', border: '#3b82f6', text: '#3b82f6' };
+            return { bg: 'rgba(234, 179, 8, 0.2)', border: '#eab308', text: '#eab308' };
+        }
+
+        function getHardwareIcon(type) {
+            if (type === 'npu') return '🚀';
+            if (type === 'igpu') return '💎';
+            return '⚙️';
+        }
+
+        async function updateHardwareStatus() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+
+                const hardware = data.hardware || {};
+                const colors = getHardwareColor(hardware.type);
+
+                document.getElementById('hardwareIcon').textContent = getHardwareIcon(hardware.type);
+
+                let statusHTML = `
+                    <div class="stat-card" style="border-color: ${colors.border}; background: ${colors.bg};">
+                        <div class="stat-label">Hardware</div>
+                        <div class="stat-value" style="color: ${colors.text};">${hardware.name || 'CPU'}</div>
+                    </div>
+                    <div class="stat-card" style="border-color: ${colors.border}; background: ${colors.bg};">
+                        <div class="stat-label">Performance</div>
+                        <div class="stat-value" style="color: ${colors.text};">${data.performance || '~5x'}</div>
+                    </div>
+                `;
+
+                if (hardware.type === 'npu') {
+                    statusHTML += `
+                        <div class="stat-card" style="border-color: ${colors.border}; background: ${colors.bg};">
+                            <div class="stat-label">NPU Status</div>
+                            <div class="stat-value" style="color: ${colors.text};">🚀 Active</div>
+                        </div>
+                        <div class="stat-card" style="border-color: ${colors.border}; background: ${colors.bg};">
+                            <div class="stat-label">Mel Processing</div>
+                            <div class="stat-value" style="color: ${colors.text};">✅ XDNA1</div>
+                        </div>
+                        <div class="stat-card" style="border-color: ${colors.border}; background: ${colors.bg};">
+                            <div class="stat-label">Sign-Fix</div>
+                            <div class="stat-value" style="color: ${colors.text};">✅ Enabled</div>
+                        </div>
+                    `;
+
+                    if (hardware.details && hardware.details.firmware) {
+                        statusHTML += `
+                            <div class="stat-card" style="border-color: ${colors.border}; background: ${colors.bg};">
+                                <div class="stat-label">Firmware</div>
+                                <div class="stat-value" style="color: ${colors.text}; font-size: 0.9rem;">${hardware.details.firmware}</div>
+                            </div>
+                        `;
+                    }
+
+                    statusHTML += `
+                        <div class="stat-card" style="border-color: ${colors.border}; background: ${colors.bg}; grid-column: span 2;">
+                            <div class="stat-label">🦄 Magic Unicorn Tech</div>
+                            <div class="stat-value" style="color: ${colors.text}; font-size: 0.85rem;">Sign-Fixed Mel Kernel · 23.6× Realtime</div>
+                        </div>
+                    `;
+                }
+
+                statusHTML += `
+                    <div class="stat-card" style="border-color: ${colors.border}; background: ${colors.bg};">
+                        <div class="stat-label">Model</div>
+                        <div class="stat-value" style="color: ${colors.text};">${data.model || 'base'}</div>
+                    </div>
+                `;
+
+                document.getElementById('hardwareStatus').innerHTML = statusHTML;
+
+                const hardwareCard = document.getElementById('hardwareCard');
+                hardwareCard.style.borderColor = colors.border;
+                hardwareCard.style.borderWidth = '2px';
+
+            } catch (error) {
+                console.error('Failed to fetch hardware status:', error);
+                document.getElementById('hardwareStatus').innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-label">Status</div>
+                        <div class="stat-value" style="color: #ef4444;">Error</div>
+                    </div>
+                `;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateHardwareStatus();
+            hardwareStatusInterval = setInterval(updateHardwareStatus, 5000);
+        });
+
+        window.addEventListener('beforeunload', () => {
+            if (hardwareStatusInterval) {
+                clearInterval(hardwareStatusInterval);
+            }
+        });
+
+        // Theme Switching
+        const themeButtons = document.querySelectorAll('.theme-btn');
+        const currentTheme = localStorage.getItem('theme') || 'light';
+
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        themeButtons.forEach(btn => {
+            if (btn.dataset.theme === currentTheme) {
+                btn.classList.add('active');
+            }
+
+            btn.addEventListener('click', () => {
+                const theme = btn.dataset.theme;
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('theme', theme);
+
+                themeButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        // Form Submission
+        document.getElementById('transcribeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const fileInput = document.getElementById('file');
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('model', document.getElementById('model').value);
+            formData.append('language', document.getElementById('language').value);
+            formData.append('task', document.getElementById('task').value);
+
+            const submitBtn = document.getElementById('submitBtn');
+            const statusMessage = document.getElementById('statusMessage');
+            const progressContainer = document.getElementById('progressContainer');
+
+            submitBtn.disabled = true;
+            statusMessage.innerHTML = '';
+            progressContainer.style.display = 'block';
+            document.getElementById('progressFill').style.width = '0%';
+
+            try {
+                const response = await fetch('/v1/audio/transcriptions', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Transcription failed');
+                }
+
+                const result = await response.json();
+
+                statusMessage.innerHTML = '<div class="success-message">✅ Transcription completed successfully!</div>';
+                progressContainer.style.display = 'none';
+
+                displayResults(result);
+
+            } catch (error) {
+                statusMessage.innerHTML = `<div class="error-message">❌ Error: ${error.message}</div>`;
+                progressContainer.style.display = 'none';
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+
+        function displayResults(result) {
+            const resultsCard = document.getElementById('resultsCard');
+            const resultsContent = document.getElementById('resultsContent');
+            const statsCard = document.getElementById('statsCard');
+            const statsContent = document.getElementById('statsContent');
+
+            resultsCard.style.display = 'block';
+            statsCard.style.display = 'block';
+
+            // Display transcript
+            let transcriptHTML = '<div class="transcript-container"><div class="transcript-text">';
+
+            if (result.segments && Array.isArray(result.segments)) {
+                result.segments.forEach(segment => {
+                    const startTime = formatTime(segment.start || 0);
+                    const endTime = formatTime(segment.end || 0);
+                    transcriptHTML += `
+                        <div class="segment">
+                            <div class="segment-time">[${startTime} → ${endTime}]</div>
+                            <div class="segment-text">${segment.text}</div>
+                        </div>
+                    `;
+                });
+            } else {
+                transcriptHTML += `<div class="segment-text">${result.text || 'No text extracted'}</div>`;
+            }
+
+            transcriptHTML += '</div></div>';
+            resultsContent.innerHTML = transcriptHTML;
+
+            // Display stats
+            let statsHTML = '';
+            if (result.elapsed_ms !== undefined) {
+                const duration = (result.audio_duration_s || 0).toFixed(2);
+                const elapsed = (result.elapsed_ms / 1000).toFixed(2);
+                const realtime = (result.realtime_factor || 0).toFixed(1);
+
+                statsHTML = `
+                    <div class="stat-card">
+                        <div class="stat-label">Audio Duration</div>
+                        <div class="stat-value">${duration}s</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Processing Time</div>
+                        <div class="stat-value">${elapsed}s</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Realtime Factor</div>
+                        <div class="stat-value" style="color: #22c55e;">${realtime}×</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Language</div>
+                        <div class="stat-value">${result.language || 'en'}</div>
+                    </div>
+                `;
+
+                if (result.npu_mel_used !== undefined) {
+                    statsHTML += `
+                        <div class="stat-card">
+                            <div class="stat-label">NPU Mel</div>
+                            <div class="stat-value">${result.npu_mel_used ? '✅' : '❌'}</div>
+                        </div>
+                    `;
+                }
+
+                if (result.npu_generation) {
+                    statsHTML += `
+                        <div class="stat-card">
+                            <div class="stat-label">Hardware</div>
+                            <div class="stat-value" style="font-size: 0.9rem;">${result.npu_generation}</div>
+                        </div>
+                    `;
+                }
+            }
+
+            statsContent.innerHTML = statsHTML;
+        }
+
+        function formatTime(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = Math.floor(seconds % 60);
+
+            if (hours > 0) {
+                return `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            }
+            return `${minutes}:${String(secs).padStart(2, '0')}`;
+        }
+    </script>
+</body>
+</html>
