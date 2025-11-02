@@ -1,0 +1,66 @@
+{
+  "timestamp": "2025-11-02 12:23:48 UTC",
+  "total_tests": 4,
+  "successful": 0,
+  "failed": 4,
+  "target": "400.0-500.0\u00d7 realtime",
+  "results": [
+    {
+      "test_name": "1 Second Audio",
+      "audio_duration_s": 1.0,
+      "audio_file": "test_1s.wav",
+      "processing_time_ms": 21.933962998446077,
+      "realtime_factor": 45.5913963231745,
+      "mel_time_ms": 0.0,
+      "encoder_time_ms": 0.0,
+      "decoder_time_ms": 0.0,
+      "npu_utilization_percent": 0.0,
+      "success": false,
+      "error": "500 Server Error: Internal Server Error for url: http://127.0.0.1:9050/v1/audio/transcriptions",
+      "transcription": ""
+    },
+    {
+      "test_name": "5 Second Audio",
+      "audio_duration_s": 5.0,
+      "audio_file": "test_5s.wav",
+      "processing_time_ms": 107.94556498876773,
+      "realtime_factor": 46.31964268768499,
+      "mel_time_ms": 0.0,
+      "encoder_time_ms": 0.0,
+      "decoder_time_ms": 0.0,
+      "npu_utilization_percent": 0.0,
+      "success": false,
+      "error": "500 Server Error: Internal Server Error for url: http://127.0.0.1:9050/v1/audio/transcriptions",
+      "transcription": ""
+    },
+    {
+      "test_name": "30 Second Audio (Target)",
+      "audio_duration_s": 30.0,
+      "audio_file": "test_30s.wav",
+      "processing_time_ms": 11.054035014240071,
+      "realtime_factor": 2713.9411048864317,
+      "mel_time_ms": 0.0,
+      "encoder_time_ms": 0.0,
+      "decoder_time_ms": 0.0,
+      "npu_utilization_percent": 0.0,
+      "success": false,
+      "error": "500 Server Error: Internal Server Error for url: http://127.0.0.1:9050/v1/audio/transcriptions",
+      "transcription": ""
+    },
+    {
+      "test_name": "Silence (Edge Case)",
+      "audio_duration_s": 5.0,
+      "audio_file": "test_silence.wav",
+      "processing_time_ms": 110.63975698198192,
+      "realtime_factor": 45.191711699206536,
+      "mel_time_ms": 0.0,
+      "encoder_time_ms": 0.0,
+      "decoder_time_ms": 0.0,
+      "npu_utilization_percent": 0.0,
+      "success": false,
+      "error": "500 Server Error: Internal Server Error for url: http://127.0.0.1:9050/v1/audio/transcriptions",
+      "transcription": ""
+    }
+  ],
+  "status": "ALL_FAILED"
+}

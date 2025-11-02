@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-11-02 02:29:56 UTC",
+  "timestamp": "2025-11-02 12:32:42 UTC",
   "service_status": {
     "status": "healthy",
     "service": "Unicorn-Amanuensis XDNA2 C++ + Buffer Pool",
@@ -8,7 +8,7 @@
     "model": "base",
     "device": "cpu",
     "compute_type": "int8",
-    "uptime_seconds": 140.95653867721558,
+    "uptime_seconds": 155.78721737861633,
     "encoder": {
       "type": "C++ with NPU",
       "runtime_version": "1.0.0",
@@ -18,21 +18,21 @@
     },
     "buffer_pools": {
       "mel": {
-        "hit_rate": 0.0,
+        "hit_rate": 1.0,
         "buffers_available": 10,
         "buffers_in_use": 0,
         "total_buffers": 10,
         "has_leaks": false
       },
       "audio": {
-        "hit_rate": 0.0,
+        "hit_rate": 1.0,
         "buffers_available": 5,
         "buffers_in_use": 0,
         "total_buffers": 5,
         "has_leaks": false
       },
       "encoder_output": {
-        "hit_rate": 0.0,
+        "hit_rate": 1.0,
         "buffers_available": 5,
         "buffers_in_use": 0,
         "total_buffers": 5,
@@ -40,18 +40,18 @@
       }
     },
     "performance": {
-      "requests_processed": 0,
-      "total_audio_seconds": 0.0,
-      "total_processing_seconds": 0.0,
-      "average_realtime_factor": 0,
+      "requests_processed": 1,
+      "total_audio_seconds": 1.001375,
+      "total_processing_seconds": 1.534746177989291,
+      "average_realtime_factor": 0.6524694534909519,
       "target_realtime_factor": 400
     },
     "warnings": []
   },
   "npu_enabled": true,
   "tests_run": 5,
-  "tests_passed": 1,
-  "tests_failed": 4,
+  "tests_passed": 4,
+  "tests_failed": 1,
   "test_results": [
     {
       "test_name": "Service Health Check",
@@ -66,7 +66,7 @@
           "model": "base",
           "device": "cpu",
           "compute_type": "int8",
-          "uptime_seconds": 140.95653867721558,
+          "uptime_seconds": 155.78721737861633,
           "encoder": {
             "type": "C++ with NPU",
             "runtime_version": "1.0.0",
@@ -76,21 +76,21 @@
           },
           "buffer_pools": {
             "mel": {
-              "hit_rate": 0.0,
+              "hit_rate": 1.0,
               "buffers_available": 10,
               "buffers_in_use": 0,
               "total_buffers": 10,
               "has_leaks": false
             },
             "audio": {
-              "hit_rate": 0.0,
+              "hit_rate": 1.0,
               "buffers_available": 5,
               "buffers_in_use": 0,
               "total_buffers": 5,
               "has_leaks": false
             },
             "encoder_output": {
-              "hit_rate": 0.0,
+              "hit_rate": 1.0,
               "buffers_available": 5,
               "buffers_in_use": 0,
               "total_buffers": 5,
@@ -98,10 +98,10 @@
             }
           },
           "performance": {
-            "requests_processed": 0,
-            "total_audio_seconds": 0.0,
-            "total_processing_seconds": 0.0,
-            "average_realtime_factor": 0,
+            "requests_processed": 1,
+            "total_audio_seconds": 1.001375,
+            "total_processing_seconds": 1.534746177989291,
+            "average_realtime_factor": 0.6524694534909519,
             "target_realtime_factor": 400
           },
           "warnings": []
@@ -110,20 +110,36 @@
     },
     {
       "test_name": "Transcription: 1 second audio",
-      "passed": false,
+      "passed": true,
       "details": {
-        "passed": false,
-        "error": "Pipeline processing failed: Encoder failed: Forward pass failed",
-        "status_code": 500
+        "passed": true,
+        "transcription": " Ooh.",
+        "audio_duration": 1.001375,
+        "processing_time": 0.6114949499897193,
+        "realtime_factor": 1.6375850692092149,
+        "performance": {
+          "audio_duration_s": 1.001375,
+          "processing_time_s": 0.6114949499897193,
+          "realtime_factor": 1.6375850692092149,
+          "mode": "pipeline"
+        }
       }
     },
     {
       "test_name": "Transcription: 5 second audio",
-      "passed": false,
+      "passed": true,
       "details": {
-        "passed": false,
-        "error": "Pipeline processing failed: Encoder failed: Forward pass failed",
-        "status_code": 500
+        "passed": true,
+        "transcription": " Whoa! Whoa! Whoa! Whoa!",
+        "audio_duration": 5.001375,
+        "processing_time": 0.8025325379858259,
+        "realtime_factor": 6.231990309766522,
+        "performance": {
+          "audio_duration_s": 5.001375,
+          "processing_time_s": 0.8025325379858259,
+          "realtime_factor": 6.231990309766522,
+          "mode": "pipeline"
+        }
       }
     },
     {
@@ -137,11 +153,19 @@
     },
     {
       "test_name": "Transcription: Silent audio (edge case)",
-      "passed": false,
+      "passed": true,
       "details": {
-        "passed": false,
-        "error": "Pipeline processing failed: Encoder failed: Forward pass failed",
-        "status_code": 500
+        "passed": true,
+        "transcription": "",
+        "audio_duration": 5.001375,
+        "processing_time": 0.41997419399558567,
+        "realtime_factor": 11.908767423106406,
+        "performance": {
+          "audio_duration_s": 5.001375,
+          "processing_time_s": 0.41997419399558567,
+          "realtime_factor": 11.908767423106406,
+          "mode": "pipeline"
+        }
       }
     }
   ]

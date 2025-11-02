@@ -212,6 +212,38 @@ def load_xrt_npu_application():
             )
 
         # Create XRT app wrapper with real buffer operations
+        class BufferWrapper:
+            """
+            Wrapper for XRTApp buffers to provide .write()/.read() interface.
+            Compatible with mlir-aie setup_aie() buffer interface.
+            """
+            def __init__(self, xrt_app, idx):
+                self.xrt_app = xrt_app
+                self.idx = idx
+
+            def write(self, data):
+                """Write data and sync to device"""
+                self.xrt_app.write_buffer(self.idx, data)
+
+            def read(self):
+                """Sync from device and read data"""
+                return self.xrt_app.read_buffer(self.idx)
+
+        class BuffersDict:
+            """
+            Dictionary-like interface for XRTApp buffers.
+            Provides compatibility with npu_callback that expects .buffers[3].write()
+            """
+            def __init__(self, xrt_app):
+                self.xrt_app = xrt_app
+                self._wrappers = {}
+
+            def __getitem__(self, idx):
+                """Get buffer wrapper by index"""
+                if idx not in self._wrappers:
+                    self._wrappers[idx] = BufferWrapper(self.xrt_app, idx)
+                return self._wrappers[idx]
+
         class XRTApp:
             """
             XRT Application with Real Buffer Operations.
@@ -249,6 +281,9 @@ def load_xrt_npu_application():
 
                 # Buffer metadata (for size tracking and validation)
                 self.buffer_metadata = {}
+
+                # Create buffers dict for compatibility with npu_callback
+                self.buffers = BuffersDict(self)
 
                 logger.info(f"  XRTApp initialized with kernel: {kernel_name}")
 
@@ -301,16 +336,16 @@ def load_xrt_npu_application():
                 Write data to XRT buffer and sync to device.
 
                 Copies data from host (CPU) memory to XRT buffer and synchronizes
-                to NPU device memory. Data must match the buffer's registered shape
-                and dtype.
+                to NPU device memory. Data can be smaller than buffer size (for
+                variable-length inputs), but cannot exceed it.
 
                 Args:
                     idx: Buffer index
-                    data: NumPy array to write (must match registered dtype/shape)
+                    data: NumPy array to write (can be smaller than buffer, same dtype)
 
                 Raises:
                     KeyError: If buffer index not registered
-                    ValueError: If data shape/dtype doesn't match
+                    ValueError: If data exceeds buffer size or dtype mismatch
                     RuntimeError: If write or sync fails
                 """
                 if idx not in self.xrt_buffers:
@@ -318,13 +353,16 @@ def load_xrt_npu_application():
 
                 # Validate data
                 metadata = self.buffer_metadata[idx]
-                expected_shape = metadata['shape']
+                buffer_size = metadata['size']
                 expected_dtype = metadata['dtype']
 
-                if data.shape != expected_shape:
+                # Allow variable-sized data (common for NPU matmul with different input sizes)
+                # Just check that data doesn't exceed buffer capacity
+                data_size = data.nbytes
+                if data_size > buffer_size:
                     raise ValueError(
-                        f"Data shape {data.shape} doesn't match buffer {idx} "
-                        f"shape {expected_shape}"
+                        f"Data size {data_size} bytes exceeds buffer {idx} "
+                        f"capacity {buffer_size} bytes"
                     )
 
                 if data.dtype != expected_dtype:
@@ -338,13 +376,16 @@ def load_xrt_npu_application():
                     # Get buffer object
                     bo = self.xrt_buffers[idx]
 
+                    # Flatten data for writing (XRT expects 1D byte arrays)
+                    data_flat = np.ascontiguousarray(data.flatten())
+
                     # Write data to buffer (offset 0)
-                    bo.write(data, 0)
+                    bo.write(data_flat, 0)
 
                     # Synchronize to device (host → NPU)
                     bo.sync(xrt.xclBOSyncDirection.XCL_BO_SYNC_BO_TO_DEVICE)
 
-                    logger.debug(f"  Wrote {data.nbytes:,} bytes to buffer {idx}")
+                    logger.debug(f"  Wrote {data_flat.nbytes:,} bytes to buffer {idx}")
 
                 except Exception as e:
                     logger.error(f"Failed to write buffer {idx}: {e}")
