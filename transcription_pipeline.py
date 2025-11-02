@@ -45,6 +45,7 @@ from buffer_pool import GlobalBufferManager
 from xdna2.mel_utils import compute_mel_spectrogram_zerocopy, validate_mel_contiguity
 from xdna2.encoder_cpp import WhisperEncoderCPP
 from xdna2.whisper_conv1d import WhisperConv1dPreprocessor
+from xdna2.component_timer import ComponentTimer
 
 # Use simple audio loader (no ffmpeg required for WAV files)
 try:
@@ -178,6 +179,9 @@ class TranscriptionPipeline:
         # Response futures for tracking requests
         self._response_futures: Dict[str, asyncio.Future] = {}
         self._futures_lock = asyncio.Lock()
+
+        # Component timer for performance tracking (Week 19.6)
+        self.timer = ComponentTimer(enabled=True)
 
         logger.info("TranscriptionPipeline initialized")
         logger.info(f"  Load workers: {num_load_workers}")
@@ -404,40 +408,43 @@ class TranscriptionPipeline:
         mel_buffer = None
 
         try:
-            # Load audio (WhisperX handles this)
-            audio_buffer = self.buffer_manager.acquire('audio')
+            with self.timer.time('stage1.total'):
+                # Load audio (WhisperX handles this)
+                with self.timer.time('stage1.audio_loading'):
+                    audio_buffer = self.buffer_manager.acquire('audio')
 
-            # For now, use WhisperX load_audio (TODO: optimize with buffer pool)
-            import whisperx
-            import tempfile
-            import os
+                    # For now, use WhisperX load_audio (TODO: optimize with buffer pool)
+                    import whisperx
+                    import tempfile
+                    import os
 
-            # Write to temp file (WhisperX needs file path)
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
-                tmp.write(audio_data)
-                tmp_path = tmp.name
+                    # Write to temp file (WhisperX needs file path)
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+                        tmp.write(audio_data)
+                        tmp_path = tmp.name
 
-            try:
-                audio = load_audio(tmp_path)
-            finally:
-                os.unlink(tmp_path)
+                    try:
+                        audio = load_audio(tmp_path)
+                    finally:
+                        os.unlink(tmp_path)
 
-            # Copy into buffer
-            np.copyto(audio_buffer[:len(audio)], audio)
+                    # Copy into buffer
+                    np.copyto(audio_buffer[:len(audio)], audio)
 
-            # Acquire mel buffer
-            mel_buffer = self.buffer_manager.acquire('mel')
+                # Acquire mel buffer
+                mel_buffer = self.buffer_manager.acquire('mel')
 
-            # Compute mel with zero-copy optimization (with variable-length support)
-            # mel_np will be a SLICE of mel_buffer with the correct size
-            mel_np, actual_frames = compute_mel_spectrogram_zerocopy(
-                audio_buffer[:len(audio)],
-                self.feature_extractor,
-                output=mel_buffer
-            )
+                # Compute mel with zero-copy optimization (with variable-length support)
+                # mel_np will be a SLICE of mel_buffer with the correct size
+                with self.timer.time('stage1.mel_computation'):
+                    mel_np, actual_frames = compute_mel_spectrogram_zerocopy(
+                        audio_buffer[:len(audio)],
+                        self.feature_extractor,
+                        output=mel_buffer
+                    )
 
-            # Validate mel is C-contiguous
-            validate_mel_contiguity(mel_np)
+                    # Validate mel is C-contiguous
+                    validate_mel_contiguity(mel_np)
 
             logger.debug(
                 f"[Stage1] Mel computed: {actual_frames} frames, "
@@ -494,14 +501,17 @@ class TranscriptionPipeline:
         encoder_buffer = None
 
         try:
-            # Apply conv1d preprocessing (Bug #5 fix: mel 80→512)
-            embeddings = self.conv1d_preprocessor.process(mel)  # (n_frames, 80) → (n_frames//2, 512)
+            with self.timer.time('stage2.total'):
+                # Apply conv1d preprocessing (Bug #5 fix: mel 80→512)
+                with self.timer.time('stage2.conv1d_preprocessing'):
+                    embeddings = self.conv1d_preprocessor.process(mel)  # (n_frames, 80) → (n_frames//2, 512)
 
-            # Acquire encoder output buffer
-            encoder_buffer = self.buffer_manager.acquire('encoder_output')
+                # Acquire encoder output buffer
+                encoder_buffer = self.buffer_manager.acquire('encoder_output')
 
-            # Run encoder (C++ + NPU) on embeddings (not raw mel!)
-            encoder_output = self.cpp_encoder.forward(embeddings)  # (n_frames//2, 512) → (n_frames//2, 512)
+                # Run encoder (C++ + NPU) on embeddings (not raw mel!)
+                with self.timer.time('stage2.npu_encoder'):
+                    encoder_output = self.cpp_encoder.forward(embeddings)  # (n_frames//2, 512) → (n_frames//2, 512)
 
             # Release mel buffer (no longer needed)
             self.buffer_manager.release('mel', mel_buffer)
@@ -554,66 +564,71 @@ class TranscriptionPipeline:
         options = item.data.get('options', {})
 
         try:
-            # Decoder - supports CustomWhisperDecoder, faster-whisper, and WhisperX
-            #
-            # Week 19.5 Architecture Fix: Use custom decoder with NPU encoder features!
-            # This eliminates wasteful CPU re-encoding (300-3,200ms saved)
+            with self.timer.time('stage3.total'):
+                # Decoder - supports CustomWhisperDecoder, faster-whisper, and WhisperX
+                #
+                # Week 19.5 Architecture Fix: Use custom decoder with NPU encoder features!
+                # This eliminates wasteful CPU re-encoding (300-3,200ms saved)
 
-            # Check if using CustomWhisperDecoder (has transcribe_from_features method)
-            is_custom_decoder = hasattr(self.python_decoder, 'transcribe_from_features')
+                # Check if using CustomWhisperDecoder (has transcribe_from_features method)
+                is_custom_decoder = hasattr(self.python_decoder, 'transcribe_from_features')
 
-            # Check if using faster-whisper (has get_stats method)
-            is_faster_whisper = hasattr(self.python_decoder, 'get_stats')
+                # Check if using faster-whisper (has get_stats method)
+                is_faster_whisper = hasattr(self.python_decoder, 'get_stats')
 
-            if is_custom_decoder:
-                # CustomWhisperDecoder (Week 19.5 fix - FAST!)
-                # Accepts NPU encoder output directly (NO RE-ENCODING!)
-                logger.debug(f"[Stage3] Using CustomWhisperDecoder with NPU features")
-                result = self.python_decoder.transcribe_from_features(
-                    encoder_output,  # ✅ USE NPU ENCODER OUTPUT DIRECTLY!
-                    language="en",   # Force English (skip detection for speed)
-                    word_timestamps=False  # Alignment will add these
-                )
-            elif is_faster_whisper:
-                # faster-whisper decoder (Week 19 optimization)
-                # WARNING: This re-encodes audio on CPU (wasteful!)
-                logger.warning(
-                    "[Stage3] Using faster-whisper - will RE-ENCODE audio on CPU! "
-                    "Use CustomWhisperDecoder to eliminate re-encoding."
-                )
-                result = self.python_decoder.transcribe(
-                    audio,  # ❌ RE-ENCODES (300-3,200ms wasted)
-                    language="en",
-                    word_timestamps=False,
-                    vad_filter=False
-                )
-            else:
-                # WhisperX decoder (legacy path)
-                # WARNING: This re-encodes audio on CPU (wasteful!)
-                logger.warning(
-                    "[Stage3] Using WhisperX - will RE-ENCODE audio on CPU! "
-                    "Use CustomWhisperDecoder to eliminate re-encoding."
-                )
-                result = self.python_decoder.transcribe(
-                    audio,  # ❌ RE-ENCODES (300-3,200ms wasted)
-                    batch_size=self.batch_size
-                )
+                with self.timer.time('stage3.decoder'):
+                    if is_custom_decoder:
+                        # CustomWhisperDecoder (Week 19.5 fix - FAST!)
+                        # Accepts NPU encoder output directly (NO RE-ENCODING!)
+                        logger.debug(f"[Stage3] Using CustomWhisperDecoder with NPU features")
+                        result = self.python_decoder.transcribe_from_features(
+                            encoder_output,  # ✅ USE NPU ENCODER OUTPUT DIRECTLY!
+                            language="en",   # Force English (skip detection for speed)
+                            word_timestamps=False  # Alignment will add these
+                        )
+                    elif is_faster_whisper:
+                        # faster-whisper decoder (Week 19 optimization)
+                        # WARNING: This re-encodes audio on CPU (wasteful!)
+                        logger.warning(
+                            "[Stage3] Using faster-whisper - will RE-ENCODE audio on CPU! "
+                            "Use CustomWhisperDecoder to eliminate re-encoding."
+                        )
+                        result = self.python_decoder.transcribe(
+                            audio,  # ❌ RE-ENCODES (300-3,200ms wasted)
+                            language="en",
+                            word_timestamps=False,
+                            vad_filter=False
+                        )
+                    else:
+                        # WhisperX decoder (legacy path)
+                        # WARNING: This re-encodes audio on CPU (wasteful!)
+                        logger.warning(
+                            "[Stage3] Using WhisperX - will RE-ENCODE audio on CPU! "
+                            "Use CustomWhisperDecoder to eliminate re-encoding."
+                        )
+                        result = self.python_decoder.transcribe(
+                            audio,  # ❌ RE-ENCODES (300-3,200ms wasted)
+                            batch_size=self.batch_size
+                        )
 
-            # Alignment (adds word-level timestamps)
-            result = whisperx.align(
-                result["segments"],
-                self.model_a,
-                self.metadata,
-                audio,
-                self.device
-            )
+                # Alignment (adds word-level timestamps)
+                with self.timer.time('stage3.alignment'):
+                    result = whisperx.align(
+                        result["segments"],
+                        self.model_a,
+                        self.metadata,
+                        audio,
+                        self.device
+                    )
 
-            # Release buffers
-            self.buffer_manager.release('encoder_output', encoder_buffer)
-            self.buffer_manager.release('audio', audio_buffer)
+                # Post-processing
+                with self.timer.time('stage3.postprocessing'):
+                    # Release buffers
+                    self.buffer_manager.release('encoder_output', encoder_buffer)
+                    self.buffer_manager.release('audio', audio_buffer)
 
-            # Format response
-            text = " ".join([seg["text"] for seg in result["segments"]])
+                    # Format response
+                    text = " ".join([seg["text"] for seg in result["segments"]])
 
             # Return final result
             return WorkItem(
@@ -622,7 +637,8 @@ class TranscriptionPipeline:
                     'text': text,
                     'segments': result['segments'],
                     'words': result.get('word_segments', []),
-                    'language': result.get('language', 'en')
+                    'language': result.get('language', 'en'),
+                    'timing': self.timer.get_breakdown()  # Include timing breakdown (Week 19.6)
                 },
                 metadata=item.metadata,
                 stage=4  # Complete

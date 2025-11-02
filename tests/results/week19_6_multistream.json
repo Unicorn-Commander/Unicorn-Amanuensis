@@ -1,0 +1,58 @@
+{
+  "timestamp": "2025-11-02 15:08:01 UTC",
+  "results": {
+    "test_name": "multi_stream_reliability",
+    "stream_counts_tested": [
+      4,
+      8,
+      16
+    ],
+    "avg_success_rate_pct": 0.0,
+    "all_100_pct_success": false,
+    "week18_success_rate": 100.0,
+    "results": [
+      {
+        "test_name": "multi_stream_4",
+        "num_streams": 4,
+        "num_successful": 0,
+        "num_failed": 8,
+        "success_rate_pct": 0.0,
+        "avg_processing_time_ms": 0,
+        "avg_realtime_factor": 0,
+        "p50_processing_time_ms": 0,
+        "p95_processing_time_ms": 0,
+        "errors": [
+          "HTTP 500: Internal Server Error"
+        ]
+      },
+      {
+        "test_name": "multi_stream_8",
+        "num_streams": 8,
+        "num_successful": 0,
+        "num_failed": 16,
+        "success_rate_pct": 0.0,
+        "avg_processing_time_ms": 0,
+        "avg_realtime_factor": 0,
+        "p50_processing_time_ms": 0,
+        "p95_processing_time_ms": 0,
+        "errors": [
+          "HTTP 500: Internal Server Error"
+        ]
+      },
+      {
+        "test_name": "multi_stream_16",
+        "num_streams": 16,
+        "num_successful": 0,
+        "num_failed": 32,
+        "success_rate_pct": 0.0,
+        "avg_processing_time_ms": 0,
+        "avg_realtime_factor": 0,
+        "p50_processing_time_ms": 0,
+        "p95_processing_time_ms": 0,
+        "errors": [
+          "HTTP 500: Internal Server Error"
+        ]
+      }
+    ]
+  }
+}

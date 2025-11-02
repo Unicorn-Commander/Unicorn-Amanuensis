@@ -1,0 +1,200 @@
+{
+  "timestamp": "2025-11-02 15:08:01 UTC",
+  "service_url": "http://localhost:9050",
+  "week18_baseline": {
+    "1s_audio": {
+      "realtime_factor": 3.0,
+      "processing_time_ms": 328
+    },
+    "5s_audio": {
+      "realtime_factor": 10.1,
+      "processing_time_ms": 495
+    },
+    "silence": {
+      "realtime_factor": 10.6,
+      "processing_time_ms": 473
+    },
+    "average_realtime": 7.9,
+    "multi_stream_success_rate": 100.0
+  },
+  "baseline_validation": {
+    "test_name": "baseline_validation",
+    "total_tests": 4,
+    "passed": 0,
+    "failed": 0,
+    "errors": 4,
+    "success_rate_pct": 0.0,
+    "avg_realtime_factor": 0,
+    "week18_avg_realtime": 7.9,
+    "performance_vs_week18_pct": 0.0,
+    "results": [
+      {
+        "test_name": "baseline_test_1s.wav",
+        "status": "ERROR",
+        "audio_file": "test_1s.wav",
+        "audio_duration_s": 1.0,
+        "processing_time_ms": 0,
+        "realtime_factor": 0,
+        "transcription": "",
+        "expected_transcription": " Ooh.",
+        "accuracy_match": false,
+        "error_message": "HTTP 500: Internal Server Error"
+      },
+      {
+        "test_name": "baseline_test_5s.wav",
+        "status": "ERROR",
+        "audio_file": "test_5s.wav",
+        "audio_duration_s": 5.0,
+        "processing_time_ms": 0,
+        "realtime_factor": 0,
+        "transcription": "",
+        "expected_transcription": " Whoa! Whoa! Whoa! Whoa!",
+        "accuracy_match": false,
+        "error_message": "HTTP 500: Internal Server Error"
+      },
+      {
+        "test_name": "baseline_test_30s.wav",
+        "status": "ERROR",
+        "audio_file": "test_30s.wav",
+        "audio_duration_s": 30.0,
+        "processing_time_ms": 0,
+        "realtime_factor": 0,
+        "transcription": "",
+        "expected_transcription": null,
+        "accuracy_match": false,
+        "error_message": "HTTP 500: Internal Server Error"
+      },
+      {
+        "test_name": "baseline_test_silence.wav",
+        "status": "ERROR",
+        "audio_file": "test_silence.wav",
+        "audio_duration_s": 5.0,
+        "processing_time_ms": 0,
+        "realtime_factor": 0,
+        "transcription": "",
+        "expected_transcription": "",
+        "accuracy_match": false,
+        "error_message": "HTTP 500: Internal Server Error"
+      }
+    ]
+  },
+  "multi_stream_reliability": {
+    "test_name": "multi_stream_reliability",
+    "stream_counts_tested": [
+      4,
+      8,
+      16
+    ],
+    "avg_success_rate_pct": 0.0,
+    "all_100_pct_success": false,
+    "week18_success_rate": 100.0,
+    "results": [
+      {
+        "test_name": "multi_stream_4",
+        "num_streams": 4,
+        "num_successful": 0,
+        "num_failed": 8,
+        "success_rate_pct": 0.0,
+        "avg_processing_time_ms": 0,
+        "avg_realtime_factor": 0,
+        "p50_processing_time_ms": 0,
+        "p95_processing_time_ms": 0,
+        "errors": [
+          "HTTP 500: Internal Server Error"
+        ]
+      },
+      {
+        "test_name": "multi_stream_8",
+        "num_streams": 8,
+        "num_successful": 0,
+        "num_failed": 16,
+        "success_rate_pct": 0.0,
+        "avg_processing_time_ms": 0,
+        "avg_realtime_factor": 0,
+        "p50_processing_time_ms": 0,
+        "p95_processing_time_ms": 0,
+        "errors": [
+          "HTTP 500: Internal Server Error"
+        ]
+      },
+      {
+        "test_name": "multi_stream_16",
+        "num_streams": 16,
+        "num_successful": 0,
+        "num_failed": 32,
+        "success_rate_pct": 0.0,
+        "avg_processing_time_ms": 0,
+        "avg_realtime_factor": 0,
+        "p50_processing_time_ms": 0,
+        "p95_processing_time_ms": 0,
+        "errors": [
+          "HTTP 500: Internal Server Error"
+        ]
+      }
+    ]
+  },
+  "long_form_audio": {
+    "test_name": "long_form_audio",
+    "files_tested": [
+      "test_30s.wav",
+      "test_60s.wav"
+    ],
+    "all_working": false,
+    "results": [
+      {
+        "test_name": "baseline_test_30s.wav",
+        "status": "ERROR",
+        "audio_file": "test_30s.wav",
+        "audio_duration_s": 30.0,
+        "processing_time_ms": 0,
+        "realtime_factor": 0,
+        "transcription": "",
+        "expected_transcription": null,
+        "accuracy_match": false,
+        "error_message": "HTTP 500: Internal Server Error"
+      },
+      {
+        "test_name": "baseline_test_60s.wav",
+        "status": "ERROR",
+        "audio_file": "test_60s.wav",
+        "audio_duration_s": 60.0,
+        "processing_time_ms": 0,
+        "realtime_factor": 0,
+        "transcription": "",
+        "expected_transcription": null,
+        "accuracy_match": false,
+        "error_message": "HTTP 500: Internal Server Error"
+      }
+    ]
+  },
+  "regression_checks": {
+    "test_name": "regression_checks",
+    "all_passed": true,
+    "tests": [
+      {
+        "test": "no_empty_transcriptions",
+        "passed": true,
+        "empty_count": 0,
+        "total_runs": 3
+      },
+      {
+        "test": "no_hallucinations",
+        "passed": true,
+        "hallucination_text": ""
+      },
+      {
+        "test": "consistent_results",
+        "passed": true,
+        "unique_transcriptions": [],
+        "total_runs": 0
+      }
+    ]
+  },
+  "overall_summary": {
+    "baseline_tests": "0/4 passed",
+    "multi_stream_avg_success": "0.0%",
+    "long_form_working": false,
+    "regression_tests_passed": true,
+    "week18_parity_achieved": false
+  }
+}

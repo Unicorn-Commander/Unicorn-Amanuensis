@@ -104,13 +104,15 @@ BATCH_MAX_WAIT_MS = int(os.environ.get("BATCH_MAX_WAIT_MS", "50"))  # 25-100ms
 # USE_FASTER_WHISPER: Enable faster-whisper (CTranslate2) decoder for 4-6× speedup
 # - "true": Use faster-whisper (RECOMMENDED for production)
 # - "false": Use WhisperX (legacy, slower)
-USE_FASTER_WHISPER = os.environ.get("USE_FASTER_WHISPER", "true").lower() == "true"
+# Week 19.6 ROLLBACK: Default to false (use Week 18 WhisperX decoder)
+USE_FASTER_WHISPER = os.environ.get("USE_FASTER_WHISPER", "false").lower() == "true"
 
 # Week 19.5 Architecture Fix - Custom Decoder
 # USE_CUSTOM_DECODER: Use CustomWhisperDecoder that accepts NPU features directly
 # - "true": Use CustomWhisperDecoder (ELIMINATES CPU RE-ENCODING, 2.5-3.6× speedup!)
 # - "false": Use faster-whisper or WhisperX (RE-ENCODES on CPU, wasteful)
-USE_CUSTOM_DECODER = os.environ.get("USE_CUSTOM_DECODER", "true").lower() == "true"
+# Week 19.6 ROLLBACK: Default to false (disable Week 19.5 custom decoder)
+USE_CUSTOM_DECODER = os.environ.get("USE_CUSTOM_DECODER", "false").lower() == "true"
 
 # NPU/Hardware configuration
 # User preference: "I really don't want CPU fallback" - defaults to no fallback
@@ -819,6 +821,13 @@ async def startup_event():
     MAX_AUDIO_DURATION = int(os.getenv('MAX_AUDIO_DURATION', '30'))  # seconds (default: 30s)
     SAMPLE_RATE = 16000
 
+    # Week 19.6 Buffer Pool Fix: Increase pool sizes for multi-stream support
+    # Support 50+ concurrent streams (vs 4-5 before)
+    AUDIO_BUFFER_POOL_SIZE = int(os.getenv('AUDIO_BUFFER_POOL_SIZE', '50'))
+    MEL_BUFFER_POOL_SIZE = int(os.getenv('MEL_BUFFER_POOL_SIZE', '50'))
+    ENCODER_BUFFER_POOL_SIZE = int(os.getenv('ENCODER_BUFFER_POOL_SIZE', '50'))
+    MAX_POOL_SIZE = int(os.getenv('MAX_POOL_SIZE', '100'))  # Safety limit
+
     # Calculate buffer sizes dynamically
     MAX_AUDIO_SAMPLES = MAX_AUDIO_DURATION * SAMPLE_RATE
     MAX_MEL_FRAMES = (MAX_AUDIO_SAMPLES // 160) * 2  # hop_length=160, conv1d stride=2
@@ -828,32 +837,37 @@ async def startup_event():
     logger.info(f"  Audio buffer: {MAX_AUDIO_SAMPLES:,} samples ({MAX_AUDIO_SAMPLES*4/1024/1024:.1f} MB per buffer)")
     logger.info(f"  Mel buffer: {MAX_MEL_FRAMES:,} frames ({MAX_MEL_FRAMES*80*4/1024/1024:.1f} MB per buffer)")
     logger.info(f"  Encoder buffer: {MAX_ENCODER_FRAMES:,} frames ({MAX_ENCODER_FRAMES*512*4/1024/1024:.1f} MB per buffer)")
+    logger.info(f"  Week 19.6 Buffer Pool Sizes: audio={AUDIO_BUFFER_POOL_SIZE}, mel={MEL_BUFFER_POOL_SIZE}, encoder={ENCODER_BUFFER_POOL_SIZE}")
 
     # Configure buffer pools based on calculated sizes
+    # Week 19.6: Increased from 5/10/5 to 50/50/50 to eliminate "buffer pool exhausted" errors
     buffer_manager.configure({
         'mel': {
             'size': MAX_MEL_FRAMES * 80 * 4,  # frames × mels × sizeof(float32)
-            'count': 10,             # Pre-allocate 10 buffers
-            'max_count': 20,         # Max 20 concurrent requests
+            'count': MEL_BUFFER_POOL_SIZE,    # Week 19.6: Increased from 10 to 50
+            'max_count': MAX_POOL_SIZE,       # Week 19.6: Safety limit (100)
             'dtype': np.float32,
             'shape': (MAX_MEL_FRAMES, 80),  # (frames, mels) - C-contiguous
-            'zero_on_release': False # No need to zero (overwritten each time)
+            'zero_on_release': False,       # No need to zero (overwritten each time)
+            'growth_strategy': 'auto'       # Week 19.6: Auto-grow if needed
         },
         'audio': {
             'size': MAX_AUDIO_SAMPLES * 4,  # samples × sizeof(float32)
-            'count': 5,              # Pre-allocate 5 buffers
-            'max_count': 15,         # Max 15 concurrent requests
+            'count': AUDIO_BUFFER_POOL_SIZE,  # Week 19.6: Increased from 5 to 50
+            'max_count': MAX_POOL_SIZE,       # Week 19.6: Safety limit (100)
             'dtype': np.float32,
             'shape': (MAX_AUDIO_SAMPLES,),  # CRITICAL FIX: Must specify shape!
-            'zero_on_release': False
+            'zero_on_release': False,
+            'growth_strategy': 'auto'       # Week 19.6: Auto-grow if needed
         },
         'encoder_output': {
             'size': MAX_ENCODER_FRAMES * 512 * 4,  # frames × hidden × sizeof(float32)
-            'count': 5,              # Pre-allocate 5 buffers
-            'max_count': 15,         # Max 15 concurrent requests
+            'count': ENCODER_BUFFER_POOL_SIZE,     # Week 19.6: Increased from 5 to 50
+            'max_count': MAX_POOL_SIZE,            # Week 19.6: Safety limit (100)
             'dtype': np.float32,
             'shape': (MAX_ENCODER_FRAMES, 512),  # (frames, hidden)
-            'zero_on_release': False
+            'zero_on_release': False,
+            'growth_strategy': 'auto'       # Week 19.6: Auto-grow if needed
         }
     })
 
@@ -984,7 +998,8 @@ async def transcribe(
     file: UploadFile = File(...),
     diarize: bool = Form(False),
     min_speakers: int = Form(None),
-    max_speakers: int = Form(None)
+    max_speakers: int = Form(None),
+    include_timing: bool = Form(False)
 ):
     """
     Transcribe audio file with C++ NPU encoder and buffer pool optimization.
@@ -1000,9 +1015,11 @@ async def transcribe(
         diarize: Enable speaker diarization
         min_speakers: Minimum number of speakers
         max_speakers: Maximum number of speakers
+        include_timing: Include component-level timing breakdown (Week 19.6)
 
     Returns:
         JSON response with transcription, segments, and words
+        Optionally includes 'timing' field with component breakdown
     """
     global request_count, total_audio_seconds, total_processing_time
 
@@ -1022,7 +1039,6 @@ async def transcribe(
             logger.info(f"[Batch Request {request_count + 1}] Processing: {file.filename}")
 
             # Load audio from bytes
-            import tempfile
             with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
                 tmp.write(audio_data)
                 tmp_path = tmp.name
@@ -1121,7 +1137,7 @@ async def transcribe(
             )
 
             # Return result (pipeline already has text, segments, words)
-            return {
+            response = {
                 "text": result.get("text", ""),
                 "segments": result.get("segments", []),
                 "language": result.get("language", "en"),
@@ -1133,6 +1149,12 @@ async def transcribe(
                     "mode": "pipeline"
                 }
             }
+
+            # Include timing breakdown if requested (Week 19.6)
+            if include_timing and 'timing' in result:
+                response['timing'] = result['timing']
+
+            return response
 
         except asyncio.TimeoutError:
             logger.error(f"[Pipeline Request] Timeout after 30s for request {request_id}")
