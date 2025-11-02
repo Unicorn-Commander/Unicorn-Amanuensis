@@ -1,0 +1,148 @@
+{
+  "timestamp": "2025-11-02 02:29:56 UTC",
+  "service_status": {
+    "status": "healthy",
+    "service": "Unicorn-Amanuensis XDNA2 C++ + Buffer Pool",
+    "version": "2.1.0",
+    "backend": "C++ encoder with NPU + Buffer pooling",
+    "model": "base",
+    "device": "cpu",
+    "compute_type": "int8",
+    "uptime_seconds": 140.95653867721558,
+    "encoder": {
+      "type": "C++ with NPU",
+      "runtime_version": "1.0.0",
+      "num_layers": 6,
+      "npu_enabled": true,
+      "weights_loaded": true
+    },
+    "buffer_pools": {
+      "mel": {
+        "hit_rate": 0.0,
+        "buffers_available": 10,
+        "buffers_in_use": 0,
+        "total_buffers": 10,
+        "has_leaks": false
+      },
+      "audio": {
+        "hit_rate": 0.0,
+        "buffers_available": 5,
+        "buffers_in_use": 0,
+        "total_buffers": 5,
+        "has_leaks": false
+      },
+      "encoder_output": {
+        "hit_rate": 0.0,
+        "buffers_available": 5,
+        "buffers_in_use": 0,
+        "total_buffers": 5,
+        "has_leaks": false
+      }
+    },
+    "performance": {
+      "requests_processed": 0,
+      "total_audio_seconds": 0.0,
+      "total_processing_seconds": 0.0,
+      "average_realtime_factor": 0,
+      "target_realtime_factor": 400
+    },
+    "warnings": []
+  },
+  "npu_enabled": true,
+  "tests_run": 5,
+  "tests_passed": 1,
+  "tests_failed": 4,
+  "test_results": [
+    {
+      "test_name": "Service Health Check",
+      "passed": true,
+      "details": {
+        "passed": true,
+        "health": {
+          "status": "healthy",
+          "service": "Unicorn-Amanuensis XDNA2 C++ + Buffer Pool",
+          "version": "2.1.0",
+          "backend": "C++ encoder with NPU + Buffer pooling",
+          "model": "base",
+          "device": "cpu",
+          "compute_type": "int8",
+          "uptime_seconds": 140.95653867721558,
+          "encoder": {
+            "type": "C++ with NPU",
+            "runtime_version": "1.0.0",
+            "num_layers": 6,
+            "npu_enabled": true,
+            "weights_loaded": true
+          },
+          "buffer_pools": {
+            "mel": {
+              "hit_rate": 0.0,
+              "buffers_available": 10,
+              "buffers_in_use": 0,
+              "total_buffers": 10,
+              "has_leaks": false
+            },
+            "audio": {
+              "hit_rate": 0.0,
+              "buffers_available": 5,
+              "buffers_in_use": 0,
+              "total_buffers": 5,
+              "has_leaks": false
+            },
+            "encoder_output": {
+              "hit_rate": 0.0,
+              "buffers_available": 5,
+              "buffers_in_use": 0,
+              "total_buffers": 5,
+              "has_leaks": false
+            }
+          },
+          "performance": {
+            "requests_processed": 0,
+            "total_audio_seconds": 0.0,
+            "total_processing_seconds": 0.0,
+            "average_realtime_factor": 0,
+            "target_realtime_factor": 400
+          },
+          "warnings": []
+        }
+      }
+    },
+    {
+      "test_name": "Transcription: 1 second audio",
+      "passed": false,
+      "details": {
+        "passed": false,
+        "error": "Pipeline processing failed: Encoder failed: Forward pass failed",
+        "status_code": 500
+      }
+    },
+    {
+      "test_name": "Transcription: 5 second audio",
+      "passed": false,
+      "details": {
+        "passed": false,
+        "error": "Pipeline processing failed: Encoder failed: Forward pass failed",
+        "status_code": 500
+      }
+    },
+    {
+      "test_name": "Transcription: 30 second audio",
+      "passed": false,
+      "details": {
+        "passed": false,
+        "error": "Pipeline processing failed: Load/Mel failed: could not broadcast input array from shape (480000,) into shape (122880,)",
+        "status_code": 500
+      }
+    },
+    {
+      "test_name": "Transcription: Silent audio (edge case)",
+      "passed": false,
+      "details": {
+        "passed": false,
+        "error": "Pipeline processing failed: Encoder failed: Forward pass failed",
+        "status_code": 500
+      }
+    }
+  ]
+}

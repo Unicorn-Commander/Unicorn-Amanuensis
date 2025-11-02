@@ -46,6 +46,13 @@ from xdna2.mel_utils import compute_mel_spectrogram_zerocopy, validate_mel_conti
 from xdna2.encoder_cpp import WhisperEncoderCPP
 from xdna2.whisper_conv1d import WhisperConv1dPreprocessor
 
+# Use simple audio loader (no ffmpeg required for WAV files)
+try:
+    from audio_loader import load_audio
+except ImportError:
+    # Fallback to whisperx (requires ffmpeg)
+    load_audio = whisperx.load_audio
+
 logger = logging.getLogger(__name__)
 
 
@@ -411,7 +418,7 @@ class TranscriptionPipeline:
                 tmp_path = tmp.name
 
             try:
-                audio = whisperx.load_audio(tmp_path)
+                audio = load_audio(tmp_path)
             finally:
                 os.unlink(tmp_path)
 
