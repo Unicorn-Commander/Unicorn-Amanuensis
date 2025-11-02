@@ -1,0 +1,21 @@
+{
+  "timestamp": "2025-11-02 12:20:31 UTC",
+  "smoke_test": {
+    "status": "fail",
+    "returncode": 1,
+    "output": "[OK] XRT Python bindings loaded\n\n======================================================================\n  WEEK 15: SIMPLE NPU EXECUTION TEST\n  64x64 Matrix Multiply on XDNA2\n======================================================================\n\n[Kernel] matmul_1tile_bf16.xclbin\n[Size] Matrix: 512x512 @ 512x512 = 512x512\n[Note] Using full kernel size (262,144 elements)\n\n[1/9] Opening NPU device...\n  Device 0 opened\n[2/9] Loading xclbin...\n  xclbin registered\n[3/9] Loading kernel...\n  Kernel: MLIR_AIE\n[4/9] Creating test data...\n  A: 512x512 (range: 0.000 to 0.100)\n  B: 512x512 (range: 0.000 to 0.100)\n  C_ref: 512x512 (range: 1.046 to 1.497)\n[5/9] Creating buffers...\n  Created buffers: A=524288B, B=524288B, C=524288B\n[6/9] Writing input data...\n  Data written and synced to device\n[7/9] Executing kernel...\n  Kernel executed in 1.22ms\n  Performance: 219.4 GFLOPS\n[8/9] Reading result...\n  Result: 512x512 (range: 0.000 to 0.000)\n[9/9] Validating results...\n  Max absolute error: 1.496705\n  Mean absolute error: 1.280823\n  Max relative error: 100.00%\n  Mean relative error: 100.00%\n\n[Sample] First 5 elements:\n  Expected: [1.2548203 1.3566875 1.2056096 1.3151734 1.3135903]\n  NPU:      [0. 0. 0. 0. 0.]\n  Error:    [1.2548203 1.3566875 1.2056096 1.3151734 1.3135903]\n\n======================================================================\n  RESULTS\n======================================================================\n  Status: \u2717 FAIL\n  Execution: 1.22ms\n  Performance: 219.4 GFLOPS\n  Accuracy: 100.00% mean error\n\n  Issues detected:\n    - Error (100.0%) exceeds tolerance (10.0%)\n    - All zeros returned (kernel may not be running)\n======================================================================\n",
+    "error": null,
+    "metrics": {}
+  },
+  "integration_tests": {
+    "status": "skipped",
+    "reason": "Smoke test failed"
+  },
+  "performance_tests": {
+    "status": "skipped",
+    "reason": "Integration tests failed"
+  },
+  "overall_status": "partial",
+  "go_no_go": "NO-GO",
+  "summary": {}
+}

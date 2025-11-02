@@ -1,0 +1,830 @@
+{
+  "timestamp": "2025-11-02 13:11:21 UTC",
+  "total_tests": 5,
+  "results": [
+    {
+      "test_name": "4 Concurrent Streams (1s audio)",
+      "num_streams": 4,
+      "total_requests": 8,
+      "successful_requests": 8,
+      "failed_requests": 0,
+      "wall_clock_time_s": 1.7973976180073805,
+      "total_audio_duration_s": 8.0,
+      "throughput_realtime_factor": 4.450879382420073,
+      "avg_latency_ms": 778.8265657582087,
+      "median_latency_ms": 622.1539070102153,
+      "p95_latency_ms": 1213.385709997965,
+      "p99_latency_ms": 1213.385709997965,
+      "min_latency_ms": 445.03274900489487,
+      "max_latency_ms": 1213.385709997965,
+      "estimated_npu_utilization_percent": 0.025592556448915414,
+      "requests": [
+        {
+          "request_id": 0,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 565.1590350025799,
+          "realtime_factor": 1.7694134536758048,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 1,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 1201.0568280238658,
+          "realtime_factor": 0.8326000707604564,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 2,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 1213.385709997965,
+          "realtime_factor": 0.8241402480351258,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 3,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 979.063272010535,
+          "realtime_factor": 1.0213844483681538,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 4,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 656.3064490037505,
+          "realtime_factor": 1.5236784607525402,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 5,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 445.03274900489487,
+          "realtime_factor": 2.2470256452722337,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 6,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 588.0013650166802,
+          "realtime_factor": 1.7006763240619898,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 7,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 582.6071180053987,
+          "realtime_factor": 1.7164225583504347,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        }
+      ]
+    },
+    {
+      "test_name": "8 Concurrent Streams (1s audio)",
+      "num_streams": 8,
+      "total_requests": 16,
+      "successful_requests": 16,
+      "failed_requests": 0,
+      "wall_clock_time_s": 3.2844270460191183,
+      "total_audio_duration_s": 16.0,
+      "throughput_realtime_factor": 4.871473707839777,
+      "avg_latency_ms": 1425.4690597517765,
+      "median_latency_ms": 1523.55305099627,
+      "p95_latency_ms": 1959.6667969890404,
+      "p99_latency_ms": 1959.6667969890404,
+      "min_latency_ms": 543.5830450151116,
+      "max_latency_ms": 1959.6667969890404,
+      "estimated_npu_utilization_percent": 0.028010973820078715,
+      "requests": [
+        {
+          "request_id": 0,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 1959.6667969890404,
+          "realtime_factor": 0.5102908318579796,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 1,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 1370.026502001565,
+          "realtime_factor": 0.729912887479937,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 2,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 1950.2930000016931,
+          "realtime_factor": 0.512743469826909,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 3,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 543.5830450151116,
+          "realtime_factor": 1.8396453111818454,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 4,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 1127.1013460063841,
+          "realtime_factor": 0.8872316615921563,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 5,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 1144.1681809956208,
+          "realtime_factor": 0.8739973865816038,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 6,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 919.8211609909777,
+          "realtime_factor": 1.087167856545767,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 7,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 1755.8100169990212,
+          "realtime_factor": 0.569537700729815,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 8,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 1616.304620023584,
+          "realtime_factor": 0.6186952555919866,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 9,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 1581.1144830076955,
+          "realtime_factor": 0.6324652710142387,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 10,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 1573.2052880048286,
+          "realtime_factor": 0.6356449521398575,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 11,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 1570.1287759875413,
+          "realtime_factor": 0.6368904355447179,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 12,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 1534.7614159982186,
+          "realtime_factor": 0.6515670706704557,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 13,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 1512.3446859943215,
+          "realtime_factor": 0.6612249239613851,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 14,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 1325.7327460160013,
+          "realtime_factor": 0.7542998413557556,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 15,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 1323.4428919968195,
+          "realtime_factor": 0.755604949822348,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        }
+      ]
+    },
+    {
+      "test_name": "4 Concurrent Streams (5s audio)",
+      "num_streams": 4,
+      "total_requests": 8,
+      "successful_requests": 8,
+      "failed_requests": 0,
+      "wall_clock_time_s": 2.3365138079971075,
+      "total_audio_duration_s": 40.0,
+      "throughput_realtime_factor": 17.119522197169708,
+      "avg_latency_ms": 992.1289861267724,
+      "median_latency_ms": 1018.2873144949554,
+      "p95_latency_ms": 1360.2062660211232,
+      "p99_latency_ms": 1360.2062660211232,
+      "min_latency_ms": 482.09109698655084,
+      "max_latency_ms": 1360.2062660211232,
+      "estimated_npu_utilization_percent": 0.09843725263372582,
+      "requests": [
+        {
+          "request_id": 0,
+          "audio_file": "test_5s.wav",
+          "audio_duration_s": 5.0,
+          "processing_time_ms": 482.09109698655084,
+          "realtime_factor": 10.371483794772272,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 1,
+          "audio_file": "test_5s.wav",
+          "audio_duration_s": 5.0,
+          "processing_time_ms": 822.5827100104652,
+          "realtime_factor": 6.078416114455393,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 2,
+          "audio_file": "test_5s.wav",
+          "audio_duration_s": 5.0,
+          "processing_time_ms": 1360.2062660211232,
+          "realtime_factor": 3.67591307649685,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 3,
+          "audio_file": "test_5s.wav",
+          "audio_duration_s": 5.0,
+          "processing_time_ms": 1101.920090004569,
+          "realtime_factor": 4.537534114637358,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 4,
+          "audio_file": "test_5s.wav",
+          "audio_duration_s": 5.0,
+          "processing_time_ms": 1158.964880014537,
+          "realtime_factor": 4.314194576747903,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 5,
+          "audio_file": "test_5s.wav",
+          "audio_duration_s": 5.0,
+          "processing_time_ms": 1029.5954819885083,
+          "realtime_factor": 4.856276166192235,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 6,
+          "audio_file": "test_5s.wav",
+          "audio_duration_s": 5.0,
+          "processing_time_ms": 1006.9791470014025,
+          "realtime_factor": 4.965346119519033,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 7,
+          "audio_file": "test_5s.wav",
+          "audio_duration_s": 5.0,
+          "processing_time_ms": 974.6922169870231,
+          "realtime_factor": 5.129824484960024,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        }
+      ]
+    },
+    {
+      "test_name": "16 Concurrent Streams (1s audio) - STRESS TEST",
+      "num_streams": 16,
+      "total_requests": 32,
+      "successful_requests": 15,
+      "failed_requests": 17,
+      "wall_clock_time_s": 3.069951396988472,
+      "total_audio_duration_s": 32.0,
+      "throughput_realtime_factor": 10.423617791275463,
+      "avg_latency_ms": 1967.3538346716668,
+      "median_latency_ms": 1882.334799011005,
+      "p95_latency_ms": 3067.3343790112995,
+      "p99_latency_ms": 3067.3343790112995,
+      "min_latency_ms": 592.6360559824388,
+      "max_latency_ms": 3067.3343790112995,
+      "estimated_npu_utilization_percent": 0.05993580229983391,
+      "requests": [
+        {
+          "request_id": 0,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 1126.4923209964763,
+          "realtime_factor": 0.8877113331011584,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 1,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 1137.2817090013996,
+          "realtime_factor": 0.8792896184693404,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 2,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 592.6360559824388,
+          "realtime_factor": 1.687376240283349,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 3,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 951.3939900207333,
+          "realtime_factor": 1.0510892548083128,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 4,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 1882.334799011005,
+          "realtime_factor": 0.5312551202503447,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 5,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 1684.658895013854,
+          "realtime_factor": 0.5935919745888835,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 6,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 2687.1637330041267,
+          "realtime_factor": 0.3721395863295779,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 7,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 1322.7407219819725,
+          "realtime_factor": 0.7560060587698675,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 8,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 1873.6200800049119,
+          "realtime_factor": 0.5337261329935034,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 9,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 2087.7332070085686,
+          "realtime_factor": 0.47898840553140454,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 10,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 2484.1102920181584,
+          "realtime_factor": 0.40255861553859307,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 11,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 2678.0096480215434,
+          "realtime_factor": 0.3734116494833313,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 12,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 2876.367154007312,
+          "realtime_factor": 0.34766076319805517,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 13,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 3058.430534991203,
+          "realtime_factor": 0.32696508505231636,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 14,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 0.0,
+          "realtime_factor": 0.0,
+          "success": false,
+          "error": "HTTP error: 500, message='Internal Server Error', url='http://127.0.0.1:9050/v1/audio/transcriptions'",
+          "transcription": ""
+        },
+        {
+          "request_id": 15,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 3067.3343790112995,
+          "realtime_factor": 0.32601597231871804,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 16,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 0.0,
+          "realtime_factor": 0.0,
+          "success": false,
+          "error": "HTTP error: 500, message='Internal Server Error', url='http://127.0.0.1:9050/v1/audio/transcriptions'",
+          "transcription": ""
+        },
+        {
+          "request_id": 17,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 0.0,
+          "realtime_factor": 0.0,
+          "success": false,
+          "error": "HTTP error: 500, message='Internal Server Error', url='http://127.0.0.1:9050/v1/audio/transcriptions'",
+          "transcription": ""
+        },
+        {
+          "request_id": 18,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 0.0,
+          "realtime_factor": 0.0,
+          "success": false,
+          "error": "HTTP error: 500, message='Internal Server Error', url='http://127.0.0.1:9050/v1/audio/transcriptions'",
+          "transcription": ""
+        },
+        {
+          "request_id": 19,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 0.0,
+          "realtime_factor": 0.0,
+          "success": false,
+          "error": "HTTP error: 500, message='Internal Server Error', url='http://127.0.0.1:9050/v1/audio/transcriptions'",
+          "transcription": ""
+        },
+        {
+          "request_id": 20,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 0.0,
+          "realtime_factor": 0.0,
+          "success": false,
+          "error": "HTTP error: 500, message='Internal Server Error', url='http://127.0.0.1:9050/v1/audio/transcriptions'",
+          "transcription": ""
+        },
+        {
+          "request_id": 21,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 0.0,
+          "realtime_factor": 0.0,
+          "success": false,
+          "error": "HTTP error: 500, message='Internal Server Error', url='http://127.0.0.1:9050/v1/audio/transcriptions'",
+          "transcription": ""
+        },
+        {
+          "request_id": 22,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 0.0,
+          "realtime_factor": 0.0,
+          "success": false,
+          "error": "HTTP error: 500, message='Internal Server Error', url='http://127.0.0.1:9050/v1/audio/transcriptions'",
+          "transcription": ""
+        },
+        {
+          "request_id": 23,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 0.0,
+          "realtime_factor": 0.0,
+          "success": false,
+          "error": "HTTP error: 500, message='Internal Server Error', url='http://127.0.0.1:9050/v1/audio/transcriptions'",
+          "transcription": ""
+        },
+        {
+          "request_id": 24,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 0.0,
+          "realtime_factor": 0.0,
+          "success": false,
+          "error": "HTTP error: 500, message='Internal Server Error', url='http://127.0.0.1:9050/v1/audio/transcriptions'",
+          "transcription": ""
+        },
+        {
+          "request_id": 25,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 0.0,
+          "realtime_factor": 0.0,
+          "success": false,
+          "error": "HTTP error: 500, message='Internal Server Error', url='http://127.0.0.1:9050/v1/audio/transcriptions'",
+          "transcription": ""
+        },
+        {
+          "request_id": 26,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 0.0,
+          "realtime_factor": 0.0,
+          "success": false,
+          "error": "HTTP error: 500, message='Internal Server Error', url='http://127.0.0.1:9050/v1/audio/transcriptions'",
+          "transcription": ""
+        },
+        {
+          "request_id": 27,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 0.0,
+          "realtime_factor": 0.0,
+          "success": false,
+          "error": "HTTP error: 500, message='Internal Server Error', url='http://127.0.0.1:9050/v1/audio/transcriptions'",
+          "transcription": ""
+        },
+        {
+          "request_id": 28,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 0.0,
+          "realtime_factor": 0.0,
+          "success": false,
+          "error": "HTTP error: 500, message='Internal Server Error', url='http://127.0.0.1:9050/v1/audio/transcriptions'",
+          "transcription": ""
+        },
+        {
+          "request_id": 29,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 0.0,
+          "realtime_factor": 0.0,
+          "success": false,
+          "error": "HTTP error: 500, message='Internal Server Error', url='http://127.0.0.1:9050/v1/audio/transcriptions'",
+          "transcription": ""
+        },
+        {
+          "request_id": 30,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 0.0,
+          "realtime_factor": 0.0,
+          "success": false,
+          "error": "HTTP error: 500, message='Internal Server Error', url='http://127.0.0.1:9050/v1/audio/transcriptions'",
+          "transcription": ""
+        },
+        {
+          "request_id": 31,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 0.0,
+          "realtime_factor": 0.0,
+          "success": false,
+          "error": "HTTP error: 500, message='Internal Server Error', url='http://127.0.0.1:9050/v1/audio/transcriptions'",
+          "transcription": ""
+        }
+      ]
+    },
+    {
+      "test_name": "4 Concurrent Streams (mixed 1s/5s)",
+      "num_streams": 4,
+      "total_requests": 8,
+      "successful_requests": 8,
+      "failed_requests": 0,
+      "wall_clock_time_s": 1.8614584339957219,
+      "total_audio_duration_s": 24.0,
+      "throughput_realtime_factor": 12.89311625856866,
+      "avg_latency_ms": 861.5585218685737,
+      "median_latency_ms": 850.6445599923609,
+      "p95_latency_ms": 1280.4004969948437,
+      "p99_latency_ms": 1280.4004969948437,
+      "min_latency_ms": 569.0238290117122,
+      "max_latency_ms": 1280.4004969948437,
+      "estimated_npu_utilization_percent": 0.07413541848676979,
+      "requests": [
+        {
+          "request_id": 0,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 569.0238290117122,
+          "realtime_factor": 1.7573956467461347,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 1,
+          "audio_file": "test_5s.wav",
+          "audio_duration_s": 5.0,
+          "processing_time_ms": 1280.4004969948437,
+          "realtime_factor": 3.905028162465744,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 2,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 767.9616450041067,
+          "realtime_factor": 1.302148364446837,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 3,
+          "audio_file": "test_5s.wav",
+          "audio_duration_s": 5.0,
+          "processing_time_ms": 792.3190629808232,
+          "realtime_factor": 6.310589046272911,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 4,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 935.3871659841388,
+          "realtime_factor": 1.0690760322201778,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 5,
+          "audio_file": "test_5s.wav",
+          "audio_duration_s": 5.0,
+          "processing_time_ms": 908.9700570038985,
+          "realtime_factor": 5.500731252337122,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 6,
+          "audio_file": "test_1s.wav",
+          "audio_duration_s": 1.0,
+          "processing_time_ms": 1059.1719589720014,
+          "realtime_factor": 0.9441337561188535,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        },
+        {
+          "request_id": 7,
+          "audio_file": "test_5s.wav",
+          "audio_duration_s": 5.0,
+          "processing_time_ms": 579.2339589970652,
+          "realtime_factor": 8.632090578144666,
+          "success": true,
+          "error": "",
+          "transcription": ""
+        }
+      ]
+    }
+  ],
+  "metrics": {
+    "avg_throughput_realtime": 9.951721867454737,
+    "max_throughput_realtime": 17.119522197169708,
+    "overall_avg_latency_ms": 1205.0673936353996,
+    "total_requests": 72,
+    "total_successful": 55,
+    "total_failed": 17
+  },
+  "status": "COMPLETE"
+}

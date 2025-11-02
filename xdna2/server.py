@@ -752,29 +752,45 @@ async def startup_event():
 
     buffer_manager = GlobalBufferManager.instance()
 
-    # Configure buffer pools based on profiling analysis
+    # Buffer pool configuration (user-configurable via environment)
+    # Week 18 Fix: Make buffer sizes configurable for long-form audio support
+    MAX_AUDIO_DURATION = int(os.getenv('MAX_AUDIO_DURATION', '30'))  # seconds (default: 30s)
+    SAMPLE_RATE = 16000
+
+    # Calculate buffer sizes dynamically
+    MAX_AUDIO_SAMPLES = MAX_AUDIO_DURATION * SAMPLE_RATE
+    MAX_MEL_FRAMES = (MAX_AUDIO_SAMPLES // 160) * 2  # hop_length=160, conv1d stride=2
+    MAX_ENCODER_FRAMES = MAX_MEL_FRAMES
+
+    logger.info(f"[BufferPool] Configured for audio up to {MAX_AUDIO_DURATION}s")
+    logger.info(f"  Audio buffer: {MAX_AUDIO_SAMPLES:,} samples ({MAX_AUDIO_SAMPLES*4/1024/1024:.1f} MB per buffer)")
+    logger.info(f"  Mel buffer: {MAX_MEL_FRAMES:,} frames ({MAX_MEL_FRAMES*80*4/1024/1024:.1f} MB per buffer)")
+    logger.info(f"  Encoder buffer: {MAX_ENCODER_FRAMES:,} frames ({MAX_ENCODER_FRAMES*512*4/1024/1024:.1f} MB per buffer)")
+
+    # Configure buffer pools based on calculated sizes
     buffer_manager.configure({
         'mel': {
-            'size': 960 * 1024,      # 960KB for mel spectrogram
+            'size': MAX_MEL_FRAMES * 80 * 4,  # frames × mels × sizeof(float32)
             'count': 10,             # Pre-allocate 10 buffers
             'max_count': 20,         # Max 20 concurrent requests
             'dtype': np.float32,
-            'shape': (3000, 80),     # 3000 frames × 80 mels (30s audio, transposed for C-contiguous)
+            'shape': (MAX_MEL_FRAMES, 80),  # (frames, mels) - C-contiguous
             'zero_on_release': False # No need to zero (overwritten each time)
         },
         'audio': {
-            'size': 480 * 1024,      # 480KB for audio
+            'size': MAX_AUDIO_SAMPLES * 4,  # samples × sizeof(float32)
             'count': 5,              # Pre-allocate 5 buffers
             'max_count': 15,         # Max 15 concurrent requests
             'dtype': np.float32,
+            'shape': (MAX_AUDIO_SAMPLES,),  # CRITICAL FIX: Must specify shape!
             'zero_on_release': False
         },
         'encoder_output': {
-            'size': 3 * 1024 * 1024, # 3MB for encoder output
+            'size': MAX_ENCODER_FRAMES * 512 * 4,  # frames × hidden × sizeof(float32)
             'count': 5,              # Pre-allocate 5 buffers
             'max_count': 15,         # Max 15 concurrent requests
             'dtype': np.float32,
-            'shape': (3000, 512),    # 3000 frames × 512 hidden
+            'shape': (MAX_ENCODER_FRAMES, 512),  # (frames, hidden)
             'zero_on_release': False
         }
     })
@@ -783,16 +799,21 @@ async def startup_event():
     stats = buffer_manager.get_stats()
     total_memory = 0
     for pool_name, pool_stats in stats.items():
-        pool_memory = pool_stats['total_buffers'] * stats[pool_name]['buffers_available']
         if pool_name == 'mel':
-            pool_memory = pool_stats['total_buffers'] * 960 * 1024
+            pool_memory = pool_stats['total_buffers'] * (MAX_MEL_FRAMES * 80 * 4)
         elif pool_name == 'audio':
-            pool_memory = pool_stats['total_buffers'] * 480 * 1024
+            pool_memory = pool_stats['total_buffers'] * (MAX_AUDIO_SAMPLES * 4)
         elif pool_name == 'encoder_output':
-            pool_memory = pool_stats['total_buffers'] * 3 * 1024 * 1024
+            pool_memory = pool_stats['total_buffers'] * (MAX_ENCODER_FRAMES * 512 * 4)
+        else:
+            pool_memory = 0
         total_memory += pool_memory
 
     logger.info(f"  Total pool memory: {total_memory / (1024*1024):.1f}MB")
+    logger.info(f"  Per-buffer breakdown:")
+    logger.info(f"    Mel: {stats['mel']['total_buffers']} × {MAX_MEL_FRAMES*80*4/1024/1024:.1f}MB = {stats['mel']['total_buffers']*MAX_MEL_FRAMES*80*4/1024/1024:.1f}MB")
+    logger.info(f"    Audio: {stats['audio']['total_buffers']} × {MAX_AUDIO_SAMPLES*4/1024/1024:.1f}MB = {stats['audio']['total_buffers']*MAX_AUDIO_SAMPLES*4/1024/1024:.1f}MB")
+    logger.info(f"    Encoder: {stats['encoder_output']['total_buffers']} × {MAX_ENCODER_FRAMES*512*4/1024/1024:.1f}MB = {stats['encoder_output']['total_buffers']*MAX_ENCODER_FRAMES*512*4/1024/1024:.1f}MB")
     logger.info("="*70 + "\n")
 
     # Initialize multi-stream pipeline (if enabled)
