@@ -211,29 +211,249 @@ def load_xrt_npu_application():
                 f"Available kernels in xclbin: {kernel_names_available}"
             )
 
-        # Create a simple XRT app wrapper
-        class XRTAppStub:
-            """XRT app wrapper for NPU callback with XDNA2 support"""
+        # Create XRT app wrapper with real buffer operations
+        class XRTApp:
+            """
+            XRT Application with Real Buffer Operations.
+
+            Implements real XRT buffer allocation, data transfer, and kernel execution
+            for NPU-accelerated matrix operations. Replaces the stub implementation
+            with full hardware support.
+
+            Key Features:
+            - Real XRT buffer object allocation using xrt.bo()
+            - Host-to-device and device-to-host data synchronization
+            - Kernel execution with xrt.run()
+            - Buffer metadata tracking for size/shape validation
+            - Error handling and logging
+
+            Week 16 Implementation (Service Integration Team)
+            """
             def __init__(self, device, context, kernel, kernel_name):
+                """
+                Initialize XRT application.
+
+                Args:
+                    device: XRT device handle
+                    context: XRT hardware context
+                    kernel: XRT kernel handle
+                    kernel_name: Name of the loaded kernel
+                """
                 self.device = device
                 self.context = context
                 self.kernel = kernel
                 self.kernel_name = kernel_name
-                self.buffers = {}
+
+                # Real XRT buffer objects (xrt.bo instances)
+                self.xrt_buffers = {}
+
+                # Buffer metadata (for size tracking and validation)
+                self.buffer_metadata = {}
+
+                logger.info(f"  XRTApp initialized with kernel: {kernel_name}")
 
             def register_buffer(self, idx, dtype, shape):
-                """Register a buffer for NPU operations"""
-                # In real implementation, would allocate XRT buffer
-                logger.debug(f"  Registering buffer {idx}: {dtype} {shape}")
-                # For now, just track metadata
-                self.buffers[idx] = {'dtype': dtype, 'shape': shape}
+                """
+                Allocate real XRT buffer object.
 
-            def run(self):
-                """Execute kernel (stub for now)"""
-                logger.debug(f"  Executing NPU kernel {self.kernel_name} (stub)")
-                pass
+                Creates an actual XRT buffer object (xrt.bo) on the NPU with proper
+                size calculation and group ID assignment. Buffers are allocated in
+                host-accessible memory for easy data transfer.
 
-        return XRTAppStub(device, context, kernel, kernel_name)
+                Args:
+                    idx: Buffer index (0-based, corresponds to kernel argument index)
+                    dtype: NumPy dtype for the buffer (e.g., np.float32, np.bfloat16)
+                    shape: Tuple of buffer dimensions (e.g., (1500, 512))
+
+                Raises:
+                    RuntimeError: If buffer allocation fails
+                """
+                try:
+                    # Calculate buffer size in bytes
+                    size = int(np.prod(shape) * np.dtype(dtype).itemsize)
+
+                    # Create XRT buffer object
+                    # - host_only flag: Buffer is accessible from host (for data transfer)
+                    # - group_id: Get memory bank assignment from kernel argument index
+                    bo = xrt.bo(
+                        self.device,
+                        size,
+                        xrt.bo.host_only,
+                        self.kernel.group_id(idx)
+                    )
+
+                    # Store buffer object and metadata
+                    self.xrt_buffers[idx] = bo
+                    self.buffer_metadata[idx] = {
+                        'dtype': dtype,
+                        'shape': shape,
+                        'size': size
+                    }
+
+                    logger.info(f"  Registered buffer {idx}: {dtype} {shape} ({size:,} bytes)")
+
+                except Exception as e:
+                    logger.error(f"Failed to register buffer {idx}: {e}")
+                    raise RuntimeError(f"Buffer registration failed: {e}")
+
+            def write_buffer(self, idx, data):
+                """
+                Write data to XRT buffer and sync to device.
+
+                Copies data from host (CPU) memory to XRT buffer and synchronizes
+                to NPU device memory. Data must match the buffer's registered shape
+                and dtype.
+
+                Args:
+                    idx: Buffer index
+                    data: NumPy array to write (must match registered dtype/shape)
+
+                Raises:
+                    KeyError: If buffer index not registered
+                    ValueError: If data shape/dtype doesn't match
+                    RuntimeError: If write or sync fails
+                """
+                if idx not in self.xrt_buffers:
+                    raise KeyError(f"Buffer {idx} not registered")
+
+                # Validate data
+                metadata = self.buffer_metadata[idx]
+                expected_shape = metadata['shape']
+                expected_dtype = metadata['dtype']
+
+                if data.shape != expected_shape:
+                    raise ValueError(
+                        f"Data shape {data.shape} doesn't match buffer {idx} "
+                        f"shape {expected_shape}"
+                    )
+
+                if data.dtype != expected_dtype:
+                    logger.warning(
+                        f"Converting data from {data.dtype} to {expected_dtype} "
+                        f"for buffer {idx}"
+                    )
+                    data = data.astype(expected_dtype)
+
+                try:
+                    # Get buffer object
+                    bo = self.xrt_buffers[idx]
+
+                    # Write data to buffer (offset 0)
+                    bo.write(data, 0)
+
+                    # Synchronize to device (host → NPU)
+                    bo.sync(xrt.xclBOSyncDirection.XCL_BO_SYNC_BO_TO_DEVICE)
+
+                    logger.debug(f"  Wrote {data.nbytes:,} bytes to buffer {idx}")
+
+                except Exception as e:
+                    logger.error(f"Failed to write buffer {idx}: {e}")
+                    raise RuntimeError(f"Buffer write failed: {e}")
+
+            def read_buffer(self, idx):
+                """
+                Read data from XRT buffer after kernel execution.
+
+                Synchronizes buffer from NPU device memory to host and reads the
+                data into a NumPy array. Used to retrieve results after kernel
+                execution.
+
+                Args:
+                    idx: Buffer index
+
+                Returns:
+                    NumPy array with buffer contents (dtype/shape from metadata)
+
+                Raises:
+                    KeyError: If buffer index not registered
+                    RuntimeError: If sync or read fails
+                """
+                if idx not in self.xrt_buffers:
+                    raise KeyError(f"Buffer {idx} not registered")
+
+                try:
+                    # Get buffer object and metadata
+                    bo = self.xrt_buffers[idx]
+                    metadata = self.buffer_metadata[idx]
+
+                    # Synchronize from device (NPU → host)
+                    bo.sync(xrt.xclBOSyncDirection.XCL_BO_SYNC_BO_FROM_DEVICE)
+
+                    # Read data from buffer
+                    # bo.map() returns buffer's memory as bytes
+                    # Use size from metadata to handle variable-length data
+                    size = metadata['size']
+                    data = np.frombuffer(
+                        bytes(bo.map())[:size],
+                        dtype=metadata['dtype']
+                    ).reshape(metadata['shape'])
+
+                    logger.debug(f"  Read {data.nbytes:,} bytes from buffer {idx}")
+
+                    return data
+
+                except Exception as e:
+                    logger.error(f"Failed to read buffer {idx}: {e}")
+                    raise RuntimeError(f"Buffer read failed: {e}")
+
+            def run(self, input_buffers=None, output_buffers=None):
+                """
+                Execute NPU kernel with registered buffers.
+
+                Builds the kernel argument list from registered buffers and executes
+                the kernel on the NPU. Waits for completion before returning.
+
+                Args:
+                    input_buffers: List of input buffer indices (optional, for logging)
+                    output_buffers: List of output buffer indices (optional, for logging)
+
+                Returns:
+                    True if execution successful
+
+                Raises:
+                    RuntimeError: If no buffers registered or kernel execution fails
+                """
+                if not self.xrt_buffers:
+                    raise RuntimeError("No buffers registered")
+
+                try:
+                    # Build argument list (buffers in index order)
+                    args = []
+                    for idx in sorted(self.xrt_buffers.keys()):
+                        args.append(self.xrt_buffers[idx])
+
+                    logger.debug(
+                        f"  Executing kernel {self.kernel_name} with "
+                        f"{len(args)} buffers..."
+                    )
+
+                    # Execute kernel with buffer arguments
+                    # Returns a run handle that we can wait on
+                    run_handle = self.kernel(*args)
+
+                    # Wait for kernel completion
+                    run_handle.wait()
+
+                    logger.debug(f"  Kernel {self.kernel_name} execution complete")
+
+                    return True
+
+                except Exception as e:
+                    logger.error(f"Kernel execution failed: {e}")
+                    raise RuntimeError(f"Kernel execution failed: {e}")
+
+            def cleanup(self):
+                """
+                Clean up XRT resources.
+
+                Releases all buffer objects. Should be called when done with the
+                application to free NPU memory.
+                """
+                logger.debug(f"  Cleaning up {len(self.xrt_buffers)} buffers...")
+                self.xrt_buffers.clear()
+                self.buffer_metadata.clear()
+
+        return XRTApp(device, context, kernel, kernel_name)
 
     except ImportError:
         raise ImportError(
