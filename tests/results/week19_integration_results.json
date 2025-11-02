@@ -1,0 +1,154 @@
+{
+  "timestamp": "2025-11-02 13:34:51 UTC",
+  "total_tests": 10,
+  "successful": 5,
+  "failed": 5,
+  "success_rate": 50.0,
+  "by_type": {
+    "functionality": {
+      "total": 4,
+      "passed": 3
+    },
+    "accuracy": {
+      "total": 3,
+      "passed": 1
+    },
+    "performance": {
+      "total": 3,
+      "passed": 1
+    }
+  },
+  "results": [
+    {
+      "test_name": "1 Second Audio",
+      "test_type": "functionality",
+      "audio_file": "test_1s.wav",
+      "audio_duration_s": 1.0,
+      "success": true,
+      "processing_time_ms": 852.9008510231506,
+      "realtime_factor": 1.1724692252333755,
+      "transcription": " Ooh.",
+      "expected_text": null,
+      "error": "",
+      "http_status": 200
+    },
+    {
+      "test_name": "5 Second Audio",
+      "test_type": "functionality",
+      "audio_file": "test_5s.wav",
+      "audio_duration_s": 5.0,
+      "success": true,
+      "processing_time_ms": 867.0165390067268,
+      "realtime_factor": 5.7669026772293295,
+      "transcription": " Whoa! Whoa! Whoa! Whoa!",
+      "expected_text": null,
+      "error": "",
+      "http_status": 200
+    },
+    {
+      "test_name": "30 Second Audio (Buffer Fix)",
+      "test_type": "functionality",
+      "audio_file": "test_30s.wav",
+      "audio_duration_s": 30.0,
+      "success": false,
+      "processing_time_ms": 7.636722992174327,
+      "realtime_factor": 0.0,
+      "transcription": "",
+      "expected_text": null,
+      "error": "HTTP 500",
+      "http_status": 500
+    },
+    {
+      "test_name": "Silent Audio (Edge Case)",
+      "test_type": "functionality",
+      "audio_file": "test_silence.wav",
+      "audio_duration_s": 5.0,
+      "success": true,
+      "processing_time_ms": 488.75265699462034,
+      "realtime_factor": 10.23012341405038,
+      "transcription": "",
+      "expected_text": null,
+      "error": "",
+      "http_status": 200
+    },
+    {
+      "test_name": "Accuracy: 1 Second Audio",
+      "test_type": "accuracy",
+      "audio_file": "test_1s.wav",
+      "audio_duration_s": 1.0,
+      "success": false,
+      "processing_time_ms": 0.0,
+      "realtime_factor": 0.0,
+      "transcription": " Ooh.",
+      "expected_text": "",
+      "error": "Low similarity: 0.0%",
+      "http_status": 200
+    },
+    {
+      "test_name": "Accuracy: 5 Second Audio",
+      "test_type": "accuracy",
+      "audio_file": "test_5s.wav",
+      "audio_duration_s": 5.0,
+      "success": false,
+      "processing_time_ms": 0.0,
+      "realtime_factor": 0.0,
+      "transcription": " Whoa! Whoa! Whoa! Whoa!",
+      "expected_text": "",
+      "error": "Low similarity: 0.0%",
+      "http_status": 200
+    },
+    {
+      "test_name": "Accuracy: Silence (Edge Case)",
+      "test_type": "accuracy",
+      "audio_file": "test_silence.wav",
+      "audio_duration_s": 5.0,
+      "success": true,
+      "processing_time_ms": 0.0,
+      "realtime_factor": 0.0,
+      "transcription": "",
+      "expected_text": "",
+      "error": "",
+      "http_status": 200
+    },
+    {
+      "test_name": "Performance: 1 Second Audio",
+      "test_type": "performance",
+      "audio_file": "test_1s.wav",
+      "audio_duration_s": 1.0,
+      "success": false,
+      "processing_time_ms": 577.2128500102554,
+      "realtime_factor": 1.732463163254652,
+      "transcription": "",
+      "expected_text": null,
+      "error": "Slower than baseline: 0.57\u00d7",
+      "http_status": 200
+    },
+    {
+      "test_name": "Performance: 5 Second Audio",
+      "test_type": "performance",
+      "audio_file": "test_5s.wav",
+      "audio_duration_s": 5.0,
+      "success": false,
+      "processing_time_ms": 855.6443369889166,
+      "realtime_factor": 5.843549456068879,
+      "transcription": "",
+      "expected_text": null,
+      "error": "Slower than baseline: 0.58\u00d7",
+      "http_status": 200
+    },
+    {
+      "test_name": "Performance: Silence (Edge Case)",
+      "test_type": "performance",
+      "audio_file": "test_silence.wav",
+      "audio_duration_s": 5.0,
+      "success": true,
+      "processing_time_ms": 490.91001201304607,
+      "realtime_factor": 10.185166074525128,
+      "transcription": "",
+      "expected_text": null,
+      "error": "",
+      "http_status": 200
+    }
+  ],
+  "status": "FAIL"
+}

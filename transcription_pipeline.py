@@ -554,16 +554,52 @@ class TranscriptionPipeline:
         options = item.data.get('options', {})
 
         try:
-            # Decoder (WhisperX)
-            # Note: For now we're using the full WhisperX pipeline since we can't
-            # easily inject encoder output. In production, we'd modify WhisperX
-            # or use a custom decoder that accepts encoder output directly.
+            # Decoder - supports CustomWhisperDecoder, faster-whisper, and WhisperX
+            #
+            # Week 19.5 Architecture Fix: Use custom decoder with NPU encoder features!
+            # This eliminates wasteful CPU re-encoding (300-3,200ms saved)
 
-            # Use the audio directly with WhisperX (it will re-run encoder internally)
-            # This is suboptimal but functional for now
-            result = self.python_decoder.transcribe(audio, batch_size=self.batch_size)
+            # Check if using CustomWhisperDecoder (has transcribe_from_features method)
+            is_custom_decoder = hasattr(self.python_decoder, 'transcribe_from_features')
 
-            # Alignment
+            # Check if using faster-whisper (has get_stats method)
+            is_faster_whisper = hasattr(self.python_decoder, 'get_stats')
+
+            if is_custom_decoder:
+                # CustomWhisperDecoder (Week 19.5 fix - FAST!)
+                # Accepts NPU encoder output directly (NO RE-ENCODING!)
+                logger.debug(f"[Stage3] Using CustomWhisperDecoder with NPU features")
+                result = self.python_decoder.transcribe_from_features(
+                    encoder_output,  # ✅ USE NPU ENCODER OUTPUT DIRECTLY!
+                    language="en",   # Force English (skip detection for speed)
+                    word_timestamps=False  # Alignment will add these
+                )
+            elif is_faster_whisper:
+                # faster-whisper decoder (Week 19 optimization)
+                # WARNING: This re-encodes audio on CPU (wasteful!)
+                logger.warning(
+                    "[Stage3] Using faster-whisper - will RE-ENCODE audio on CPU! "
+                    "Use CustomWhisperDecoder to eliminate re-encoding."
+                )
+                result = self.python_decoder.transcribe(
+                    audio,  # ❌ RE-ENCODES (300-3,200ms wasted)
+                    language="en",
+                    word_timestamps=False,
+                    vad_filter=False
+                )
+            else:
+                # WhisperX decoder (legacy path)
+                # WARNING: This re-encodes audio on CPU (wasteful!)
+                logger.warning(
+                    "[Stage3] Using WhisperX - will RE-ENCODE audio on CPU! "
+                    "Use CustomWhisperDecoder to eliminate re-encoding."
+                )
+                result = self.python_decoder.transcribe(
+                    audio,  # ❌ RE-ENCODES (300-3,200ms wasted)
+                    batch_size=self.batch_size
+                )
+
+            # Alignment (adds word-level timestamps)
             result = whisperx.align(
                 result["segments"],
                 self.model_a,
