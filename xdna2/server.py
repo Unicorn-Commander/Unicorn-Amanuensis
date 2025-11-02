@@ -86,6 +86,14 @@ NUM_LOAD_WORKERS = int(os.environ.get("NUM_LOAD_WORKERS", "4"))
 NUM_DECODER_WORKERS = int(os.environ.get("NUM_DECODER_WORKERS", "4"))
 MAX_QUEUE_SIZE = int(os.environ.get("MAX_QUEUE_SIZE", "100"))
 
+# NPU/Hardware configuration
+# User preference: "I really don't want CPU fallback" - defaults to no fallback
+REQUIRE_NPU = os.environ.get("REQUIRE_NPU", "false").lower() == "true"  # Fail if NPU unavailable
+ALLOW_FALLBACK = os.environ.get("ALLOW_FALLBACK", "false").lower() == "true"  # Allow fallback devices (default: false)
+FALLBACK_DEVICE = os.environ.get("FALLBACK_DEVICE", "none")  # none, igpu, or cpu (default: none)
+# Device priority when fallback enabled: npu -> igpu -> cpu
+# To enable fallback: Set ALLOW_FALLBACK=true and FALLBACK_DEVICE=igpu or cpu
+
 # Global instances (initialized at startup)
 cpp_encoder: Optional[WhisperEncoderCPP] = None
 python_decoder = None  # WhisperX decoder (fallback to Python for now)
@@ -119,11 +127,21 @@ def load_xrt_npu_application():
         Exception: If XRT loading fails
     """
     # Check for xclbin files in expected locations
+    # __file__ = /home/ccadmin/CC-1L/npu-services/unicorn-amanuensis/xdna2/server.py
+    # kernels/ = /home/ccadmin/CC-1L/kernels/ (4 levels up from server.py)
     xclbin_candidates = [
+        # Whisper-specific xclbins (preferred)
         Path(__file__).parent / "cpp" / "build" / "whisper_encoder.xclbin",
         Path(__file__).parent / "kernels" / "whisper_encoder.xclbin",
         Path(__file__).parent / "final.xclbin",
         Path(__file__).parent.parent / "kernels" / "whisper_encoder.xclbin",
+
+        # Generic matmul kernels from CC-1L/kernels/common/ (actual kernel location)
+        Path(__file__).parent.parent.parent.parent / "kernels" / "common" / "build_bf16_1tile" / "matmul_1tile_bf16.xclbin",
+        Path(__file__).parent.parent.parent.parent / "kernels" / "common" / "build_bf16_2tile_FIXED" / "matmul_2tile_bf16_xdna2_FIXED.xclbin",
+        Path(__file__).parent.parent.parent.parent / "kernels" / "common" / "build_bf16_4tile" / "matmul_4tile_bf16.xclbin",
+        Path(__file__).parent.parent.parent.parent / "kernels" / "common" / "build_bfp16_1tile" / "matmul_1tile.xclbin",
+        Path(__file__).parent.parent.parent.parent / "kernels" / "common" / "build_fixed_1tile" / "matmul_1tile.xclbin",
     ]
 
     xclbin_path = None
@@ -144,22 +162,44 @@ def load_xrt_npu_application():
 
     # Try to import and use pyxrt (XRT Python bindings)
     try:
-        import pyxrt
+        import pyxrt as xrt
         logger.info(f"  Loading XRT device...")
 
         # Load XRT device (device 0)
-        device = pyxrt.device(0)
-        uuid = device.load_xclbin(str(xclbin_path))
-        logger.info(f"  XRT device loaded (UUID: {uuid})")
+        device = xrt.device(0)
+        logger.info(f"  XRT device opened")
 
-        # Create kernel handle for matmul
-        # Note: Kernel name may vary based on xclbin build
-        # Try common kernel names
-        kernel_names = ["matmul_bfp16", "matmul_bf16", "matmul", "whisper_matmul"]
+        # Load xclbin file into object (CRITICAL: Don't use load_xclbin() on XDNA2!)
+        xclbin = xrt.xclbin(str(xclbin_path))
+        logger.info(f"  xclbin object created")
+
+        # Register xclbin with device (XDNA2 requires register_xclbin, not load_xclbin)
+        device.register_xclbin(xclbin)
+        logger.info(f"  xclbin registered successfully")
+
+        # Get UUID
+        uuid = xclbin.get_uuid()
+        logger.info(f"  UUID: {uuid}")
+
+        # Create hardware context
+        context = xrt.hw_context(device, uuid)
+        logger.info(f"  Hardware context created")
+
+        # Get available kernels
+        kernels = xclbin.get_kernels()
+        kernel_names_available = [k.get_name() for k in kernels]
+        logger.info(f"  Available kernels: {kernel_names_available}")
+
+        # Try to get kernel handle
+        # MLIR-AIE xclbins use "MLIR_AIE" as kernel name
+        # Older xclbins may use matmul variants
+        kernel_names_to_try = ["MLIR_AIE", "matmul_bfp16", "matmul_bf16", "matmul", "whisper_matmul"]
         kernel = None
-        for kname in kernel_names:
+        kernel_name = None
+        for kname in kernel_names_to_try:
             try:
-                kernel = pyxrt.kernel(device, uuid, kname)
+                kernel = xrt.kernel(context, kname)
+                kernel_name = kname
                 logger.info(f"  Loaded kernel: {kname}")
                 break
             except:
@@ -167,16 +207,18 @@ def load_xrt_npu_application():
 
         if not kernel:
             raise RuntimeError(
-                f"Could not load any kernel from {kernel_names}. "
-                f"Check xclbin kernel names."
+                f"Could not load any kernel from {kernel_names_to_try}. "
+                f"Available kernels in xclbin: {kernel_names_available}"
             )
 
         # Create a simple XRT app wrapper
         class XRTAppStub:
-            """Minimal XRT app wrapper for NPU callback"""
-            def __init__(self, device, kernel):
+            """XRT app wrapper for NPU callback with XDNA2 support"""
+            def __init__(self, device, context, kernel, kernel_name):
                 self.device = device
+                self.context = context
                 self.kernel = kernel
+                self.kernel_name = kernel_name
                 self.buffers = {}
 
             def register_buffer(self, idx, dtype, shape):
@@ -188,10 +230,10 @@ def load_xrt_npu_application():
 
             def run(self):
                 """Execute kernel (stub for now)"""
-                logger.debug("  Executing NPU kernel (stub)")
+                logger.debug(f"  Executing NPU kernel {self.kernel_name} (stub)")
                 pass
 
-        return XRTAppStub(device, kernel)
+        return XRTAppStub(device, context, kernel, kernel_name)
 
     except ImportError:
         raise ImportError(
@@ -290,20 +332,107 @@ def initialize_encoder():
                     cpp_encoder.use_npu = False
 
             except FileNotFoundError as e:
-                logger.warning(f"XRT app not found: {e}")
-                logger.warning("  NPU acceleration disabled (xclbin not available)")
-                logger.warning("  Continuing in CPU mode")
+                error_msg = f"XRT app not found: {e}"
+                logger.error(error_msg)
+
+                # Check if NPU is required - fail if so
+                if REQUIRE_NPU:
+                    logger.error("  ❌ CRITICAL: NPU required but xclbin not found")
+                    logger.error("  Set REQUIRE_NPU=false to allow fallback")
+                    raise RuntimeError(
+                        "NPU acceleration required (REQUIRE_NPU=true) but xclbin not available. "
+                        "Check xclbin paths or set REQUIRE_NPU=false to continue."
+                    )
+
+                # Check if fallback is allowed - fail if not
+                if not ALLOW_FALLBACK:
+                    logger.error("  ❌ CRITICAL: Fallback disabled and NPU unavailable")
+                    logger.error("  Set ALLOW_FALLBACK=true to enable fallback")
+                    raise RuntimeError(
+                        "NPU unavailable and fallback disabled (ALLOW_FALLBACK=false). "
+                        "Enable fallback or fix xclbin path."
+                    )
+
+                # Fallback is allowed - check device preference
+                if FALLBACK_DEVICE == "none":
+                    logger.error("  ❌ CRITICAL: No fallback device configured")
+                    logger.error("  Set FALLBACK_DEVICE=igpu or FALLBACK_DEVICE=cpu to enable fallback")
+                    raise RuntimeError(
+                        "NPU unavailable and no fallback device configured (FALLBACK_DEVICE=none). "
+                        "Set FALLBACK_DEVICE=igpu or cpu to continue."
+                    )
+
+                # Log fallback
+                logger.warning(f"  NPU acceleration disabled (xclbin not available)")
+                logger.warning(f"  Falling back to {FALLBACK_DEVICE.upper()} mode")
                 cpp_encoder.use_npu = False
 
             except ImportError as e:
-                logger.warning(f"XRT libraries not available: {e}")
-                logger.warning("  NPU acceleration disabled (pyxrt not installed)")
-                logger.warning("  Continuing in CPU mode")
+                error_msg = f"XRT libraries not available: {e}"
+                logger.error(error_msg)
+
+                # Check if NPU is required - fail if so
+                if REQUIRE_NPU:
+                    logger.error("  ❌ CRITICAL: NPU required but pyxrt not installed")
+                    logger.error("  Install pyxrt or set REQUIRE_NPU=false to allow fallback")
+                    raise RuntimeError(
+                        "NPU acceleration required (REQUIRE_NPU=true) but pyxrt not available. "
+                        "Install pyxrt or set REQUIRE_NPU=false to continue."
+                    )
+
+                # Check if fallback is allowed - fail if not
+                if not ALLOW_FALLBACK:
+                    logger.error("  ❌ CRITICAL: Fallback disabled and NPU unavailable")
+                    logger.error("  Set ALLOW_FALLBACK=true to enable fallback")
+                    raise RuntimeError(
+                        "NPU unavailable and fallback disabled (ALLOW_FALLBACK=false). "
+                        "Enable fallback or install pyxrt."
+                    )
+
+                # Fallback is allowed - check device preference
+                if FALLBACK_DEVICE == "none":
+                    logger.error("  ❌ CRITICAL: No fallback device configured")
+                    logger.error("  Set FALLBACK_DEVICE=igpu or FALLBACK_DEVICE=cpu to enable fallback")
+                    raise RuntimeError(
+                        "NPU unavailable and no fallback device configured (FALLBACK_DEVICE=none). "
+                        "Set FALLBACK_DEVICE=igpu or cpu to continue."
+                    )
+
+                # Log fallback
+                logger.warning(f"  NPU acceleration disabled (pyxrt not installed)")
+                logger.warning(f"  Falling back to {FALLBACK_DEVICE.upper()} mode")
                 cpp_encoder.use_npu = False
 
             except Exception as e:
-                logger.error(f"Failed to load XRT NPU application: {e}")
-                logger.warning("  Falling back to CPU mode")
+                error_msg = f"Failed to load XRT NPU application: {e}"
+                logger.error(error_msg)
+
+                # Check if NPU is required - fail if so
+                if REQUIRE_NPU:
+                    logger.error("  ❌ CRITICAL: NPU required but loading failed")
+                    logger.error("  Set REQUIRE_NPU=false to allow fallback")
+                    raise RuntimeError(
+                        f"NPU acceleration required (REQUIRE_NPU=true) but loading failed: {e}"
+                    )
+
+                # Check if fallback is allowed - fail if not
+                if not ALLOW_FALLBACK:
+                    logger.error("  ❌ CRITICAL: Fallback disabled and NPU unavailable")
+                    logger.error("  Set ALLOW_FALLBACK=true to enable fallback")
+                    raise RuntimeError(
+                        f"NPU unavailable and fallback disabled (ALLOW_FALLBACK=false): {e}"
+                    )
+
+                # Fallback is allowed - check device preference
+                if FALLBACK_DEVICE == "none":
+                    logger.error("  ❌ CRITICAL: No fallback device configured")
+                    logger.error("  Set FALLBACK_DEVICE=igpu or FALLBACK_DEVICE=cpu to enable fallback")
+                    raise RuntimeError(
+                        f"NPU unavailable and no fallback device configured (FALLBACK_DEVICE=none): {e}"
+                    )
+
+                # Log fallback
+                logger.warning(f"  Falling back to {FALLBACK_DEVICE.upper()} mode")
                 cpp_encoder.use_npu = False
         # =================================================================
 
