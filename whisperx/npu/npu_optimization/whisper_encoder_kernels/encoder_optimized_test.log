@@ -1,0 +1,70 @@
+
+
+======================================================================
+OPTIMIZED ENCODER BLOCK TEST - Buffer Reuse Optimization
+======================================================================
+
+Initializing encoder (one-time cost)...
+======================================================================
+NPU Encoder Block Initialization
+======================================================================
+
+✅ NPU device: /dev/accel/accel0
+Loading Attention kernel (64x64)...
+  ✅ Attention kernel loaded (2.04ms per tile)
+Loading LayerNorm kernel...
+  ✅ LayerNorm kernel loaded (0.12ms per operation)
+Loading GELU kernel...
+  ✅ GELU kernel loaded (0.19ms per operation)
+
+======================================================================
+✅ NPU Encoder Block Ready!
+======================================================================
+
+  Initialization time: 230.3ms (amortized across all calls)
+
+Preparing test data...
+  ✅ Test data ready
+
+Running warm-up pass...
+  ✅ Warm-up complete
+
+Benchmarking optimized forward pass (10 iterations)...
+  ✅ Benchmark complete:
+     Average: 2.85ms
+     Std dev: 0.12ms
+     Min:     2.74ms
+     Max:     3.10ms
+
+======================================================================
+PERFORMANCE COMPARISON
+======================================================================
+
+Original integrated:  5.40ms per tile
+Optimized (buffered): 2.85ms per tile
+Improvement:          1.90x faster
+
+Full pipeline projection (11-second audio):
+  Mel preprocessing:    304.7ms (unchanged)
+
+  Original encoder:     758.2ms
+  Optimized encoder:    399.7ms
+  Encoder improvement:  1.90x
+
+  Original total:       1062.9ms → 10.3x realtime
+  Optimized total:      704.4ms → 15.6x realtime
+  Overall improvement:  1.51x
+
+✅ GOOD PROGRESS! 15.6x realtime (target: 50-80x)
+======================================================================
+
+Output Validation:
+  Attention activity:  3700/4096 (90.3%)
+  LayerNorm activity:  139/256 (54.3%)
+  GELU activity:       44/512 (8.6%)
+
+
+✅ Optimized encoder block test complete!
+   Performance improvement: 1.90x
+   New realtime factor: 15.6x
+

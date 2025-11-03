@@ -1,0 +1,57 @@
+# Optimized Configuration
+# Current best optimizations enabled
+
+name: optimized
+description: Current best optimizations - buffer reuse and efficient DMA
+
+optimizations:
+  buffer_reuse: true
+  batching: false
+  multi_core: false
+  dma_optimization: true
+  pipeline_overlap: false
+
+kernels:
+  attention:
+    enabled: true
+    tile_size: 64
+    num_heads: 1
+    buffer_reuse: true
+
+  layernorm:
+    enabled: true
+    size: 256
+    buffer_reuse: true
+
+  gelu:
+    enabled: true
+    size: 512
+    buffer_reuse: true
+
+  matmul:
+    enabled: true
+    tile_size: 16
+    buffer_reuse: true
+
+benchmarks:
+  num_iterations: 100
+  warmup_iterations: 5
+  audio_lengths: [10, 30, 60, 120, 300]
+
+accuracy:
+  validate: true
+  tolerance: 0.95
+  compare_with_cpu: true
+
+reporting:
+  generate_markdown: true
+  generate_json: true
+  generate_plots: true
+
+performance_targets:
+  current_rtf: 14.0
+  target_rtf: 220.0
+  milestone_1: 20.0  # Larger tiles
+  milestone_2: 60.0  # Batch processing
+  milestone_3: 120.0 # Multi-core
+  milestone_4: 220.0 # Full optimization

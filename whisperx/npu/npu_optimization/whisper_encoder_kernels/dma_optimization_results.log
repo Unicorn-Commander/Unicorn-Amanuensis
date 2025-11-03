@@ -1,0 +1,103 @@
+Initializing NPU Encoder...
+======================================================================
+NPU Encoder Block Initialization
+======================================================================
+
+✅ NPU device: /dev/accel/accel0
+Loading Attention kernel (64x64)...
+  ✅ Attention kernel loaded (2.04ms per tile)
+Loading LayerNorm kernel...
+  ✅ LayerNorm kernel loaded (0.12ms per operation)
+Loading GELU kernel...
+  ✅ GELU kernel loaded (0.19ms per operation)
+Loading Matmul kernel (16x16)...
+  ✅ Matmul kernel loaded (0.45ms per operation)
+
+======================================================================
+✅ NPU Encoder Block Ready!
+======================================================================
+
+
+
+
+======================================================================
+DMA OPTIMIZATION BENCHMARK SUITE
+======================================================================
+
+Configuration:
+  Number of tiles:  10
+  Tile size:        64x64 (Q, K, V)
+  Data type:        INT8
+
+======================================================================
+BENCHMARK 1: Baseline (Per-Kernel Sync)
+======================================================================
+
+Results (average over 10 tiles):
+  DMA write:     0.035ms
+  Compute:       2.318ms
+  DMA read:      0.047ms
+  Total:         2.400ms
+  DMA overhead:  0.083ms (3.4%)
+
+======================================================================
+BENCHMARK 2: Buffer Pooling
+======================================================================
+
+Results (average over 10 tiles):
+  Avg time per tile:  2.081ms
+  Buffer reuse ratio: 0/2
+
+Improvement vs baseline: 1.153x
+
+======================================================================
+BENCHMARK 3: Pipelined Execution
+======================================================================
+
+Results (10 tiles):
+  Total time:         19.271ms
+  Avg time per tile:  1.927ms
+  Pipeline stalls:    0
+
+Improvement vs baseline: 1.245x
+
+======================================================================
+BENCHMARK 4: Batch DMA
+======================================================================
+
+Results (batch size 4, 10 tiles):
+  Avg time per tile:  2.074ms
+
+Improvement vs baseline: 1.157x
+
+
+
+======================================================================
+DMA OPTIMIZATION SUMMARY
+======================================================================
+
+Strategy             Time (ms)    Improvement  Cumulative RTF
+----------------------------------------------------------------------
+baseline             2.400        1.0x         16.2x RT
+buffer_pooling       2.081        1.15x        18.7x RT
+pipelined            1.927        1.25x        23.3x RT
+batch_dma            2.074        1.16x        26.9x RT
+----------------------------------------------------------------------
+
+DMA Overhead Analysis (Baseline):
+  DMA write:        0.035ms
+  DMA read:         0.047ms
+  Total DMA:        0.083ms
+  DMA percentage:   3.4%
+  Compute:          2.318ms
+
+Best Optimization: pipelined
+  Improvement: 1.25x
+  Time per tile: 1.927ms
+
+Recommendation:
+  ✅ Target achieved: 1.66x improvement
+  ✅ New RTF: 26.9x realtime
+
+Benchmark complete!
+

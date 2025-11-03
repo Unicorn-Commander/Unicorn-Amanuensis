@@ -1,0 +1,314 @@
+Traceback (most recent call last):
+  File "/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/whisper_encoder_kernels/run_all_benchmarks.py", line 116, in main
+    pipeline_results = pipeline_bench.benchmark_multiple_lengths(lengths)
+  File "/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/whisper_encoder_kernels/benchmark_suite/benchmark_pipeline.py", line 175, in benchmark_multiple_lengths
+    result = self.benchmark_encoder(length)
+  File "/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/whisper_encoder_kernels/benchmark_suite/benchmark_pipeline.py", line 127, in benchmark_encoder
+    encoder_output = self.run_npu_encoder(mel_features)
+  File "/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/whisper_encoder_kernels/benchmark_suite/benchmark_pipeline.py", line 78, in run_npu_encoder
+    self._initialize_encoder()
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/whisper_encoder_kernels/benchmark_suite/benchmark_pipeline.py", line 38, in _initialize_encoder
+    self.encoder = NPUEncoderBlock()
+                   ~~~~~~~~~~~~~~~^^
+  File "/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/whisper_encoder_kernels/test_encoder_block.py", line 41, in __init__
+    self._load_gelu_kernel()
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/whisper_encoder_kernels/test_encoder_block.py", line 138, in _load_gelu_kernel
+    self.gelu_ctx = xrt.hw_context(self.device, uuid)
+                    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+RuntimeError: DRM_IOCTL_AMDXDNA_CREATE_HWCTX IOCTL failed (err=-2): No such file or directory
+Traceback (most recent call last):
+  File "/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/whisper_encoder_kernels/benchmark_suite/benchmark_accuracy.py", line 349, in validate_all_kernels
+    self.validate_attention_accuracy()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/whisper_encoder_kernels/benchmark_suite/benchmark_accuracy.py", line 158, in validate_attention_accuracy
+    self._initialize_encoder()
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/whisper_encoder_kernels/benchmark_suite/benchmark_accuracy.py", line 39, in _initialize_encoder
+    self.encoder = NPUEncoderBlock()
+                   ~~~~~~~~~~~~~~~^^
+  File "/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/whisper_encoder_kernels/test_encoder_block.py", line 41, in __init__
+    self._load_gelu_kernel()
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/whisper_encoder_kernels/test_encoder_block.py", line 138, in _load_gelu_kernel
+    self.gelu_ctx = xrt.hw_context(self.device, uuid)
+                    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+RuntimeError: DRM_IOCTL_AMDXDNA_CREATE_HWCTX IOCTL failed (err=-2): No such file or directory
+
+======================================================================
+              NPU WHISPER COMPREHENSIVE BENCHMARK SUITE               
+======================================================================
+
+Start time: 2025-10-30 01:36:04
+Output directory: benchmark_results
+Quick mode: True
+Skip accuracy: False
+
+
+======================================================================
+                      PHASE 1: KERNEL BENCHMARKS                      
+======================================================================
+
+======================================================================
+BENCHMARKING ALL KERNELS
+======================================================================
+
+Benchmarking Attention kernel (64x64)...
+Initializing NPU Encoder Block...
+======================================================================
+NPU Encoder Block Initialization
+======================================================================
+
+✅ NPU device: /dev/accel/accel0
+Loading Attention kernel (64x64)...
+  ✅ Attention kernel loaded (2.04ms per tile)
+Loading LayerNorm kernel...
+  ✅ LayerNorm kernel loaded (0.12ms per operation)
+Loading GELU kernel...
+  ✅ GELU kernel loaded (0.19ms per operation)
+Loading Matmul kernel (16x16)...
+  ✅ Matmul kernel loaded (0.45ms per operation)
+
+======================================================================
+✅ NPU Encoder Block Ready!
+======================================================================
+
+Encoder initialized successfully!
+
+  Progress: 20/20 iterations
+  Attention Statistics:
+    Mean:   2.233ms
+    Std:    0.069ms
+    Min:    2.104ms
+    Max:    2.370ms
+    Median: 2.229ms
+    P95:    2.370ms
+    P99:    2.370ms
+
+Benchmarking LayerNorm kernel...
+  Progress: 20/20 iterations
+  LayerNorm Statistics:
+    Mean:   0.166ms
+    Std:    0.054ms
+    Min:    0.119ms
+    Max:    0.262ms
+    Median: 0.137ms
+    P95:    0.258ms
+    P99:    0.261ms
+
+Benchmarking GELU kernel...
+  Progress: 20/20 iterations
+  GELU Statistics:
+    Mean:   0.142ms
+    Std:    0.027ms
+    Min:    0.110ms
+    Max:    0.202ms
+    Median: 0.136ms
+    P95:    0.198ms
+    P99:    0.201ms
+
+Benchmarking Matmul kernel (16x16)...
+  Progress: 20/20 iterations
+  Matmul Statistics:
+    Mean:   0.493ms
+    Std:    0.085ms
+    Min:    0.424ms
+    Max:    0.734ms
+    Median: 0.464ms
+    P95:    0.703ms
+    P99:    0.727ms
+
+======================================================================
+ALL KERNEL BENCHMARKS COMPLETE
+======================================================================
+
+Results saved to benchmark_results/kernel_results_20251030_013604.json
+✅ Kernel benchmarks complete
+
+
+======================================================================
+                     PHASE 2: PIPELINE BENCHMARKS                     
+======================================================================
+
+======================================================================
+PIPELINE BENCHMARK - MULTIPLE AUDIO LENGTHS
+======================================================================
+
+Benchmarking 30s audio...
+Initializing NPU Encoder Block...
+======================================================================
+NPU Encoder Block Initialization
+======================================================================
+
+✅ NPU device: /dev/accel/accel0
+Loading Attention kernel (64x64)...
+  ✅ Attention kernel loaded (2.04ms per tile)
+Loading LayerNorm kernel...
+  ✅ LayerNorm kernel loaded (0.12ms per operation)
+Loading GELU kernel...
+❌ Error in pipeline benchmarks: DRM_IOCTL_AMDXDNA_CREATE_HWCTX IOCTL failed (err=-2): No such file or directory
+
+======================================================================
+                     PHASE 3: ACCURACY VALIDATION                     
+======================================================================
+
+======================================================================
+ACCURACY VALIDATION - ALL KERNELS
+======================================================================
+
+Validating Attention accuracy...
+Initializing NPU Encoder Block...
+======================================================================
+NPU Encoder Block Initialization
+======================================================================
+
+✅ NPU device: /dev/accel/accel0
+Loading Attention kernel (64x64)...
+  ✅ Attention kernel loaded (2.04ms per tile)
+Loading LayerNorm kernel...
+  ✅ LayerNorm kernel loaded (0.12ms per operation)
+Loading GELU kernel...
+Error during validation: DRM_IOCTL_AMDXDNA_CREATE_HWCTX IOCTL failed (err=-2): No such file or directory
+======================================================================
+ACCURACY VALIDATION SUMMARY
+======================================================================
+
+Kernel          Correlation     MSE          Max Diff     Status    
+----------------------------------------------------------------------
+
+Results saved to benchmark_results/accuracy_results_20251030_013604.json
+✅ Accuracy validation complete
+
+
+======================================================================
+                   PHASE 4: OPTIMIZATION COMPARISON                   
+======================================================================
+
+======================================================================
+OPTIMIZATION COMPARISON
+======================================================================
+
+Testing: baseline
+  No optimizations - individual kernel calls
+Initializing NPU Encoder Block...
+======================================================================
+NPU Encoder Block Initialization
+======================================================================
+
+✅ NPU device: /dev/accel/accel0
+Loading Attention kernel (64x64)...
+  ✅ Attention kernel loaded (2.04ms per tile)
+Loading LayerNorm kernel...
+  ✅ LayerNorm kernel loaded (0.12ms per operation)
+Loading GELU kernel...
+  Error: DRM_IOCTL_AMDXDNA_CREATE_HWCTX IOCTL failed (err=-2): No such file or directory
+
+Testing: buffer_optimized
+  Buffer reuse - minimize DMA sync operations
+Initializing NPU Encoder Block...
+======================================================================
+NPU Encoder Block Initialization
+======================================================================
+
+✅ NPU device: /dev/accel/accel0
+Loading Attention kernel (64x64)...
+  ✅ Attention kernel loaded (2.04ms per tile)
+Loading LayerNorm kernel...
+  ✅ LayerNorm kernel loaded (0.12ms per operation)
+Loading GELU kernel...
+  Error: DRM_IOCTL_AMDXDNA_CREATE_HWCTX IOCTL failed (err=-2): No such file or directory
+
+Testing: batched
+  Batch processing - process multiple tiles together
+Initializing NPU Encoder Block...
+======================================================================
+NPU Encoder Block Initialization
+======================================================================
+
+✅ NPU device: /dev/accel/accel0
+Loading Attention kernel (64x64)...
+  ✅ Attention kernel loaded (2.04ms per tile)
+Loading LayerNorm kernel...
+  ✅ LayerNorm kernel loaded (0.12ms per operation)
+Loading GELU kernel...
+  Error: DRM_IOCTL_AMDXDNA_CREATE_HWCTX IOCTL failed (err=-2): No such file or directory
+
+Testing: multi_core
+  Multi-core NPU - parallel tile processing
+Initializing NPU Encoder Block...
+======================================================================
+NPU Encoder Block Initialization
+======================================================================
+
+✅ NPU device: /dev/accel/accel0
+Loading Attention kernel (64x64)...
+  ✅ Attention kernel loaded (2.04ms per tile)
+Loading LayerNorm kernel...
+  ✅ LayerNorm kernel loaded (0.12ms per operation)
+Loading GELU kernel...
+  Error: DRM_IOCTL_AMDXDNA_CREATE_HWCTX IOCTL failed (err=-2): No such file or directory
+
+Testing: fully_optimized
+  All optimizations - full NPU utilization
+Initializing NPU Encoder Block...
+======================================================================
+NPU Encoder Block Initialization
+======================================================================
+
+✅ NPU device: /dev/accel/accel0
+Loading Attention kernel (64x64)...
+  ✅ Attention kernel loaded (2.04ms per tile)
+Loading LayerNorm kernel...
+  ✅ LayerNorm kernel loaded (0.12ms per operation)Traceback (most recent call last):
+  File "/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/whisper_encoder_kernels/run_all_benchmarks.py", line 175, in main
+    comparison_results = comparison_bench.compare_optimizations()
+  File "/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/whisper_encoder_kernels/benchmark_suite/benchmark_comparison.py", line 208, in compare_optimizations
+    best_rtf = max([r['realtime_factor'] for r in self.results.values()])
+ValueError: max() iterable argument is empty
+
+Loading GELU kernel...
+  Error: DRM_IOCTL_AMDXDNA_CREATE_HWCTX IOCTL failed (err=-2): No such file or directory
+
+======================================================================
+OPTIMIZATION COMPARISON SUMMARY
+======================================================================
+
+Configuration        Tile Time       RTF        Speedup   
+----------------------------------------------------------------------
+
+❌ Error in optimization comparison: max() iterable argument is empty
+
+======================================================================
+                      PHASE 5: REPORT GENERATION                      
+======================================================================
+
+Report generated: benchmark_results/BENCHMARK_REPORT_20251030_013604.md
+✅ Markdown report: benchmark_results/BENCHMARK_REPORT_20251030_013604.md
+JSON report generated: benchmark_results/benchmark_report_20251030_013604.json
+✅ JSON report: benchmark_results/benchmark_report_20251030_013604.json
+✅ Latest report symlink: benchmark_results/BENCHMARK_REPORT_LATEST.md
+
+
+======================================================================
+                       BENCHMARK SUITE COMPLETE                       
+======================================================================
+
+📊 Results Summary:
+
+✅ Kernel Benchmarks:
+   - Attention: 2.233ms (mean)
+   - LayerNorm: 0.166ms (mean)
+   - GELU: 0.142ms (mean)
+   - Matmul: 0.493ms (mean)
+
+
+
+
+======================================================================
+
+📁 All results saved to: benchmark_results
+📄 Main report: benchmark_results/BENCHMARK_REPORT_LATEST.md
+
+End time: 2025-10-30 01:36:07
+

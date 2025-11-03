@@ -1,0 +1,17 @@
+============================================================
+MULTI-CORE ATTENTION KERNEL TEST (IRON)
+============================================================
+Configuration:
+  NPU Columns: 4
+  Batch Size: 4 tiles
+  Tile Size: 64×64
+  Input per tile: 12288 bytes (Q+K+V)
+  Output per tile: 4096 bytes
+============================================================
+
+Loading XCLBIN from: build_attention_iron/attention_multicore.xclbin
+✗ Error loading XCLBIN: load_axlf: Operation not supported
+
+✗ Test aborted: Cannot load XCLBIN
+  Please compile kernel first:
+  ./compile_attention_iron.sh

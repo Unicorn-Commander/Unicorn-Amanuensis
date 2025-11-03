@@ -1,0 +1,36 @@
+<string>:90: SyntaxWarning: invalid escape sequence '\!'
+<string>:99: SyntaxWarning: invalid escape sequence '\!'
+<string>:101: SyntaxWarning: invalid escape sequence '\!'
+======================================================================
+TESTING RESCALED KERNEL ON PHOENIX XDNA1 NPU
+Compiled: 18:52 UTC with 16x scaling boost
+======================================================================
+
+[1/4] Computing librosa reference...
+      Reference: shape (80, 101), range [0.00, 383.57]
+[2/4] Loading RESCALED kernel on NPU...
+      ✅ Loaded (55KB, with 16x scaling)
+[3/4] Executing on Phoenix XDNA1 NPU...
+      ✅ Time: 0.0167s (59.7x realtime)
+      ✅ Output: (80, 40)
+[4/4] Validating accuracy...
+
+======================================================================
+🚀 PHOENIX XDNA1 NPU RESULTS - RESCALED KERNEL
+======================================================================
+NPU Output:
+  Shape: (80, 40)
+  Range: [0, 15] (was [0,4], now wider\!)
+  Mean: 0.29
+  Non-zero: 120/3200 (3.8%)
+  Unique values: 4
+
+Accuracy:
+  Correlation: -0.0277
+  Target: > 0.95
+  Status: ❌ POOR - Need different scaling approach
+
+Performance:
+  Realtime factor: 59.7x
+  Time per frame: 0.42ms
+======================================================================

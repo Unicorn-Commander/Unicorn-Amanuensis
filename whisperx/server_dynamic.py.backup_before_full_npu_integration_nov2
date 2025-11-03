@@ -1,0 +1,506 @@
+#!/usr/bin/env python3
+"""
+🦄 Unicorn Amanuensis - Smart Dynamic Server
+Auto-detects hardware (NPU > iGPU > CPU) and models
+Uses the best available acceleration automatically
+"""
+
+import os
+import sys
+import logging
+import subprocess
+from pathlib import Path
+from typing import Optional, Dict
+import tempfile
+import time
+
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+app = FastAPI(
+    title="🦄 Unicorn Amanuensis (Dynamic)",
+    description="Auto-detects best hardware: NPU → iGPU → CPU",
+    version="3.0.0"
+)
+
+# Add CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Mount static files
+static_dir = Path(__file__).parent / "static"
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+
+class DynamicHardwareDetector:
+    """Smart hardware detection with priority: NPU > iGPU > CPU"""
+
+    @staticmethod
+    def find_whisper_models() -> Dict[str, Path]:
+        """Auto-find Whisper models in common locations"""
+        search_paths = [
+            Path("/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/models/whisper_onnx_cache"),
+            Path("/home/ucadmin/Development/whisper_npu_project/whisper_onnx_cache"),
+            Path("/app/models/whisper_onnx_cache"),
+            Path("/models/whisper_onnx_cache"),
+            Path.home() / ".cache" / "whisper",
+            Path.home() / ".cache" / "huggingface" / "hub",
+        ]
+
+        models = {}
+        for search_path in search_paths:
+            if search_path.exists():
+                logger.info(f"📁 Scanning: {search_path}")
+                for model_dir in search_path.iterdir():
+                    if model_dir.is_dir() and "whisper" in model_dir.name.lower():
+                        model_name = model_dir.name
+                        models[model_name] = model_dir
+                        logger.info(f"   ✓ Found: {model_name}")
+
+        return models
+
+    @staticmethod
+    def detect_npu() -> Optional[Dict]:
+        """Detect AMD Phoenix NPU"""
+        try:
+            if not Path("/dev/accel/accel0").exists():
+                return None
+
+            result = subprocess.run(
+                ["/opt/xilinx/xrt/bin/xrt-smi", "examine"],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+
+            if result.returncode == 0 and "NPU Phoenix" in result.stdout:
+                logger.info("🚀 AMD Phoenix NPU detected!")
+
+                # Count XCLBIN kernels
+                kernel_dir = Path(__file__).parent / "npu/npu_optimization/whisper_encoder_kernels"
+                kernel_count = len(list(kernel_dir.glob("*.xclbin"))) if kernel_dir.exists() else 0
+
+                return {
+                    "type": "npu",
+                    "name": "AMD Phoenix NPU",
+                    "device": "/dev/accel/accel0",
+                    "kernels": kernel_count,
+                    "priority": 1,  # Highest priority
+                    "expected_speedup": "28-220x"
+                }
+        except Exception as e:
+            logger.debug(f"NPU detection failed: {e}")
+
+        return None
+
+    @staticmethod
+    def detect_igpu() -> Optional[Dict]:
+        """Detect Intel iGPU"""
+        try:
+            result = subprocess.run(
+                ["lspci"], capture_output=True, text=True
+            )
+
+            if "Intel" in result.stdout and ("VGA" in result.stdout or "Display" in result.stdout):
+                logger.info("🎨 Intel iGPU detected!")
+                return {
+                    "type": "igpu",
+                    "name": "Intel Integrated Graphics",
+                    "priority": 2,
+                    "expected_speedup": "13-19x"
+                }
+        except Exception as e:
+            logger.debug(f"iGPU detection failed: {e}")
+
+        return None
+
+    @staticmethod
+    def detect_hardware() -> Dict:
+        """Detect best available hardware"""
+        logger.info("🔍 Scanning hardware...")
+
+        # Check in priority order
+        npu = DynamicHardwareDetector.detect_npu()
+        if npu:
+            return npu
+
+        igpu = DynamicHardwareDetector.detect_igpu()
+        if igpu:
+            return igpu
+
+        logger.info("💻 Using CPU (fallback)")
+        return {
+            "type": "cpu",
+            "name": "CPU",
+            "priority": 3,
+            "expected_speedup": "5-13x"
+        }
+
+class DynamicWhisperEngine:
+    """Whisper engine that uses best available hardware"""
+
+    def __init__(self):
+        self.hardware = DynamicHardwareDetector.detect_hardware()
+        self.models = DynamicHardwareDetector.find_whisper_models()
+        self.engine = None
+        self.current_model = "base"
+
+        logger.info(f"✅ Hardware selected: {self.hardware['name']}")
+        logger.info(f"✅ Models found: {len(self.models)}")
+
+        self._initialize_engine()
+
+    def _initialize_engine(self):
+        """Initialize transcription engine based on hardware"""
+
+        if self.hardware["type"] == "npu":
+            self._init_npu_engine()
+        elif self.hardware["type"] == "igpu":
+            self._init_igpu_engine()
+        else:
+            self._init_cpu_engine()
+
+    def _init_npu_engine(self):
+        """Initialize NPU-accelerated engine"""
+        try:
+            sys.path.insert(0, str(Path(__file__).parent / 'npu'))
+            from npu_runtime_unified import UnifiedNPURuntime
+
+            self.npu_runtime = UnifiedNPURuntime()
+            logger.info(f"✅ NPU Runtime initialized!")
+            logger.info(f"   Mel: {self.npu_runtime.mel_available}")
+            logger.info(f"   GELU: {self.npu_runtime.gelu_available}")
+            logger.info(f"   Attention: {self.npu_runtime.attention_available}")
+
+            # For now, use faster-whisper as backend (will be NPU-accelerated in phase 2)
+            from faster_whisper import WhisperModel
+            self.engine = WhisperModel("base", device="cpu", compute_type="int8")
+            logger.info("✅ Using faster-whisper with NPU preprocessing")
+
+        except Exception as e:
+            logger.error(f"NPU init failed: {e}, falling back to CPU")
+            self._init_cpu_engine()
+
+    def _init_igpu_engine(self):
+        """Initialize iGPU-accelerated engine"""
+        try:
+            from faster_whisper import WhisperModel
+            self.engine = WhisperModel("base", device="cpu", compute_type="int8")
+            logger.info("✅ Using faster-whisper (iGPU mode planned)")
+        except Exception as e:
+            logger.error(f"iGPU init failed: {e}")
+            self._init_cpu_engine()
+
+    def _init_cpu_engine(self):
+        """Initialize CPU engine"""
+        try:
+            from faster_whisper import WhisperModel
+            self.engine = WhisperModel("base", device="cpu", compute_type="int8")
+            logger.info("✅ Using faster-whisper (CPU)")
+        except Exception as e:
+            logger.error(f"Engine init failed: {e}")
+            raise
+
+    async def transcribe(self, audio_path: str, model: str = "base", vad_filter: bool = True) -> Dict:
+        """Transcribe audio using best available hardware
+
+        Args:
+            audio_path: Path to audio file
+            model: Whisper model to use
+            vad_filter: Enable Voice Activity Detection to filter out silent/noisy segments (default: True)
+        """
+        start_time = time.time()
+
+        # Use NPU mel preprocessing if available
+        mel_time = 0
+        if hasattr(self, 'npu_runtime') and self.npu_runtime.mel_available:
+            try:
+                mel_start = time.time()
+                logger.info("🚀 Using NPU mel preprocessing...")
+
+                # Load audio - convert with FFmpeg if needed
+                import librosa
+                import subprocess
+                from pathlib import Path
+
+                # Check if file needs conversion
+                audio_ext = Path(audio_path).suffix.lower()
+                if audio_ext in ['.m4a', '.mp4', '.aac', '.opus']:
+                    # Convert to WAV using FFmpeg
+                    wav_path = audio_path.replace(audio_ext, '.wav')
+
+                    # Try to find ffmpeg
+                    import shutil
+                    ffmpeg_path = shutil.which('ffmpeg') or '/usr/bin/ffmpeg'
+
+                    subprocess.run([
+                        ffmpeg_path, '-i', audio_path,
+                        '-ar', '16000',  # Resample to 16kHz
+                        '-ac', '1',       # Convert to mono
+                        '-y',             # Overwrite
+                        wav_path
+                    ], check=True, capture_output=True)
+                    audio, sr = librosa.load(wav_path, sr=16000)
+                else:
+                    audio, sr = librosa.load(audio_path, sr=16000)
+
+                # Process with NPU - call the mel_processor directly
+                mel_features = self.npu_runtime.mel_processor.process(audio)
+                mel_time = time.time() - mel_start
+                logger.info(f"✅ NPU mel completed in {mel_time:.3f}s - Shape: {mel_features.shape}")
+
+            except Exception as e:
+                logger.error(f"❌ NPU mel preprocessing failed: {e}")
+                raise HTTPException(status_code=500, detail=f"NPU preprocessing failed: {str(e)}. NPU-only mode - no CPU fallback allowed.")
+
+        logger.info(f"🎙️ VAD filter: {'enabled' if vad_filter else 'disabled'}")
+
+        # Check if we have NPU-computed mel features to inject
+        if hasattr(self, 'npu_runtime') and self.npu_runtime.mel_available and 'mel_features' in locals():
+            logger.info("🔥 INJECTING NPU mel features directly into faster-whisper (bypassing CPU recomputation)")
+
+            # Import required modules
+            from faster_whisper.transcribe import TranscriptionOptions, TranscriptionInfo
+            from faster_whisper.tokenizer import Tokenizer
+
+            # Ensure mel_features is float32 and has correct shape
+            import numpy as np
+            if mel_features.dtype != np.float32:
+                mel_features = mel_features.astype(np.float32)
+
+            # mel_features should be (n_mels, n_frames), which matches faster-whisper's expectation
+            logger.info(f"📊 Mel features shape: {mel_features.shape}, dtype: {mel_features.dtype}")
+
+            # Create transcription options
+            options = TranscriptionOptions(
+                beam_size=5,
+                best_of=5,
+                patience=1.0,
+                length_penalty=1.0,
+                repetition_penalty=1.0,
+                no_repeat_ngram_size=0,
+                log_prob_threshold=-1.0,
+                no_speech_threshold=0.6,
+                compression_ratio_threshold=2.4,
+                condition_on_previous_text=True,
+                prompt_reset_on_temperature=0.5,
+                temperatures=[0.0, 0.2, 0.4, 0.6, 0.8, 1.0],
+                initial_prompt=None,
+                prefix=None,
+                suppress_blank=True,
+                suppress_tokens=[-1],
+                without_timestamps=False,
+                max_initial_timestamp=1.0,
+                word_timestamps=True,
+                prepend_punctuations='"\'"\u00bf([{-',
+                append_punctuations='"\'.。,，!！?？:：")]}、',
+                multilingual=False,
+                max_new_tokens=None,
+                clip_timestamps="0",
+                hallucination_silence_threshold=None,
+                hotwords=None
+            )
+
+            # Create tokenizer
+            tokenizer = Tokenizer(
+                self.engine.hf_tokenizer,
+                self.engine.model.is_multilingual,
+                task="transcribe",
+                language="en"
+            )
+
+            # Use generate_segments with NPU features (no encoder_output = it will encode from features)
+            logger.info("🚀 Calling generate_segments with NPU mel features...")
+            segments = self.engine.generate_segments(
+                features=mel_features,
+                tokenizer=tokenizer,
+                options=options,
+                log_progress=False,
+                encoder_output=None  # Let it encode our NPU features
+            )
+
+            # Calculate duration from features
+            duration = float(mel_features.shape[-1] * self.engine.feature_extractor.time_per_frame)
+
+            # Create transcription info
+            info = TranscriptionInfo(
+                language="en",
+                language_probability=1.0,
+                duration=duration,
+                duration_after_vad=duration,
+                transcription_options=options,
+                vad_options=None,
+                all_language_probs=None
+            )
+
+            logger.info("✅ Successfully used NPU mel features (CPU recomputation avoided!)")
+        else:
+            # Fallback to normal transcription (will recompute mel on CPU)
+            logger.info("⚠️ Using standard transcribe() - mel will be recomputed on CPU")
+            segments, info = self.engine.transcribe(
+                audio_path,
+                beam_size=5,
+                language="en",
+                vad_filter=vad_filter,
+                word_timestamps=True
+            )
+
+        result_segments = []
+        full_text = ""
+
+        for segment in segments:
+            segment_data = {
+                "start": segment.start,
+                "end": segment.end,
+                "text": segment.text
+            }
+
+            if hasattr(segment, 'words'):
+                segment_data["words"] = [
+                    {"word": w.word, "start": w.start, "end": w.end}
+                    for w in segment.words
+                ]
+
+            result_segments.append(segment_data)
+            full_text += segment.text + " "
+
+        elapsed = time.time() - start_time
+        audio_duration = info.duration
+        realtime_factor = audio_duration / elapsed if elapsed > 0 else 0
+
+        return {
+            "text": full_text.strip(),
+            "segments": result_segments,
+            "language": info.language,
+            "duration": audio_duration,
+            "processing_time": elapsed,
+            "realtime_factor": f"{realtime_factor:.1f}x",
+            "hardware": self.hardware["name"],
+            "npu_mel_time": mel_time if mel_time > 0 else None
+        }
+
+# Initialize engine
+logger.info("🦄 Initializing Unicorn Amanuensis...")
+whisper_engine = DynamicWhisperEngine()
+logger.info("✅ Server ready!")
+
+@app.get("/")
+async def root():
+    return {
+        "service": "Unicorn Amanuensis (Dynamic)",
+        "version": "3.0.0",
+        "hardware": whisper_engine.hardware,
+        "models_found": len(whisper_engine.models),
+        "status": "ready",
+        "endpoints": {
+            "/transcribe": "POST - Upload audio file",
+            "/status": "GET - Server status",
+            "/web": "GET - Web interface"
+        }
+    }
+
+@app.get("/status")
+async def status():
+    return {
+        "status": "ready",
+        "hardware": whisper_engine.hardware,
+        "models_found": list(whisper_engine.models.keys()),
+        "current_model": whisper_engine.current_model,
+        "diarization": {
+            "available": False,
+            "note": "Diarization not implemented. Use server_whisperx_local.py or server_openvino.py for speaker diarization."
+        },
+        "npu_runtime": {
+            "available": hasattr(whisper_engine, 'npu_runtime'),
+            "mel_ready": whisper_engine.npu_runtime.mel_available if hasattr(whisper_engine, 'npu_runtime') else False,
+            "gelu_ready": whisper_engine.npu_runtime.gelu_available if hasattr(whisper_engine, 'npu_runtime') else False,
+            "attention_ready": whisper_engine.npu_runtime.attention_available if hasattr(whisper_engine, 'npu_runtime') else False,
+        }
+    }
+
+@app.get("/web", response_class=HTMLResponse)
+async def web_interface():
+    """Serve web interface"""
+    index_file = static_dir / "index.html"
+    if index_file.exists():
+        return FileResponse(index_file)
+    else:
+        return HTMLResponse("<h1>🦄 Unicorn Amanuensis (Dynamic)</h1><p>Upload audio to transcribe</p>")
+
+@app.post("/transcribe")
+@app.post("/v1/audio/transcriptions")
+async def transcribe(
+    file: UploadFile = File(...),
+    model: str = Form("base"),
+    language: str = Form("en"),
+    enable_diarization: bool = Form(False),
+    vad_filter: bool = Form(True),
+    enable_vad: bool = Form(None)
+):
+    """Transcribe audio file (supports both /transcribe and OpenAI-compatible /v1/audio/transcriptions)
+
+    Args:
+        file: Audio file to transcribe
+        model: Whisper model to use (default: base)
+        language: Language code (default: en)
+        enable_diarization: Enable speaker diarization (default: False, NOT IMPLEMENTED)
+        vad_filter: Enable Voice Activity Detection to filter silent/noisy segments (default: True)
+        enable_vad: Alias for vad_filter for user-friendliness (optional)
+
+    Note:
+        - VAD (Voice Activity Detection) is ENABLED by default to skip silent segments
+        - This helps prevent "Can't find viable result" errors on noisy audio
+        - Set vad_filter=false or enable_vad=false to disable if needed
+        - Diarization is currently NOT IMPLEMENTED in this server
+        - For diarization support, use server_whisperx_local.py or server_openvino.py instead
+    """
+
+    # Handle VAD parameter aliases - enable_vad takes precedence if explicitly set
+    if enable_vad is not None:
+        vad_filter = enable_vad
+
+    # Log warning if diarization is requested (not implemented)
+    if enable_diarization:
+        logger.warning("⚠️ Speaker diarization requested but NOT IMPLEMENTED in this server")
+        logger.warning("   For diarization support, use server_whisperx_local.py or server_openvino.py")
+
+    # Save uploaded file
+    suffix = Path(file.filename).suffix if file.filename else ".wav"
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        content = await file.read()
+        tmp.write(content)
+        tmp_path = tmp.name
+
+    try:
+        result = await whisper_engine.transcribe(tmp_path, model, vad_filter=vad_filter)
+
+        # Add VAD and diarization status to result
+        result["vad_filter"] = vad_filter
+        result["diarization_requested"] = enable_diarization
+        result["diarization_available"] = False
+        if enable_diarization:
+            result["diarization_note"] = "Diarization not implemented in this server. Use server_whisperx_local.py or server_openvino.py for speaker diarization support."
+
+        return JSONResponse(result)
+
+    except Exception as e:
+        logger.error(f"Transcription failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+    finally:
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=9004)

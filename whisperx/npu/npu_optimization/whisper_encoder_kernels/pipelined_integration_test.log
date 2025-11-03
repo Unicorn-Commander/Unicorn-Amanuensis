@@ -1,0 +1,88 @@
+
+
+======================================================================
+PIPELINED ENCODER BLOCK TEST - DMA Optimization Integration
+======================================================================
+
+Initializing encoder (one-time cost)...
+======================================================================
+NPU Encoder Block Initialization
+======================================================================
+
+✅ NPU device: /dev/accel/accel0
+Loading Attention kernel (64x64)...
+  ✅ Attention kernel loaded (2.04ms per tile)
+Loading LayerNorm kernel...
+  ✅ LayerNorm kernel loaded (0.12ms per operation)
+Loading GELU kernel...
+  ✅ GELU kernel loaded (0.19ms per operation)
+Loading Matmul kernel (16x16)...
+  ✅ Matmul kernel loaded (0.45ms per operation)
+
+======================================================================
+✅ NPU Encoder Block Ready!
+======================================================================
+
+  Initialization time: 250.3ms (amortized across all calls)
+
+Preparing test data for 10 tiles...
+  ✅ Test data ready (10 tiles)
+
+✅ Pipelined executor initialized
+
+======================================================================
+BENCHMARK 1: Sequential Execution (Baseline)
+======================================================================
+
+Results (10 tiles):
+  Total time:         25.47ms
+  Avg time per tile:  2.55ms
+
+======================================================================
+BENCHMARK 2: Pipelined Execution (DMA Overlap)
+======================================================================
+
+Results (10 tiles):
+  Total time:         19.38ms
+  Avg time per tile:  1.94ms
+  Pipeline stalls:    0
+  DMA overhead:       2.9%
+
+======================================================================
+ACCURACY VALIDATION
+======================================================================
+
+Average correlation: 0.908578
+Min correlation:     0.085784
+Max correlation:     1.000000
+⚠️  Accuracy warning: Correlation below 0.99
+
+======================================================================
+PERFORMANCE COMPARISON
+======================================================================
+
+Sequential execution:  2.55ms per tile
+Pipelined execution:   1.94ms per tile
+Speedup:               1.31x faster
+
+Full pipeline projection (11-second audio):
+  Mel preprocessing:    304.7ms (unchanged)
+
+  Sequential encoder:   357.4ms → 16.6x realtime
+  Pipelined encoder:    271.8ms → 19.1x realtime
+  Pipeline improvement: 1.31x
+
+  Overall improvement:  14.0x → 19.1x realtime
+  Total speedup:        1.36x
+
+✅ GOOD PROGRESS! 19.1x realtime (target: 23-26x)
+======================================================================
+
+
+✅ Pipelined encoder block test complete!
+   DMA speedup: 1.31x
+   Pipeline stalls: 0
+   Accuracy: 0.908578
+   New realtime factor: 19.1x
+   Total improvement: 1.36x
+

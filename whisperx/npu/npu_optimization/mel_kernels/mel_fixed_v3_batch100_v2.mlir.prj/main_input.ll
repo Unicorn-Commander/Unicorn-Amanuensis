@@ -1,0 +1,72 @@
+; ModuleID = 'LLVMDialectModule'
+source_filename = "LLVMDialectModule"
+target triple = "aie2"
+
+@of_in_cons_buff_1 = external global [800 x i8]
+@of_in_cons_buff_0 = external global [800 x i8]
+@of_out_buff_1 = external global [80 x i8]
+@of_out_buff_0 = external global [80 x i8]
+
+declare void @debug_i32(i32)
+
+; Unknown intrinsic
+declare void @llvm.aie2.event(i32)
+
+; Unknown intrinsic
+declare void @llvm.aie2.put.ms(i32, i32)
+
+; Unknown intrinsic
+declare { i32, i32 } @llvm.aie2.get.ss()
+
+; Unknown intrinsic
+declare void @llvm.aie2.mcd.write.vec(<16 x i32>, i32)
+
+; Unknown intrinsic
+declare <16 x i32> @llvm.aie2.scd.read.vec(i32)
+
+; Unknown intrinsic
+declare void @llvm.aie2.acquire(i32, i32)
+
+; Unknown intrinsic
+declare void @llvm.aie2.release(i32, i32)
+
+declare void @mel_kernel_simple(ptr, ptr)
+
+define void @core_0_2() {
+  br label %1
+
+1:                                                ; preds = %9, %0
+  %2 = phi i64 [ %10, %9 ], [ 0, %0 ]
+  %3 = icmp slt i64 %2, 4294967295
+  br i1 %3, label %4, label %11
+
+4:                                                ; preds = %7, %1
+  %5 = phi i64 [ %8, %7 ], [ 0, %1 ]
+  %6 = icmp slt i64 %5, 100
+  br i1 %6, label %7, label %9
+
+7:                                                ; preds = %4
+  call void @llvm.aie2.acquire(i32 49, i32 -1)
+  call void @llvm.aie2.acquire(i32 50, i32 -1)
+  call void @mel_kernel_simple(ptr @of_in_cons_buff_0, ptr @of_out_buff_0)
+  call void @llvm.aie2.release(i32 48, i32 1)
+  call void @llvm.aie2.release(i32 51, i32 1)
+  call void @llvm.aie2.acquire(i32 49, i32 -1)
+  call void @llvm.aie2.acquire(i32 50, i32 -1)
+  call void @mel_kernel_simple(ptr @of_in_cons_buff_1, ptr @of_out_buff_1)
+  call void @llvm.aie2.release(i32 48, i32 1)
+  call void @llvm.aie2.release(i32 51, i32 1)
+  %8 = add i64 %5, 2
+  br label %4
+
+9:                                                ; preds = %4
+  %10 = add i64 %2, 1
+  br label %1
+
+11:                                               ; preds = %1
+  ret void
+}
+
+!llvm.module.flags = !{!0}
+
+!0 = !{i32 2, !"Debug Info Version", i32 3}

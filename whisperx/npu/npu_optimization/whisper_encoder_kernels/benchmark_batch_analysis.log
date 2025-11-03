@@ -1,0 +1,62 @@
+
+
+======================================================================
+BATCH SIZE ANALYSIS
+======================================================================
+
+======================================================================
+NPU Encoder Block Initialization
+======================================================================
+
+✅ NPU device: /dev/accel/accel0
+Loading Attention kernel (64x64)...
+  ✅ Attention kernel loaded (2.04ms per tile)
+Loading LayerNorm kernel...
+  ✅ LayerNorm kernel loaded (0.12ms per operation)
+Loading GELU kernel...
+  ✅ GELU kernel loaded (0.19ms per operation)
+Loading Matmul kernel (16x16)...
+  ✅ Matmul kernel loaded (0.45ms per operation)
+
+======================================================================
+✅ NPU Encoder Block Ready!
+======================================================================
+
+Testing batch size: 1 tiles
+  Sequential: 3.18ms
+  Pipelined:  2.33ms
+  Speedup:    1.37x
+  Stalls:     0
+
+Testing batch size: 2 tiles
+  Sequential: 4.67ms
+  Pipelined:  4.27ms
+  Speedup:    1.09x
+  Stalls:     0
+
+Testing batch size: 4 tiles
+  Sequential: 8.79ms
+  Pipelined:  7.95ms
+  Speedup:    1.11x
+  Stalls:     0
+
+Testing batch size: 8 tiles
+  Sequential: 18.04ms
+  Pipelined:  15.63ms
+  Speedup:    1.15x
+  Stalls:     0
+
+======================================================================
+BATCH SIZE SUMMARY
+======================================================================
+
+Batch Size   Sequential (ms)    Pipelined (ms)     Speedup   
+----------------------------------------------------------------------
+1            3.18               2.33               1.37      x
+2            4.67               4.27               1.09      x
+4            8.79               7.95               1.11      x
+8            18.04              15.63              1.15      x
+----------------------------------------------------------------------
+
+Benchmark complete!
+

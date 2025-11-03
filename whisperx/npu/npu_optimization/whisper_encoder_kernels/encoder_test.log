@@ -1,0 +1,68 @@
+
+
+======================================================================
+SIMPLIFIED ENCODER BLOCK TEST - Path to 220x Realtime
+======================================================================
+
+======================================================================
+NPU Encoder Block Initialization
+======================================================================
+
+✅ NPU device: /dev/accel/accel0
+Loading Attention kernel (64x64)...
+  ✅ Attention kernel loaded (2.04ms per tile)
+Loading LayerNorm kernel...
+  ✅ LayerNorm kernel loaded (0.12ms per operation)
+Loading GELU kernel...
+  ✅ GELU kernel loaded (0.19ms per operation)
+
+======================================================================
+✅ NPU Encoder Block Ready!
+======================================================================
+
+Testing encoder block with 64x64 tile...
+
+Step 1: Preparing test data...
+  ✅ Test data ready: Q, K, V (64x64 each)
+
+Step 2: Running encoder block on NPU...
+  Running attention...
+    ✅ Attention: 3.58ms
+       Output activity: 3547/4096 (86.6%)
+  Running layer normalization...
+    ✅ LayerNorm: 1.04ms
+       Output activity: 143/256 (55.9%)
+  Running GELU activation...
+    ✅ GELU: 0.60ms
+       Output activity: 28/512 (5.5%)
+
+  ✅ Total block time: 5.40ms
+
+======================================================================
+PERFORMANCE PROJECTION
+======================================================================
+
+One encoder block (64x64 tile): 5.40ms
+
+Whisper Base Encoder (sequence length 1500):
+  Tiles needed: 1500 / 64 = 23.4 tiles
+  Time per tile: 5.40ms
+  Total per encoder block: 126.3ms
+
+Full encoder (6 blocks):
+  Total time: 757.6ms = 0.76s
+
+With mel spectrogram (36.1x realtime on 11s audio):
+  Mel preprocessing: 304.7ms
+  Encoder: 757.6ms
+  Total: 1062.3ms
+
+  Realtime factor: 10.4x
+
+⚠️  Below target, but encoder incomplete (need FFN matmul)
+======================================================================
+
+
+✅ Encoder block test complete!
+   Projected realtime factor: 10.4x
+

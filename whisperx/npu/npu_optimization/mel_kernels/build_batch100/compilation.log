@@ -1,0 +1,61 @@
+Error running pass pipeline:  builtin.module(convert-vector-to-aievec{ aie-target=aie2 target-backend=llvmir },lower-affine,aie-canonicalize-device,aie.device(aie-assign-lock-ids,aie-register-objectFifos,aie-objectFifo-stateful-transform{ dynamic-objFifos=0 packet-sw-objFifos=0 },aie-assign-bd-ids,aie-lower-cascade-flows,aie-lower-broadcast-packet,aie-lower-multicast,aie-assign-tile-controller-ids,aie-generate-column-control-overlay{ route-shim-to-tile-ctrl=0 },aie-assign-buffer-addresses),convert-scf-to-cf) Failure while executing pass pipeline:
+error: "-":5:17: 'aie.tile' op allocated buffers exceeded available memory
+  
+ note: "-":5:17: see current operation: %5 = "aie.tile"() <{col = 0 : i32, row = 2 : i32}> {controller_id = #aie.packet_info<pkt_type = 0, pkt_id = 27>} : () -> index
+ note: "-":5:17: MemoryMap:
+  	(stack) 	: 0x0-0x3FF 	(1024 bytes)
+  	of_in_cons_buff_0 	: 0x400-0x13C7F 	(80000 bytes)
+  	of_in_cons_buff_1 	: 0x13C80-0x274FF 	(80000 bytes)
+  	of_out_buff_0 	: 0x27500-0x2943F 	(8000 bytes)
+  	of_out_buff_1 	: 0x29440-0x2B37F 	(8000 bytes)
+  
+error: "-":5:17: 'aie.tile' op Basic sequential allocation also failed.
+ note: "-":5:17: see current operation: %5 = "aie.tile"() <{col = 0 : i32, row = 2 : i32}> {controller_id = #aie.packet_info<pkt_type = 0, pkt_id = 27>} : () -> index
+
+Traceback (most recent call last):
+  File "/home/ucadmin/.local/bin/aiecc.py", line 8, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "/home/ucadmin/mlir-aie-fresh/mlir-aie/venv313/lib/python3.13/site-packages/mlir_aie/python/aie/compiler/aiecc/main.py", line 1907, in main
+    run(module_str)
+    ~~~^^^^^^^^^^^^
+  File "/home/ucadmin/mlir-aie-fresh/mlir-aie/venv313/lib/python3.13/site-packages/mlir_aie/python/aie/compiler/aiecc/main.py", line 1881, in run
+    asyncio.run(runner.run_flow())
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 719, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/home/ucadmin/mlir-aie-fresh/mlir-aie/venv313/lib/python3.13/site-packages/mlir_aie/python/aie/compiler/aiecc/main.py", line 1585, in run_flow
+    run_passes(
+    ~~~~~~~~~~^
+        pass_pipeline,
+        ^^^^^^^^^^^^^^
+    ...<2 lines>...
+        self.opts.verbose,
+        ^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/ucadmin/mlir-aie-fresh/mlir-aie/venv313/lib/python3.13/site-packages/mlir_aie/python/aie/compiler/aiecc/main.py", line 454, in run_passes
+    raise e
+  File "/home/ucadmin/mlir-aie-fresh/mlir-aie/venv313/lib/python3.13/site-packages/mlir_aie/python/aie/compiler/aiecc/main.py", line 451, in run_passes
+    pm.run(module.operation)
+    ~~~~~~^^^^^^^^^^^^^^^^^^
+aie._mlir_libs._site_initialize.<locals>.MLIRError: Failure while executing pass pipeline:
+error: "-":5:17: 'aie.tile' op allocated buffers exceeded available memory
+  
+ note: "-":5:17: see current operation: %5 = "aie.tile"() <{col = 0 : i32, row = 2 : i32}> {controller_id = #aie.packet_info<pkt_type = 0, pkt_id = 27>} : () -> index
+ note: "-":5:17: MemoryMap:
+  	(stack) 	: 0x0-0x3FF 	(1024 bytes)
+  	of_in_cons_buff_0 	: 0x400-0x13C7F 	(80000 bytes)
+  	of_in_cons_buff_1 	: 0x13C80-0x274FF 	(80000 bytes)
+  	of_out_buff_0 	: 0x27500-0x2943F 	(8000 bytes)
+  	of_out_buff_1 	: 0x29440-0x2B37F 	(8000 bytes)
+  
+error: "-":5:17: 'aie.tile' op Basic sequential allocation also failed.
+ note: "-":5:17: see current operation: %5 = "aie.tile"() <{col = 0 : i32, row = 2 : i32}> {controller_id = #aie.packet_info<pkt_type = 0, pkt_id = 27>} : () -> index

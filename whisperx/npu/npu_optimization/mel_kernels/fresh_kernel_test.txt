@@ -1,0 +1,47 @@
+<string>:116: SyntaxWarning: invalid escape sequence '\!'
+======================================================================
+TESTING FRESHLY COMPILED mel_fixed_v3.xclbin (Oct 29 18:37)
+WITH FFT SCALING + HTK MEL FILTERBANK FIXES
+======================================================================
+
+[1/5] Generating 440 Hz sine wave test audio (1 second)...
+      Audio: 16000 samples @ 16kHz
+[2/5] Computing librosa reference (ground truth)...
+      Shape: (80, 101)
+      Range: [0.00, 383.57]
+      Mean: 8.17
+[3/5] Loading FRESHLY COMPILED kernel on Phoenix XDNA1 NPU...
+      ✅ Loaded: build_fixed_v3/mel_fixed_v3.xclbin
+      ✅ Size: 56KB (compiled 18:37 UTC)
+[4/5] Executing on Phoenix XDNA1 NPU...
+      ✅ Execution time: 0.0176s
+      ✅ Performance: 56.7x realtime
+[5/5] Validating accuracy against librosa...
+
+======================================================================
+VALIDATION RESULTS - FRESHLY COMPILED KERNEL
+======================================================================
+
+NPU Output Analysis:
+  Shape: (80, 40) (80 mel bins × 40 frames)
+  Data type: INT8
+  Range: [0, 4]
+  Mean: 0.09
+  Std Dev: 0.50
+  Non-zero: 120 / 3200 (3.8%)
+  Unique values: 4
+
+Accuracy Metrics:
+  Correlation with librosa: -0.0297
+  Target: > 0.95 (95%)
+  Status: ❌ POOR - Needs debugging
+
+Performance:
+  Processing time: 0.0176s for 1.0s audio
+  Realtime factor: 56.7x
+  Frames processed: 40
+  Avg time/frame: 0.44ms
+
+======================================================================
+Phoenix XDNA1 NPU Hardware: ✅ VALIDATED
+======================================================================

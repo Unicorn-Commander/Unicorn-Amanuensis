@@ -1,0 +1,150 @@
+BEFORE & AFTER COMPARISON - Web GUI Controls
+==============================================
+
+BEFORE (Original):
+------------------
+Form Controls:
+  1. Audio File upload
+  2. Audio URL input
+  3. Model selection
+  4. Language selection
+  5. Enable Speaker Diarization (single checkbox, checked by default)
+  6. Transcribe button
+
+Results Display:
+  - Duration
+  - Word Count
+  - Speakers
+  - Processing Time
+
+AFTER (Updated):
+----------------
+Form Controls:
+  1. Audio File upload
+  2. Audio URL input
+  3. Model selection
+  4. Language selection
+  5. ✨ Enable Voice Activity Detection (VAD) - NEW! (checked by default)
+     └─ Description: "Automatically filters out silence and non-speech segments"
+  6. ✨ Enable Speaker Diarization - UPDATED! (unchecked by default)
+     └─ Description: "Identify different speakers (experimental, may log warnings)"
+  7. Transcribe button
+
+Results Display:
+  - Duration
+  - Word Count
+  - Speakers
+  - Processing Time
+  - ✨ VAD Filter Status - NEW! (shows ON/OFF with color coding)
+  - ✨ Diarization Status - NEW! (shows ON/OFF with color coding)
+
+
+KEY DIFFERENCES:
+----------------
+
+1. CHECKBOX BEHAVIOR CHANGE:
+   Before: Diarization was CHECKED by default
+   After:  VAD is CHECKED, Diarization is UNCHECKED
+
+2. NEW VAD CONTROL:
+   - Allows users to disable silence filtering if needed
+   - Checked by default (most users want this)
+   - Sends vad_filter=true/false to server
+
+3. IMPROVED DIARIZATION CONTROL:
+   - Now unchecked by default (experimental feature)
+   - Better labeling with warning about experimental status
+   - Sends enable_diarization=true/false to server
+
+4. VISUAL FEEDBACK:
+   - Results now show what settings were used
+   - Green "✓ ON" for enabled features
+   - Muted "✗ OFF" for disabled features
+
+5. BETTER UX:
+   - Larger checkboxes (18px vs default)
+   - Descriptive text under each option
+   - Pointer cursor on hover
+   - Consistent spacing and alignment
+
+
+SERVER API CHANGES:
+-------------------
+
+Before:
+  POST /transcribe
+    - file: (audio file)
+    - model: "base"
+    - language: "en"
+    - diarization: true/false
+    - response_format: "verbose_json"
+    - timestamp_granularities: ["word", "segment"]
+
+After:
+  POST /transcribe
+    - file: (audio file)
+    - model: "base"
+    - language: "en"
+    - vad_filter: true/false          ← NEW!
+    - enable_diarization: true/false  ← RENAMED (was 'diarization')
+    - response_format: "verbose_json"
+    - timestamp_granularities: ["word", "segment"]
+
+
+VISUAL LAYOUT:
+--------------
+
+Before:
+┌─────────────────────────────────────┐
+│ [Model Dropdown: Base]              │
+├─────────────────────────────────────┤
+│ [Language Dropdown: Auto-detect]    │
+├─────────────────────────────────────┤
+│ ☑ Enable Speaker Diarization        │
+├─────────────────────────────────────┤
+│      [🚀 Transcribe Button]         │
+└─────────────────────────────────────┘
+
+After:
+┌─────────────────────────────────────┐
+│ [Model Dropdown: Base]              │
+├─────────────────────────────────────┤
+│ [Language Dropdown: Auto-detect]    │
+├─────────────────────────────────────┤
+│ ☑ Enable Voice Activity Detection   │
+│   Automatically filters silence...  │
+├─────────────────────────────────────┤
+│ ☐ Enable Speaker Diarization        │
+│   Identify different speakers...    │
+├─────────────────────────────────────┤
+│      [🚀 Transcribe Button]         │
+└─────────────────────────────────────┘
+
+Results Display Before:
+┌─────────────────────────────────────┐
+│ Duration | Words | Speakers | Time  │
+│   5:00   |  450  |    3     | 0.7s  │
+└─────────────────────────────────────┘
+
+Results Display After:
+┌─────────────────────────────────────┐
+│ Duration | Words | Speakers | Time  │
+│   5:00   |  450  |    3     | 0.7s  │
+├─────────────────────────────────────┤
+│  VAD Filter   | Diarization         │
+│   ✓ ON        |    ✗ OFF            │
+│  (green)      |   (muted)           │
+└─────────────────────────────────────┘
+
+
+RESPONSIVE TO ALL THEMES:
+--------------------------
+✓ Light Theme - Clean and professional
+✓ Dark Theme - Easy on the eyes
+✓ Unicorn Theme - Magical purple gradient with sparkles
+
+All color variables use CSS custom properties:
+  --accent-green (for ON status)
+  --text-muted (for OFF status)
+  --text-secondary (for descriptions)
+

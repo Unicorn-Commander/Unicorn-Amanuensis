@@ -1,0 +1,249 @@
+
+
+======================================================================
+NPU Kernel Test Suite - Using Working Mel Pattern
+======================================================================
+
+======================================================================
+Testing: matmul_16x16
+Description: Matrix multiply C = A @ B (16x16 INT8)
+======================================================================
+XCLBIN: /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/whisper_encoder_kernels/build/matmul_simple.xclbin
+Input size: 512 bytes
+Output size: 256 bytes
+
+Step 1: Initializing NPU...
+✅ NPU device opened: /dev/accel/accel0
+✅ XCLBIN loaded
+✅ XCLBIN registered
+✅ Hardware context created
+✅ Kernel found: MLIR_AIE
+
+Step 2: Loading instruction buffer...
+✅ Instructions loaded: 420 bytes (group 1)
+
+Step 3: Allocating data buffers...
+✅ Input buffer: 512 bytes (group 3)
+✅ Output buffer: 256 bytes (group 4)
+
+Step 4: Preparing test data...
+✅ Generated 512 random INT8 values
+
+Step 5: Writing input to NPU...
+✅ Input synced to NPU
+
+Step 6: Executing kernel (warm-up)...
+✅ Kernel execution COMPLETED
+
+Step 7: Running performance test (10 iterations)...
+✅ Performance test complete
+   Average: 0.156 ms
+   Std dev: 0.028 ms
+
+Step 8: Reading output from NPU...
+✅ Output read: 256 bytes
+   Range: [0, 0]
+   Non-zero: 0/256 (0.0%)
+   Mean: 0.00
+
+======================================================================
+✅ matmul_16x16: SUCCESS!
+======================================================================
+
+======================================================================
+Testing: attention_64x64
+Description: Attention mechanism (64x64 tiles)
+======================================================================
+XCLBIN: /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/whisper_encoder_kernels/build_attention_64x64/attention_64x64.xclbin
+Input size: 12288 bytes
+Output size: 4096 bytes
+
+Step 1: Initializing NPU...
+✅ NPU device opened: /dev/accel/accel0
+✅ XCLBIN loaded
+✅ XCLBIN registered
+✅ Hardware context created
+✅ Kernel found: MLIR_AIE
+
+Step 2: Loading instruction buffer...
+✅ Instructions loaded: 300 bytes (group 1)
+
+Step 3: Allocating data buffers...
+✅ Input buffer: 12288 bytes (group 3)
+✅ Output buffer: 4096 bytes (group 4)
+
+Step 4: Preparing test data...
+✅ Generated 12288 random INT8 values
+
+Step 5: Writing input to NPU...
+✅ Input synced to NPU
+
+Step 6: Executing kernel (warm-up)...
+✅ Kernel execution COMPLETED
+
+Step 7: Running performance test (10 iterations)...
+✅ Performance test complete
+   Average: 2.042 ms
+   Std dev: 0.072 ms
+
+Step 8: Reading output from NPU...
+✅ Output read: 4096 bytes
+   Range: [-9, 9]
+   Non-zero: 3705/4096 (90.5%)
+   Mean: -0.49
+
+======================================================================
+✅ attention_64x64: SUCCESS!
+======================================================================
+
+======================================================================
+Testing: layernorm
+Description: Layer normalization (256 features)
+======================================================================
+XCLBIN: /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/whisper_encoder_kernels/build_layernorm/layernorm_simple.xclbin
+Input size: 768 bytes
+Output size: 256 bytes
+
+Step 1: Initializing NPU...
+✅ NPU device opened: /dev/accel/accel0
+✅ XCLBIN loaded
+✅ XCLBIN registered
+✅ Hardware context created
+✅ Kernel found: MLIR_AIE
+
+Step 2: Loading instruction buffer...
+✅ Instructions loaded: 300 bytes (group 1)
+
+Step 3: Allocating data buffers...
+✅ Input buffer: 768 bytes (group 3)
+✅ Output buffer: 256 bytes (group 4)
+
+Step 4: Preparing test data...
+✅ Generated 768 random INT8 values
+
+Step 5: Writing input to NPU...
+✅ Input synced to NPU
+
+Step 6: Executing kernel (warm-up)...
+✅ Kernel execution COMPLETED
+
+Step 7: Running performance test (10 iterations)...
+✅ Performance test complete
+   Average: 0.119 ms
+   Std dev: 0.027 ms
+
+Step 8: Reading output from NPU...
+✅ Output read: 256 bytes
+   Range: [-128, 127]
+   Non-zero: 255/256 (99.6%)
+   Mean: -1.11
+
+======================================================================
+✅ layernorm: SUCCESS!
+======================================================================
+
+======================================================================
+Testing: gelu_512
+Description: GELU activation (512 elements)
+======================================================================
+XCLBIN: /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/whisper_encoder_kernels/build_gelu/gelu_simple.xclbin
+Input size: 512 bytes
+Output size: 512 bytes
+
+Step 1: Initializing NPU...
+✅ NPU device opened: /dev/accel/accel0
+✅ XCLBIN loaded
+✅ XCLBIN registered
+✅ Hardware context created
+✅ Kernel found: MLIR_AIE
+
+Step 2: Loading instruction buffer...
+✅ Instructions loaded: 300 bytes (group 1)
+
+Step 3: Allocating data buffers...
+✅ Input buffer: 512 bytes (group 3)
+✅ Output buffer: 512 bytes (group 4)
+
+Step 4: Preparing test data...
+✅ Generated 512 random INT8 values
+
+Step 5: Writing input to NPU...
+✅ Input synced to NPU
+
+Step 6: Executing kernel (warm-up)...
+✅ Kernel execution COMPLETED
+
+Step 7: Running performance test (10 iterations)...
+✅ Performance test complete
+   Average: 0.190 ms
+   Std dev: 0.125 ms
+
+Step 8: Reading output from NPU...
+✅ Output read: 512 bytes
+   Range: [-20, 43]
+   Non-zero: 500/512 (97.7%)
+   Mean: 4.50
+
+======================================================================
+✅ gelu_512: SUCCESS!
+======================================================================
+
+======================================================================
+Testing: gelu_2048
+Description: GELU activation (2048 elements for FFN)
+======================================================================
+XCLBIN: /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/whisper_encoder_kernels/build_gelu/gelu_2048.xclbin
+Input size: 2048 bytes
+Output size: 2048 bytes
+
+Step 1: Initializing NPU...
+✅ NPU device opened: /dev/accel/accel0
+✅ XCLBIN loaded
+✅ XCLBIN registered
+✅ Hardware context created
+✅ Kernel found: MLIR_AIE
+
+Step 2: Loading instruction buffer...
+✅ Instructions loaded: 300 bytes (group 1)
+
+Step 3: Allocating data buffers...
+✅ Input buffer: 2048 bytes (group 3)
+✅ Output buffer: 2048 bytes (group 4)
+
+Step 4: Preparing test data...
+✅ Generated 2048 random INT8 values
+
+Step 5: Writing input to NPU...
+✅ Input synced to NPU
+
+Step 6: Executing kernel (warm-up)...
+✅ Kernel execution COMPLETED
+
+Step 7: Running performance test (10 iterations)...
+✅ Performance test complete
+   Average: 0.146 ms
+   Std dev: 0.020 ms
+
+Step 8: Reading output from NPU...
+✅ Output read: 2048 bytes
+   Range: [-20, 43]
+   Non-zero: 2013/2048 (98.3%)
+   Mean: 4.21
+
+======================================================================
+✅ gelu_2048: SUCCESS!
+======================================================================
+
+
+
+======================================================================
+TEST SUMMARY
+======================================================================
+✅ PASS: matmul_16x16
+✅ PASS: attention_64x64
+✅ PASS: layernorm
+✅ PASS: gelu_512
+✅ PASS: gelu_2048
+
+Total: 5/5 kernels working
+======================================================================

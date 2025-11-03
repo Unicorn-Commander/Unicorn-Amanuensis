@@ -1,0 +1,159 @@
+Traceback (most recent call last):
+  File "/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/whisper_encoder_kernels/test_gelu.py", line 153, in test_gelu_npu
+    input_bo = pyxrt.bo(device, size, pyxrt.bo.normal, 0)
+RuntimeError: unsupported buffer type: none flag (err=95): Operation not supported
+Traceback (most recent call last):
+  File "/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/whisper_encoder_kernels/test_gelu.py", line 153, in test_gelu_npu
+    input_bo = pyxrt.bo(device, size, pyxrt.bo.normal, 0)
+RuntimeError: unsupported buffer type: none flag (err=95): Operation not supported
+======================================================================
+GELU Activation Kernel Test Suite
+AMD Phoenix NPU (AIE2)
+======================================================================
+
+======================================================================
+NumPy Reference Test (512 elements)
+======================================================================
+
+Input Statistics:
+  Range: [-128, 127]
+  Mean:  -0.10
+  Std:   59.59
+
+Output Statistics (LUT):
+  Range: [-22, 107]
+  Mean:  10.19
+
+Output Statistics (Reference):
+  Range: [-22, 107]
+  Mean:  10.19
+
+Accuracy (LUT vs Reference):
+  Mean Absolute Error: 0.00 INT8 units
+  Max Absolute Error:  0.00 INT8 units
+  RMS Error:           0.00 INT8 units
+  Correlation:         1.000000
+  ✅ PASS - Accuracy within acceptable range
+
+Performance:
+  LUT Time:       25.62 µs
+  Reference Time: 51.39 µs
+  Speedup:        2.0x
+
+======================================================================
+NumPy Reference Test (2048 elements)
+======================================================================
+
+Input Statistics:
+  Range: [-128, 127]
+  Mean:  2.42
+  Std:   60.28
+
+Output Statistics (LUT):
+  Range: [-22, 107]
+  Mean:  11.67
+
+Output Statistics (Reference):
+  Range: [-22, 107]
+  Mean:  11.67
+
+Accuracy (LUT vs Reference):
+  Mean Absolute Error: 0.00 INT8 units
+  Max Absolute Error:  0.00 INT8 units
+  RMS Error:           0.00 INT8 units
+  Correlation:         1.000000
+  ✅ PASS - Accuracy within acceptable range
+
+Performance:
+  LUT Time:       16.37 µs
+  Reference Time: 110.83 µs
+  Speedup:        6.8x
+
+======================================================================
+Edge Case Tests
+======================================================================
+
+Zero:
+  Input:  [0]
+  LUT:    [0]
+  Ref:    [0]
+  Max Error: 0
+
+Min value:
+  Input:  [-128]
+  LUT:    [-20]
+  Ref:    [-20]
+  Max Error: 0
+
+Max value:
+  Input:  [127]
+  LUT:    [107]
+  Ref:    [107]
+  Max Error: 0
+
+Small positive:
+  Input:  [1 2 3 4 5]
+  LUT:    [1 1 2 2 3]
+  Ref:    [1 1 2 2 3]
+  Max Error: 0
+
+Small negative:
+  Input:  [-1 -2 -3 -4 -5]
+  LUT:    [ 0 -1 -1 -2 -2]
+  Ref:    [ 0 -1 -1 -2 -2]
+  Max Error: 0
+
+All zeros:
+  Input:  [0 0 0 0 0]
+  LUT:    [0 0 0 0 0]
+  Ref:    [0 0 0 0 0]
+  Max Error: 0
+
+All ones:
+  Input:  [1 1 1 1 1]
+  LUT:    [1 1 1 1 1]
+  Ref:    [1 1 1 1 1]
+  Max Error: 0
+
+======================================================================
+NPU Hardware Tests
+======================================================================
+
+Attempting NPU execution...
+
+======================================================================
+NPU Hardware Test (512 elements)
+======================================================================
+✅ Using XCLBIN: build_gelu/gelu_simple.xclbin
+
+Initializing NPU...
+✅ NPU initialized successfully
+
+Allocating 512-byte buffers on NPU...
+❌ ERROR during NPU execution: unsupported buffer type: none flag (err=95): Operation not supported
+
+======================================================================
+NPU Hardware Test (2048 elements)
+======================================================================
+✅ Using XCLBIN: build_gelu/gelu_2048.xclbin
+
+Initializing NPU...
+✅ NPU initialized successfully
+
+Allocating 2048-byte buffers on NPU...
+❌ ERROR during NPU execution: unsupported buffer type: none flag (err=95): Operation not supported
+
+======================================================================
+Test Summary
+======================================================================
+
+Accuracy (NumPy):
+  512 elements:  MAE = 0.00, Max = 0
+  2048 elements: MAE = 0.00, Max = 0
+
+Performance (NumPy LUT):
+  512 elements:  25.62 µs
+  2048 elements: 16.37 µs
+
+✅ Test suite complete!
+

@@ -1,0 +1,159 @@
+XRT build version: 2.20.0
+Build hash: 9b916190ad2865a7e7e497155c66b3b4940f0add
+Build date: 2025-10-08 06:49:15
+Git branch: HEAD
+PID: 622180
+UID: 1000
+[Wed Oct 29 21:56:31 2025 GMT]
+HOST: uc-1
+EXE: /usr/bin/python3.13
+[XRT] WARNING: Kernel MLIR_AIE has no compute units with connectivity required for global argument at index 0. The argument is allocated in bank 0, the compute unit is connected to bank 131071. Allocating local copy of argument buffer in connected bank.
+[XRT] WARNING: Reverting to host copy of buffers (exec_buf: Operation not supported)
+[XRT] WARNING: Kernel MLIR_AIE has no compute units with connectivity required for global argument at index 1. The argument is allocated in bank 0, the compute unit is connected to bank 65537. Allocating local copy of argument buffer in connected bank.
+[XRT] WARNING: Reverting to host copy of buffers (exec_buf: Operation not supported)
+[XRT] WARNING: Kernel MLIR_AIE has no compute units with connectivity required for global argument at index 0. The argument is allocated in bank 0, the compute unit is connected to bank 131071. Allocating local copy of argument buffer in connected bank.
+[XRT] WARNING: Reverting to host copy of buffers (exec_buf: Operation not supported)
+[XRT] WARNING: Kernel MLIR_AIE has no compute units with connectivity required for global argument at index 1. The argument is allocated in bank 0, the compute unit is connected to bank 65537. Allocating local copy of argument buffer in connected bank.
+[XRT] WARNING: Reverting to host copy of buffers (exec_buf: Operation not supported)
+[XRT] WARNING: Kernel MLIR_AIE has no compute units with connectivity required for global argument at index 0. The argument is allocated in bank 0, the compute unit is connected to bank 131071. Allocating local copy of argument buffer in connected bank.
+[XRT] WARNING: Reverting to host copy of buffers (exec_buf: Operation not supported)
+[XRT] WARNING: Kernel MLIR_AIE has no compute units with connectivity required for global argument at index 1. The argument is allocated in bank 0, the compute unit is connected to bank 65537. Allocating local copy of argument buffer in connected bank.
+[XRT] WARNING: Reverting to host copy of buffers (exec_buf: Operation not supported)
+[XRT] WARNING: Kernel MLIR_AIE has no compute units with connectivity required for global argument at index 0. The argument is allocated in bank 0, the compute unit is connected to bank 131071. Allocating local copy of argument buffer in connected bank.
+[XRT] WARNING: Reverting to host copy of buffers (exec_buf: Operation not supported)
+[XRT] WARNING: Kernel MLIR_AIE has no compute units with connectivity required for global argument at index 1. The argument is allocated in bank 0, the compute unit is connected to bank 65537. Allocating local copy of argument buffer in connected bank.
+[XRT] WARNING: Reverting to host copy of buffers (exec_buf: Operation not supported)
+
+
+======================================================================
+NPU Kernel Test Suite - Using Working Mel Pattern
+======================================================================
+
+======================================================================
+Testing: attention_64x64
+======================================================================
+XCLBIN: /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/whisper_encoder_kernels/build_attention_64x64/attention_64x64.xclbin
+Input size: 12288 bytes
+Output size: 4096 bytes
+
+Step 1: Initializing NPU...
+✅ NPU device opened: /dev/accel/accel0
+✅ XCLBIN loaded
+✅ XCLBIN registered
+✅ Hardware context created
+✅ Kernel found: MLIR_AIE
+
+Step 2: Allocating buffers...
+✅ Input buffer: 12288 bytes (group 3)
+✅ Output buffer: 4096 bytes (group 4)
+
+Step 3: Preparing test data...
+✅ Generated 12288 random INT8 values
+
+Step 4: Writing input to NPU...
+✅ Input synced to NPU
+
+Step 5: Executing kernel (warm-up)...
+❌ Kernel execution failed: ert_cmd_state.ERT_CMD_STATE_ERROR
+
+⚠️  attention_64x64 failed - continuing with other tests...
+
+======================================================================
+Testing: layernorm
+======================================================================
+XCLBIN: /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/whisper_encoder_kernels/build_layernorm/layernorm_simple.xclbin
+Input size: 768 bytes
+Output size: 256 bytes
+
+Step 1: Initializing NPU...
+✅ NPU device opened: /dev/accel/accel0
+✅ XCLBIN loaded
+✅ XCLBIN registered
+✅ Hardware context created
+✅ Kernel found: MLIR_AIE
+
+Step 2: Allocating buffers...
+✅ Input buffer: 768 bytes (group 3)
+✅ Output buffer: 256 bytes (group 4)
+
+Step 3: Preparing test data...
+✅ Generated 768 random INT8 values
+
+Step 4: Writing input to NPU...
+✅ Input synced to NPU
+
+Step 5: Executing kernel (warm-up)...
+❌ Kernel execution failed: ert_cmd_state.ERT_CMD_STATE_ERROR
+
+⚠️  layernorm failed - continuing with other tests...
+
+======================================================================
+Testing: gelu_512
+======================================================================
+XCLBIN: /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/whisper_encoder_kernels/build_gelu/gelu_simple.xclbin
+Input size: 512 bytes
+Output size: 512 bytes
+
+Step 1: Initializing NPU...
+✅ NPU device opened: /dev/accel/accel0
+✅ XCLBIN loaded
+✅ XCLBIN registered
+✅ Hardware context created
+✅ Kernel found: MLIR_AIE
+
+Step 2: Allocating buffers...
+✅ Input buffer: 512 bytes (group 3)
+✅ Output buffer: 512 bytes (group 4)
+
+Step 3: Preparing test data...
+✅ Generated 512 random INT8 values
+
+Step 4: Writing input to NPU...
+✅ Input synced to NPU
+
+Step 5: Executing kernel (warm-up)...
+❌ Kernel execution failed: ert_cmd_state.ERT_CMD_STATE_ERROR
+
+⚠️  gelu_512 failed - continuing with other tests...
+
+======================================================================
+Testing: gelu_2048
+======================================================================
+XCLBIN: /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/whisper_encoder_kernels/build_gelu/gelu_2048.xclbin
+Input size: 2048 bytes
+Output size: 2048 bytes
+
+Step 1: Initializing NPU...
+✅ NPU device opened: /dev/accel/accel0
+✅ XCLBIN loaded
+✅ XCLBIN registered
+✅ Hardware context created
+✅ Kernel found: MLIR_AIE
+
+Step 2: Allocating buffers...
+✅ Input buffer: 2048 bytes (group 3)
+✅ Output buffer: 2048 bytes (group 4)
+
+Step 3: Preparing test data...
+✅ Generated 2048 random INT8 values
+
+Step 4: Writing input to NPU...
+✅ Input synced to NPU
+
+Step 5: Executing kernel (warm-up)...
+❌ Kernel execution failed: ert_cmd_state.ERT_CMD_STATE_ERROR
+
+⚠️  gelu_2048 failed - continuing with other tests...
+
+
+
+======================================================================
+TEST SUMMARY
+======================================================================
+❌ FAIL: attention_64x64
+❌ FAIL: layernorm
+❌ FAIL: gelu_512
+❌ FAIL: gelu_2048
+
+Total: 0/4 kernels working
+======================================================================

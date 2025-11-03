@@ -1,0 +1,99 @@
+# Target Configuration
+# All optimizations enabled - 220x realtime goal
+
+name: target
+description: Target configuration with all optimizations for 220x realtime
+
+optimizations:
+  buffer_reuse: true
+  batching: true
+  multi_core: true
+  dma_optimization: true
+  pipeline_overlap: true
+
+kernels:
+  attention:
+    enabled: true
+    tile_size: 64
+    num_heads: 8          # Multi-head attention
+    buffer_reuse: true
+    vectorize: true
+    multi_core: true
+
+  layernorm:
+    enabled: true
+    size: 256
+    buffer_reuse: true
+    vectorize: true
+
+  gelu:
+    enabled: true
+    size: 512
+    buffer_reuse: true
+    vectorize: true
+
+  matmul:
+    enabled: true
+    tile_size: 64         # Larger tiles
+    buffer_reuse: true
+    multi_core: true
+    batching: true
+
+batch_processing:
+  enabled: true
+  batch_size: 4
+  tile_batch_size: 8
+
+multi_core:
+  enabled: true
+  num_cores: 24         # 4x6 tile array
+  load_balancing: true
+  core_affinity: true
+
+dma:
+  optimization: true
+  double_buffering: true
+  prefetch: true
+  overlap_compute: true
+
+benchmarks:
+  num_iterations: 100
+  warmup_iterations: 10
+  audio_lengths: [10, 30, 60, 120, 300, 600]
+
+accuracy:
+  validate: true
+  tolerance: 0.95
+  compare_with_cpu: true
+
+reporting:
+  generate_markdown: true
+  generate_json: true
+  generate_plots: true
+  generate_charts: true
+
+performance_targets:
+  current_rtf: 14.0
+  target_rtf: 220.0
+  expected_speedup: 15.7
+
+optimizations_roadmap:
+  phase_1:
+    name: "Larger Tiles"
+    target_rtf: 60.0
+    expected_speedup: 4.3
+
+  phase_2:
+    name: "Batch Processing"
+    target_rtf: 120.0
+    expected_speedup: 2.0
+
+  phase_3:
+    name: "Multi-core NPU"
+    target_rtf: 180.0
+    expected_speedup: 1.5
+
+  phase_4:
+    name: "Full Pipeline"
+    target_rtf: 220.0
+    expected_speedup: 1.2

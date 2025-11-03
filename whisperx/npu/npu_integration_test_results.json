@@ -1,0 +1,35 @@
+{
+  "test_1_mel_only": {
+    "status": "pass",
+    "avg_time_ms": 1050.3963947296143,
+    "std_time_ms": 4.130157760314824,
+    "rtf": 28.560646390758407,
+    "target_rtf": 22,
+    "mel_shape": [
+      80,
+      2998
+    ]
+  },
+  "test_2_mel_gelu": {
+    "status": "pass",
+    "avg_time_ms": 1063.9183521270752,
+    "std_time_ms": 6.898471311231462,
+    "rtf": 28.197652517245775,
+    "target_rtf": 26,
+    "gelu_frames": 100
+  },
+  "test_3_mel_gelu_attention": {
+    "status": "below_target",
+    "avg_time_ms": 1276.5514850616455,
+    "std_time_ms": 149.69804685964385,
+    "rtf": 23.500814774071788,
+    "target_rtf": 30,
+    "seq_len": 64
+  },
+  "runtime_info": {
+    "npu_available": true,
+    "mel_available": true,
+    "gelu_available": true,
+    "attention_available": true
+  }
+}

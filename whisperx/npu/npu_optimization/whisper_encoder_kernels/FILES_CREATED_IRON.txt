@@ -1,0 +1,51 @@
+Multi-Core IRON Implementation - Files Created
+================================================
+
+Date: October 30, 2025
+Objective: 4× throughput using all 4 NPU columns
+Status: Design Complete, Ready for Toolchain Installation
+
+IMPLEMENTATION FILES:
+--------------------
+attention_64x64_multicore_iron.py    - IRON API multi-core generator (218 lines, 6.2KB)
+attention_iron_generated.mlir        - Generated 4-column MLIR (8.9KB)
+compile_attention_iron.sh            - Automated build script (executable, 2.6KB)
+test_attention_multicore_iron.py     - Test harness with benchmarking (executable, 11KB)
+
+DOCUMENTATION FILES:
+-------------------
+IRON_MULTICORE_IMPLEMENTATION.md     - Complete technical guide (13KB)
+MULTICORE_IRON_SESSION_SUMMARY.md    - Detailed session report (15KB)
+QUICKSTART_MULTICORE_IRON.md         - Quick start guide (3.6KB)
+DELIVERY_SUMMARY.md                  - Final delivery summary (6.8KB)
+FILES_CREATED_IRON.txt               - This file
+
+BUILD ARTIFACTS:
+---------------
+build_attention_iron/                - Build directory (auto-created)
+  attention_int8_64x64_tiled.o      - Compiled kernel object (7.5KB)
+  attention_iron_generated.mlir     - Copy of MLIR for compilation
+  (attention_multicore.xclbin)      - Will be created after AIETools install
+
+USAGE:
+------
+1. Generate MLIR (DONE):
+   python3 attention_64x64_multicore_iron.py --output attention_iron_generated.mlir
+
+2. Compile to XCLBIN (after AIETools):
+   ./compile_attention_iron.sh
+
+3. Test performance:
+   ./test_attention_multicore_iron.py
+
+EXPECTED RESULTS:
+----------------
+- Time per batch of 4 tiles: ~2.85ms (parallel processing)
+- Effective time per tile: ~0.71ms
+- Speedup: 4× vs single-core (2.85ms)
+- Realtime factor: 52-65× (vs current 16.2×)
+- NPU utilization: 100% (all 4 columns active)
+
+NEXT STEP:
+----------
+Install AMD AIETools to unblock XCLBIN compilation

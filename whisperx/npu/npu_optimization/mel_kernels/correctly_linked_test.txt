@@ -1,0 +1,23 @@
+<string>:9: SyntaxWarning: invalid escape sequence '\!'
+<string>:92: SyntaxWarning: invalid escape sequence '\!'
+======================================================================
+TESTING CORRECTLY LINKED mel_fixed_v3.xclbin (18:38 UTC)
+WITH FIXED C CODE ACTUALLY LINKED THIS TIME\!
+======================================================================
+
+[1] Loading CORRECTLY LINKED kernel...
+    ✅ Loaded (links mel_fixed_combined_v3.o)
+[2] Executing on Phoenix XDNA1 NPU...
+    ✅ Time: 0.0167s (59.8x realtime)
+[3] Validating accuracy...
+
+======================================================================
+FINAL RESULTS - CORRECTLY LINKED KERNEL
+======================================================================
+NPU Output: (80, 40), range [0, 4]
+Non-zero: 3.8%, unique: 4
+Correlation: -0.0297 (target > 0.95)
+Performance: 59.8x realtime, 0.42ms/frame
+
+❌ STILL POOR - More debugging needed
+======================================================================

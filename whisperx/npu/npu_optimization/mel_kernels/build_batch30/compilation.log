@@ -1,0 +1,5 @@
+ld.lld: error: section '.data' will not fit in region 'data': overflowed by 6176 bytes
+clang: error: ld.lld command failed with exit code 1 (use -v to see invocation)
+
+Error encountered while running: /home/ucadmin/mlir-aie-fresh/mlir-aie/venv313/lib/python3.13/site-packages/llvm-aie/bin/clang -O2 --target=aie2-none-unknown-elf /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/mel_kernels/build_batch30/mel_fixed_v3_batch30.mlir.prj/main_input.o -Wl,--gc-sections -Wl,--orphan-handling=error -Wl,-T,/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/mel_kernels/build_batch30/mel_fixed_v3_batch30.mlir.prj/main_core_0_2.ld.script -o /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/mel_kernels/build_batch30/mel_fixed_v3_batch30.mlir.prj/main_core_0_2.elf
+

@@ -1,0 +1,149 @@
+WEB GUI UPDATE SUMMARY - VAD Filter and Diarization Controls
+================================================================
+
+DATE: November 1, 2025
+FILE: /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/static/index.html
+BACKUP: /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/static/index.html.backup-20251101-194638
+
+CHANGES MADE:
+-------------
+
+1. BACKUP CREATED ✓
+   - Location: index.html.backup-20251101-194638
+   - Size: 37 KB
+   - Safe restore point available
+
+2. NEW HTML ELEMENTS ADDED ✓
+
+   a) VAD Filter Checkbox (Line 612-620):
+      - ID: vadFilter
+      - Default: CHECKED (enabled by default)
+      - Label: "Enable Voice Activity Detection (VAD)"
+      - Description: "Automatically filters out silence and non-speech segments for cleaner transcription"
+      - Styling: 18px checkbox with pointer cursor, flexbox layout
+
+   b) Diarization Checkbox (Line 622-630):
+      - ID: enableDiarization
+      - Default: UNCHECKED (disabled by default)
+      - Label: "Enable Speaker Diarization"
+      - Description: "Identify different speakers in the audio (experimental feature, may log warnings)"
+      - Styling: 18px checkbox with pointer cursor, flexbox layout
+
+3. JAVASCRIPT CHANGES ✓
+
+   a) Form Submission (Lines 780-781, 805-806):
+      - Added: const vadFilter = document.getElementById('vadFilter').checked;
+      - Added: const diarization = document.getElementById('enableDiarization').checked;
+      - Modified: formData.append('vad_filter', vadFilter);
+      - Modified: formData.append('enable_diarization', diarization);
+      
+   b) Results Display (Lines 691-700):
+      - Added two new stat cards showing VAD and Diarization status
+      - IDs: vadStatus, diarizationStatus
+      - Shows "✓ ON" (green) or "✗ OFF" (muted) based on selection
+
+   c) Display Function Update (Lines 881-889):
+      - Reads checkbox states when displaying results
+      - Updates status display with color coding:
+        * ON: green (var(--accent-green))
+        * OFF: muted (var(--text-muted))
+
+4. DESIGN IMPROVEMENTS ✓
+   - Checkboxes are larger (18px) for better usability
+   - Pointer cursor on hover for better UX
+   - Descriptive text under each option (0.875rem, muted color)
+   - Consistent spacing (0.5rem gaps, 1.75rem left margin for descriptions)
+   - Maintains Unicorn branding with existing color scheme
+   - Responsive layout using flexbox
+
+5. SERVER INTEGRATION ✓
+   - POST /transcribe endpoint receives:
+     * vad_filter: boolean (true/false)
+     * enable_diarization: boolean (true/false)
+   - Parameters sent as FormData fields
+   - Compatible with existing server implementation
+
+TESTING CHECKLIST:
+------------------
+
+1. Visual Testing:
+   [ ] Load http://localhost:9004/web in browser
+   [ ] Verify both checkboxes appear correctly
+   [ ] Verify VAD checkbox is checked by default
+   [ ] Verify Diarization checkbox is unchecked by default
+   [ ] Verify descriptions appear under each checkbox
+   [ ] Test all three themes (Light, Dark, Unicorn)
+
+2. Functional Testing:
+   [ ] Upload audio file with VAD ON, Diarization OFF
+   [ ] Verify results show "✓ ON" for VAD, "✗ OFF" for Diarization
+   [ ] Upload audio file with VAD OFF, Diarization ON
+   [ ] Verify results show "✗ OFF" for VAD, "✓ ON" for Diarization
+   [ ] Check browser console for formData values
+   [ ] Verify server receives correct parameters
+
+3. Server Log Testing:
+   [ ] Start server: python3 server_production.py
+   [ ] Submit transcription with VAD ON
+   [ ] Verify server log shows: vad_filter=True
+   [ ] Submit transcription with Diarization ON
+   [ ] Verify server log shows: enable_diarization=True (may show warning)
+
+ROLLBACK INSTRUCTIONS:
+----------------------
+
+If any issues occur, restore the backup:
+
+    cp /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/static/index.html.backup-20251101-194638 \
+       /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/static/index.html
+
+    # Restart server
+    cd /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx
+    python3 server_production.py
+
+QUICK TEST COMMAND:
+-------------------
+
+Start the server and test:
+
+    cd /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx
+    python3 server_production.py
+
+Then open in browser:
+    http://localhost:9004/web
+
+Or test with curl:
+
+    curl -X POST \
+      -F "file=@test.wav" \
+      -F "vad_filter=true" \
+      -F "enable_diarization=false" \
+      http://localhost:9004/transcribe
+
+NOTES:
+------
+
+1. VAD Filter default: CHECKED (true)
+   - Most users want silence filtering by default
+   - Can be disabled if needed for specific use cases
+
+2. Diarization default: UNCHECKED (false)
+   - Experimental feature
+   - May log warnings if not implemented
+   - Users must explicitly enable
+
+3. All existing functionality preserved:
+   - Model selection
+   - Language selection
+   - File upload
+   - URL input
+   - Progress tracking
+   - Waveform visualization
+   - Word timestamps
+   - Speaker segments display
+
+4. Backward compatible:
+   - Server can handle requests with or without new parameters
+   - Existing API calls will work
+   - Default values: vad_filter=true, enable_diarization=false
+

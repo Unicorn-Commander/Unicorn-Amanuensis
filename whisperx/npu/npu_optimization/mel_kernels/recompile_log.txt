@@ -1,0 +1,54 @@
+======================================================================
+MEL Kernel Recompilation with Fixes
+======================================================================
+
+Source files:
+  - fft_fixed_point.c (21:06 UTC) - FFT with scaling fix
+  - mel_kernel_fft_fixed.c (21:23 UTC) - HTK mel filterbanks
+  - mel_coeffs_fixed.h (21:21 UTC) - 207 KB coefficient table
+
+======================================================================
+
+Step 0: Verify toolchain...
+✅ Peano clang: /home/ucadmin/mlir-aie-fresh/mlir-aie/venv313/lib/python3.13/site-packages/llvm-aie/bin/clang
+✅ aiecc.py: /home/ucadmin/mlir-aie-fresh/mlir-aie/venv313/bin/aiecc.py
+✅ xclbinutil: /opt/xilinx/xrt/bin/xclbinutil
+
+Step 1: Compile FIXED FFT module (with scaling)...
+✅ FFT compiled: 7148 bytes
+
+Step 2: Compile FIXED MEL kernel (with HTK filters)...
+clang++: warning: treating 'c' input as 'c++' when in C++ mode, this behavior is deprecated [-Wdeprecated]
+✅ MEL kernel compiled: 46288 bytes
+
+Step 3: Create combined object archive...
+✅ Combined archive: 54000 bytes
+
+Step 4: Verify symbols in archive...
+00000000 T fft_radix2_512_fixed
+00000000 T apply_mel_filters_q15
+         U fft_radix2_512_fixed
+00000000 T mel_kernel_simple
+
+Step 5: Copy MLIR file and update link_with...
+✅ MLIR file prepared
+
+Step 6: Generate XCLBIN with aiecc.py...
+
+
+======================================================================
+✅ COMPILATION COMPLETE!
+======================================================================
+
+Generated Files:
+-rw-rw-r-- 1 ucadmin ucadmin 300 Oct 29 18:37 /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/mel_kernels/build_fixed_v3/insts_v3.bin
+-rw-rw-r-- 1 ucadmin ucadmin 56K Oct 29 18:37 /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/mel_kernels/build_fixed_v3/mel_fixed_v3.xclbin
+
+Object Files (validated):
+-rw-rw-r-- 1 ucadmin ucadmin 7.0K Oct 29 18:37 /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/mel_kernels/build_fixed_v3/fft_fixed_point_v3.o
+-rw-rw-r-- 1 ucadmin ucadmin 46K Oct 29 18:37 /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/mel_kernels/build_fixed_v3/mel_kernel_fft_fixed_v3.o
+-rw-rw-r-- 1 ucadmin ucadmin 53K Oct 29 18:37 /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/mel_kernels/build_fixed_v3/mel_fixed_combined_v3.o
+
+Next Step: Test on NPU hardware
+  python3 quick_correlation_test.py
+

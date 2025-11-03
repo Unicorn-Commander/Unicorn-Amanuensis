@@ -1,0 +1,37 @@
+<string>:124: SyntaxWarning: invalid escape sequence '\!'
+=== Phoenix XDNA1 NPU Mel Kernel Accuracy Validation ===
+
+[1/6] Generating test audio...
+   Audio: 16000 samples, 440 Hz sine wave
+[2/6] Computing librosa reference (ground truth)...
+   Reference shape: (80, 101)
+   Reference range: [0.00, 383.57]
+[3/6] Loading Phoenix XDNA1 NPU device...
+   ✓ Loaded: build_fixed/mel_fixed_new.xclbin
+[4/6] Preparing NPU buffers...
+[5/6] Executing on Phoenix XDNA1 NPU (40 frames)...
+   ✓ NPU execution time: 0.0165s
+   ✓ NPU output shape: (80, 40)
+   ✓ Performance: 60.6x realtime
+[6/6] Validating accuracy...
+
+=== VALIDATION RESULTS ===
+NPU Output:
+  Shape: (80, 40)
+  Range: [17, 123]
+  Mean: 88.36
+  Non-zero: 3200 / 3200 (100.0%)
+  Unique values: 92
+
+Accuracy:
+  Correlation with librosa: -0.0050
+  Target: > 0.95
+  Status: ❌ FAIL
+
+Performance:
+  Processing time: 0.0165s for 1.0s audio
+  Realtime factor: 60.6x
+  Frames processed: 40
+  Avg time/frame: 0.41ms
+
+✅ Phoenix XDNA1 NPU mel kernel validation COMPLETE\!

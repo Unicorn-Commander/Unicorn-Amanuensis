@@ -1,0 +1,139 @@
+module @mel_npu_batch20 {
+  aie.device(npu1) {
+    %c1600_i64 = arith.constant 1600 : i64
+    %c16000_i64 = arith.constant 16000 : i64
+    %c1_i64 = arith.constant 1 : i64
+    %c0_i64 = arith.constant 0 : i64
+    func.func private @mel_kernel_simple(memref<800xi8>, memref<80xi8>)
+    %shim_noc_tile_0_0 = aie.tile(0, 0) {controller_id = #aie.packet_info<pkt_type = 0, pkt_id = 15>}
+    %tile_0_2 = aie.tile(0, 2) {controller_id = #aie.packet_info<pkt_type = 0, pkt_id = 27>}
+    %of_out_cons_prod_lock_0 = aie.lock(%shim_noc_tile_0_0, 2) {init = 0 : i32, sym_name = "of_out_cons_prod_lock_0"}
+    %of_out_cons_cons_lock_0 = aie.lock(%shim_noc_tile_0_0, 3) {init = 0 : i32, sym_name = "of_out_cons_cons_lock_0"}
+    %of_out_buff_0 = aie.buffer(%tile_0_2) {address = 33024 : i32, sym_name = "of_out_buff_0"} : memref<1600xi8> 
+    %of_out_buff_1 = aie.buffer(%tile_0_2) {address = 34624 : i32, sym_name = "of_out_buff_1"} : memref<1600xi8> 
+    %of_out_prod_lock_0 = aie.lock(%tile_0_2, 2) {init = 2 : i32, sym_name = "of_out_prod_lock_0"}
+    %of_out_cons_lock_0 = aie.lock(%tile_0_2, 3) {init = 0 : i32, sym_name = "of_out_cons_lock_0"}
+    %of_in_cons_buff_0 = aie.buffer(%tile_0_2) {address = 1024 : i32, sym_name = "of_in_cons_buff_0"} : memref<16000xi8> 
+    %of_in_cons_buff_1 = aie.buffer(%tile_0_2) {address = 17024 : i32, sym_name = "of_in_cons_buff_1"} : memref<16000xi8> 
+    %of_in_cons_prod_lock_0 = aie.lock(%tile_0_2, 0) {init = 2 : i32, sym_name = "of_in_cons_prod_lock_0"}
+    %of_in_cons_cons_lock_0 = aie.lock(%tile_0_2, 1) {init = 0 : i32, sym_name = "of_in_cons_cons_lock_0"}
+    %of_in_prod_lock_0 = aie.lock(%shim_noc_tile_0_0, 0) {init = 0 : i32, sym_name = "of_in_prod_lock_0"}
+    %of_in_cons_lock_0 = aie.lock(%shim_noc_tile_0_0, 1) {init = 0 : i32, sym_name = "of_in_cons_lock_0"}
+    aie.flow(%shim_noc_tile_0_0, DMA : 0, %tile_0_2, DMA : 0)
+    aie.flow(%tile_0_2, DMA : 0, %shim_noc_tile_0_0, DMA : 0)
+    %core_0_2 = aie.core(%tile_0_2) {
+      %c0 = arith.constant 0 : index
+      %c1 = arith.constant 1 : index
+      %c4294967295 = arith.constant 4294967295 : index
+      %c20 = arith.constant 20 : index
+      %c800 = arith.constant 800 : index
+      %c80 = arith.constant 80 : index
+      %c4294967294 = arith.constant 4294967294 : index
+      %c2 = arith.constant 2 : index
+      cf.br ^bb1(%c0 : index)
+    ^bb1(%0: index):  // 2 preds: ^bb0, ^bb8
+      %1 = arith.cmpi slt, %0, %c4294967294 : index
+      cf.cond_br %1, ^bb2, ^bb9
+    ^bb2:  // pred: ^bb1
+      aie.use_lock(%of_in_cons_cons_lock_0, AcquireGreaterEqual, 1)
+      aie.use_lock(%of_out_prod_lock_0, AcquireGreaterEqual, 1)
+      cf.br ^bb3(%c0 : index)
+    ^bb3(%2: index):  // 2 preds: ^bb2, ^bb4
+      %3 = arith.cmpi slt, %2, %c20 : index
+      cf.cond_br %3, ^bb4, ^bb5
+    ^bb4:  // pred: ^bb3
+      %4 = arith.muli %2, %c800 : index
+      %5 = arith.muli %2, %c80 : index
+      %subview = memref.subview %of_in_cons_buff_0[%4] [800] [1] : memref<16000xi8> to memref<800xi8, strided<[1], offset: ?>>
+      %subview_0 = memref.subview %of_out_buff_0[%5] [80] [1] : memref<1600xi8> to memref<80xi8, strided<[1], offset: ?>>
+      %cast = memref.cast %subview : memref<800xi8, strided<[1], offset: ?>> to memref<800xi8>
+      %cast_1 = memref.cast %subview_0 : memref<80xi8, strided<[1], offset: ?>> to memref<80xi8>
+      func.call @mel_kernel_simple(%cast, %cast_1) : (memref<800xi8>, memref<80xi8>) -> ()
+      %6 = arith.addi %2, %c1 : index
+      cf.br ^bb3(%6 : index)
+    ^bb5:  // pred: ^bb3
+      aie.use_lock(%of_in_cons_prod_lock_0, Release, 1)
+      aie.use_lock(%of_out_cons_lock_0, Release, 1)
+      aie.use_lock(%of_in_cons_cons_lock_0, AcquireGreaterEqual, 1)
+      aie.use_lock(%of_out_prod_lock_0, AcquireGreaterEqual, 1)
+      cf.br ^bb6(%c0 : index)
+    ^bb6(%7: index):  // 2 preds: ^bb5, ^bb7
+      %8 = arith.cmpi slt, %7, %c20 : index
+      cf.cond_br %8, ^bb7, ^bb8
+    ^bb7:  // pred: ^bb6
+      %9 = arith.muli %7, %c800 : index
+      %10 = arith.muli %7, %c80 : index
+      %subview_2 = memref.subview %of_in_cons_buff_1[%9] [800] [1] : memref<16000xi8> to memref<800xi8, strided<[1], offset: ?>>
+      %subview_3 = memref.subview %of_out_buff_1[%10] [80] [1] : memref<1600xi8> to memref<80xi8, strided<[1], offset: ?>>
+      %cast_4 = memref.cast %subview_2 : memref<800xi8, strided<[1], offset: ?>> to memref<800xi8>
+      %cast_5 = memref.cast %subview_3 : memref<80xi8, strided<[1], offset: ?>> to memref<80xi8>
+      func.call @mel_kernel_simple(%cast_4, %cast_5) : (memref<800xi8>, memref<80xi8>) -> ()
+      %11 = arith.addi %7, %c1 : index
+      cf.br ^bb6(%11 : index)
+    ^bb8:  // pred: ^bb6
+      aie.use_lock(%of_in_cons_prod_lock_0, Release, 1)
+      aie.use_lock(%of_out_cons_lock_0, Release, 1)
+      %12 = arith.addi %0, %c2 : index
+      cf.br ^bb1(%12 : index)
+    ^bb9:  // pred: ^bb1
+      aie.use_lock(%of_in_cons_cons_lock_0, AcquireGreaterEqual, 1)
+      aie.use_lock(%of_out_prod_lock_0, AcquireGreaterEqual, 1)
+      cf.br ^bb10(%c0 : index)
+    ^bb10(%13: index):  // 2 preds: ^bb9, ^bb11
+      %14 = arith.cmpi slt, %13, %c20 : index
+      cf.cond_br %14, ^bb11, ^bb12
+    ^bb11:  // pred: ^bb10
+      %15 = arith.muli %13, %c800 : index
+      %16 = arith.muli %13, %c80 : index
+      %subview_6 = memref.subview %of_in_cons_buff_0[%15] [800] [1] : memref<16000xi8> to memref<800xi8, strided<[1], offset: ?>>
+      %subview_7 = memref.subview %of_out_buff_0[%16] [80] [1] : memref<1600xi8> to memref<80xi8, strided<[1], offset: ?>>
+      %cast_8 = memref.cast %subview_6 : memref<800xi8, strided<[1], offset: ?>> to memref<800xi8>
+      %cast_9 = memref.cast %subview_7 : memref<80xi8, strided<[1], offset: ?>> to memref<80xi8>
+      func.call @mel_kernel_simple(%cast_8, %cast_9) : (memref<800xi8>, memref<80xi8>) -> ()
+      %17 = arith.addi %13, %c1 : index
+      cf.br ^bb10(%17 : index)
+    ^bb12:  // pred: ^bb10
+      aie.use_lock(%of_in_cons_prod_lock_0, Release, 1)
+      aie.use_lock(%of_out_cons_lock_0, Release, 1)
+      aie.end
+    } {link_with = "mel_fixed_combined.o"}
+    aiex.runtime_sequence(%arg0: memref<16000xi8>, %arg1: memref<1600xi8>) {
+      aiex.npu.dma_memcpy_nd(%arg0[%c0_i64, %c0_i64, %c0_i64, %c0_i64][%c1_i64, %c1_i64, %c1_i64, %c16000_i64][%c0_i64, %c0_i64, %c0_i64, %c1_i64]) {id = 1 : i64, metadata = @of_in_shim_alloc} : memref<16000xi8>
+      aiex.npu.dma_memcpy_nd(%arg1[%c0_i64, %c0_i64, %c0_i64, %c0_i64][%c1_i64, %c1_i64, %c1_i64, %c1600_i64][%c0_i64, %c0_i64, %c0_i64, %c1_i64]) {id = 0 : i64, metadata = @of_out_shim_alloc} : memref<1600xi8>
+      aiex.npu.dma_wait {symbol = @of_out_shim_alloc}
+    }
+    aie.shim_dma_allocation @of_in_shim_alloc(MM2S, 0, 0)
+    %mem_0_2 = aie.mem(%tile_0_2) {
+      %0 = aie.dma_start(S2MM, 0, ^bb1, ^bb3)
+    ^bb1:  // 2 preds: ^bb0, ^bb2
+      aie.use_lock(%of_in_cons_prod_lock_0, AcquireGreaterEqual, 1)
+      aie.dma_bd(%of_in_cons_buff_0 : memref<16000xi8>, 0, 16000) {bd_id = 0 : i32, next_bd_id = 1 : i32}
+      aie.use_lock(%of_in_cons_cons_lock_0, Release, 1)
+      aie.next_bd ^bb2
+    ^bb2:  // pred: ^bb1
+      aie.use_lock(%of_in_cons_prod_lock_0, AcquireGreaterEqual, 1)
+      aie.dma_bd(%of_in_cons_buff_1 : memref<16000xi8>, 0, 16000) {bd_id = 1 : i32, next_bd_id = 0 : i32}
+      aie.use_lock(%of_in_cons_cons_lock_0, Release, 1)
+      aie.next_bd ^bb1
+    ^bb3:  // pred: ^bb0
+      %1 = aie.dma_start(MM2S, 0, ^bb4, ^bb6)
+    ^bb4:  // 2 preds: ^bb3, ^bb5
+      aie.use_lock(%of_out_cons_lock_0, AcquireGreaterEqual, 1)
+      aie.dma_bd(%of_out_buff_0 : memref<1600xi8>, 0, 1600) {bd_id = 2 : i32, next_bd_id = 3 : i32}
+      aie.use_lock(%of_out_prod_lock_0, Release, 1)
+      aie.next_bd ^bb5
+    ^bb5:  // pred: ^bb4
+      aie.use_lock(%of_out_cons_lock_0, AcquireGreaterEqual, 1)
+      aie.dma_bd(%of_out_buff_1 : memref<1600xi8>, 0, 1600) {bd_id = 3 : i32, next_bd_id = 2 : i32}
+      aie.use_lock(%of_out_prod_lock_0, Release, 1)
+      aie.next_bd ^bb4
+    ^bb6:  // pred: ^bb3
+      aie.end
+    }
+    aie.shim_dma_allocation @of_out_shim_alloc(S2MM, 0, 0)
+    aie.packet_flow(15) {
+      aie.packet_source<%shim_noc_tile_0_0, TileControl : 0>
+      aie.packet_dest<%shim_noc_tile_0_0, South : 0>
+    } {keep_pkt_header = true, priority_route = true}
+  }
+}

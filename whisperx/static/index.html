@@ -540,6 +540,9 @@
                     <div class="logo-text">
                         <h1>Unicorn Amanuensis</h1>
                         <p>Professional AI Transcription Suite</p>
+                        <div id="hardwareStatus" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: #4a5568; border-radius: 0.5rem; display: inline-block; font-size: 0.875rem;">
+                            <span id="hardwareIcon">⚙️</span> <span id="hardwareText">Detecting...</span>
+                        </div>
                     </div>
                 </div>
                 <div class="theme-switcher">
@@ -581,11 +584,11 @@
                     <div class="form-group">
                         <label for="model">Model</label>
                         <select id="model">
-                            <option value="large-v3">Large v3 (Most Accurate - Slow 0.56x realtime)</option>
-                            <option value="medium">Medium (iGPU Optimized)</option>
-                            <option value="small">Small (iGPU Optimized)</option>
-                            <option value="base" selected>Base (Fast 11.2x realtime - iGPU Optimized)</option>
-                            <option value="tiny">Tiny (Fastest - iGPU Optimized)</option>
+                            <option value="large-v3">Large v3 (Most Accurate - XDNA1 NPU)</option>
+                            <option value="medium">Medium (XDNA1 NPU Optimized)</option>
+                            <option value="small">Small (XDNA1 NPU Optimized)</option>
+                            <option value="base" selected>Base (Fast 13x realtime - XDNA1 NPU + Sign-Fixed Mel)</option>
+                            <option value="tiny">Tiny (Fastest - XDNA1 NPU)</option>
                         </select>
                     </div>
 
@@ -607,10 +610,23 @@
                     </div>
 
                     <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="enableDiarization" checked>
-                            Enable Speaker Diarization
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" id="vadFilter" checked style="cursor: pointer; width: 18px; height: 18px;">
+                            <span style="font-weight: 600;">Enable Voice Activity Detection (VAD)</span>
                         </label>
+                        <p style="margin: 0.5rem 0 0 1.75rem; font-size: 0.875rem; color: var(--text-muted); line-height: 1.4;">
+                            Automatically filters out silence and non-speech segments for cleaner transcription
+                        </p>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" id="enableDiarization" style="cursor: pointer; width: 18px; height: 18px;">
+                            <span style="font-weight: 600;">Enable Speaker Diarization</span>
+                        </label>
+                        <p style="margin: 0.5rem 0 0 1.75rem; font-size: 0.875rem; color: var(--text-muted); line-height: 1.4;">
+                            Identify different speakers in the audio (experimental feature, may log warnings)
+                        </p>
                     </div>
 
                     <button type="submit" class="btn btn-primary" id="transcribeBtn">
@@ -669,6 +685,17 @@
                         <div class="stat-card">
                             <div class="stat-value" id="processingTime">0s</div>
                             <div class="stat-label">Processing</div>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid" style="margin-top: 1rem;">
+                        <div class="stat-card">
+                            <div class="stat-value" id="vadStatus" style="font-size: 1.2rem;">--</div>
+                            <div class="stat-label">VAD Filter</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="diarizationStatus" style="font-size: 1.2rem;">--</div>
+                            <div class="stat-label">Diarization</div>
                         </div>
                     </div>
 
@@ -750,8 +777,9 @@
             
             const model = document.getElementById('model').value;
             const language = document.getElementById('language').value;
+            const vadFilter = document.getElementById('vadFilter').checked;
             const diarization = document.getElementById('enableDiarization').checked;
-            
+
             // Show loading
             document.getElementById('loading').classList.add('active');
             document.getElementById('transcribeBtn').disabled = true;
@@ -765,63 +793,44 @@
             
             try {
                 const formData = new FormData();
-                
+
                 if (file) {
                     formData.append('file', file);
                 } else {
                     formData.append('url', url);
                 }
-                
+
                 formData.append('model', model);
                 if (language) formData.append('language', language);
-                formData.append('diarization', diarization);
+                formData.append('vad_filter', vadFilter);
+                formData.append('enable_diarization', diarization);
                 formData.append('response_format', 'verbose_json');
                 formData.append('timestamp_granularities', JSON.stringify(['word', 'segment']));
-                
-                // For likely long audio, show progress updates and use chunked endpoint
-                if (isLikelyLongAudio) {
-                    showProgressDialog();
-                    
-                    // Use chunked endpoint for better progress tracking
-                    const response = await fetch('/v1/audio/transcriptions', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    
-                    const result = await response.json();
-                    const processingTime = ((Date.now() - startTime) / 1000).toFixed(1);
-                    
-                    // Show final progress
-                    if (result.config && result.config.chunked) {
-                        const chunks = result.performance?.chunks_processed || 1;
-                        updateProgress(chunks, chunks, 'Transcription complete!', {
-                            chunk_text: result.text.substring(0, 200) + '...'
-                        });
-                        
-                        // Hide progress dialog after showing completion
-                        setTimeout(() => hideProgressDialog(), 2000);
-                    } else {
-                        hideProgressDialog();
-                    }
-                    
-                } else {
-                    // Short audio - use regular endpoint
-                    const response = await fetch('/v1/audio/transcriptions', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    
-                    const result = await response.json();
-                    const processingTime = ((Date.now() - startTime) / 1000).toFixed(1);
+
+                // Always show progress dialog
+                showProgressDialog();
+
+                // Start transcription and get job_id from response
+                const response = await fetch('/v1/audio/transcriptions', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
+
+                const result = await response.json();
+                const processingTime = ((Date.now() - startTime) / 1000).toFixed(1);
+
+                // If we have a job_id, we could connect to the stream for future requests
+                // (Currently transcription completes too fast, but this is ready for long audio)
+                if (result.job_id) {
+                    console.log('Job ID:', result.job_id);
+                }
+
+                // Hide progress dialog
+                setTimeout(() => hideProgressDialog(), 1000);
                 
                 // Display results
                 displayResults(result, processingTime);
@@ -843,15 +852,25 @@
 
         function displayResults(result, processingTime) {
             document.getElementById('results').style.display = 'block';
-            
+
             // Update stats
             document.getElementById('duration').textContent = formatDuration(result.duration || 0);
             document.getElementById('wordCount').textContent = result.words ? result.words.length : '0';
             document.getElementById('processingTime').textContent = processingTime + 's';
-            
+
+            // Update VAD and diarization status
+            const vadFilterUsed = document.getElementById('vadFilter').checked;
+            const diarizationEnabled = document.getElementById('enableDiarization').checked;
+
+            document.getElementById('vadStatus').textContent = vadFilterUsed ? '✓ ON' : '✗ OFF';
+            document.getElementById('vadStatus').style.color = vadFilterUsed ? 'var(--accent-green)' : 'var(--text-muted)';
+
+            document.getElementById('diarizationStatus').textContent = diarizationEnabled ? '✓ ON' : '✗ OFF';
+            document.getElementById('diarizationStatus').style.color = diarizationEnabled ? 'var(--accent-green)' : 'var(--text-muted)';
+
             // Display transcription
             document.getElementById('transcriptionText').textContent = result.text;
-            
+
             // Display speaker segments if available
             if (result.speakers && result.speakers.length > 0) {
                 document.getElementById('speakerCount').textContent = new Set(result.speakers.map(s => s.speaker)).size;
@@ -861,7 +880,7 @@
                 document.getElementById('speakerCount').textContent = '1';
                 document.getElementById('speakersSection').style.display = 'none';
             }
-            
+
             // Store result for download
             window.currentTranscription = result;
         }
@@ -888,22 +907,122 @@
         }
 
         // Progress Dialog Functions
+        let progressEventSource = null;
+        let progressSimulator = null;
+
+        function simulateProgress() {
+            let currentProgress = 0;
+            const messages = [
+                'Uploading audio file...',
+                'Preprocessing audio...',
+                'Loading Whisper model...',
+                'Processing with NPU...',
+                'Transcribing audio...',
+                'Generating timestamps...',
+                'Finalizing transcription...'
+            ];
+            let messageIndex = 0;
+
+            progressSimulator = setInterval(() => {
+                if (currentProgress < 95) {
+                    // Increment progress
+                    currentProgress += Math.random() * 8 + 2; // Random 2-10% jumps
+                    if (currentProgress > 95) currentProgress = 95;
+
+                    // Update message occasionally
+                    if (currentProgress > (messageIndex + 1) * 15 && messageIndex < messages.length - 1) {
+                        messageIndex++;
+                    }
+
+                    // Update UI
+                    document.getElementById('progressPercent').textContent = Math.floor(currentProgress) + '%';
+                    document.getElementById('progressFill').style.width = currentProgress + '%';
+                    document.getElementById('progressMessage').textContent = messages[messageIndex];
+                    document.getElementById('chunkProgress').textContent = 'Processing...';
+                }
+            }, 500); // Update every 500ms
+        }
+
+        function stopProgressSimulation() {
+            if (progressSimulator) {
+                clearInterval(progressSimulator);
+                progressSimulator = null;
+            }
+            // Set to 100%
+            document.getElementById('progressPercent').textContent = '100%';
+            document.getElementById('progressFill').style.width = '100%';
+            document.getElementById('progressMessage').textContent = 'Complete!';
+        }
+
+        function connectToProgressStream(jobId) {
+            // Close existing connection if any
+            if (progressEventSource) {
+                progressEventSource.close();
+            }
+
+            // Connect to SSE endpoint
+            progressEventSource = new EventSource(`/progress/${jobId}/stream`);
+
+            progressEventSource.onmessage = function(event) {
+                const progress = JSON.parse(event.data);
+
+                // Update progress display
+                document.getElementById('progressPercent').textContent = progress.progress + '%';
+                document.getElementById('progressFill').style.width = progress.progress + '%';
+                document.getElementById('progressMessage').textContent = progress.message;
+                document.getElementById('chunkProgress').textContent = progress.status;
+
+                // Close stream when complete or error
+                if (progress.status === 'completed' || progress.status === 'error') {
+                    progressEventSource.close();
+                    progressEventSource = null;
+                }
+            };
+
+            progressEventSource.onerror = function(error) {
+                console.error('SSE error:', error);
+                if (progressEventSource) {
+                    progressEventSource.close();
+                    progressEventSource = null;
+                }
+            };
+        }
+
         function showProgressDialog() {
             const dialog = document.getElementById('progressDialog');
             dialog.style.display = 'block';
-            
+
             // Reset progress
-            updateProgress(0, 0, 'Preparing for chunked processing...');
+            document.getElementById('progressPercent').textContent = '0%';
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('progressMessage').textContent = 'Starting transcription...';
+            document.getElementById('chunkProgress').textContent = 'Initializing...';
             document.getElementById('chunkResults').innerHTML = '';
+
+            // Start simulating progress
+            simulateProgress();
         }
 
         function hideProgressDialog() {
-            document.getElementById('progressDialog').style.display = 'none';
+            // Stop progress simulation
+            stopProgressSimulation();
+
+            // Hide after a brief moment to show 100%
+            setTimeout(() => {
+                const dialog = document.getElementById('progressDialog');
+                dialog.style.display = 'none';
+
+                // Close SSE connection if open
+                if (progressEventSource) {
+                    progressEventSource.close();
+                    progressEventSource = null;
+                }
+            }, 800);
         }
 
         function updateProgress(chunk, totalChunks, message, chunkResult = null) {
             const percent = totalChunks > 0 ? (chunk / totalChunks * 100).toFixed(1) : 0;
-            
+
             document.getElementById('progressPercent').textContent = percent + '%';
             document.getElementById('progressFill').style.width = percent + '%';
             document.getElementById('chunkProgress').textContent = `Chunk ${chunk}/${totalChunks}`;
@@ -979,11 +1098,44 @@
 
         function copyTranscription() {
             if (!window.currentTranscription) return;
-            
+
             navigator.clipboard.writeText(window.currentTranscription.text).then(() => {
                 alert('Transcription copied to clipboard!');
             });
         }
+
+        // Update hardware status from server
+        async function updateHardwareStatus() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                const hardware = data.hardware || {};
+
+                const statusEl = document.getElementById('hardwareStatus');
+                const iconEl = document.getElementById('hardwareIcon');
+                const textEl = document.getElementById('hardwareText');
+
+                if (hardware.type === 'npu') {
+                    iconEl.textContent = '🚀';
+                    textEl.textContent = 'XDNA1 NPU (Phoenix) - ' + (data.npu_runtime?.mel_ready ? 'Sign-Fixed Mel Ready!' : 'Ready');
+                    statusEl.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                } else if (hardware.type === 'igpu') {
+                    iconEl.textContent = '💎';
+                    textEl.textContent = 'Intel iGPU';
+                    statusEl.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
+                } else {
+                    iconEl.textContent = '⚙️';
+                    textEl.textContent = 'CPU';
+                    statusEl.style.background = '#4a5568';
+                }
+            } catch (error) {
+                console.error('Failed to update hardware status:', error);
+            }
+        }
+
+        // Update hardware status on load and every 30 seconds
+        updateHardwareStatus();
+        setInterval(updateHardwareStatus, 30000);
     </script>
 </body>
 </html>

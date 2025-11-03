@@ -1,0 +1,14 @@
+==================================================
+Compiling 32x32 Matmul Kernel
+==================================================
+
+✅ Found Peano compiler: /home/ucadmin/mlir-aie-fresh/mlir-aie/venv313/lib/python3.13/site-packages/llvm-aie/bin
+
+Step 1: Compiling C kernel to object file...
+✅ C kernel compiled: matmul_32x32.o
+
+Step 2: Compiling MLIR to XCLBIN using aiecc.py...
+Traceback (most recent call last):
+  File "/home/ucadmin/.local/bin/aiecc.py", line 5, in <module>
+    from aie.compiler.aiecc.main import main
+ModuleNotFoundError: No module named 'aie'

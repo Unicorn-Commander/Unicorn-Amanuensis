@@ -1,0 +1,145 @@
+{
+  "benchmark_date": "2025-11-02 01:39:16",
+  "current_results": {
+    "hardware": {
+      "type": "npu",
+      "name": "AMD Phoenix NPU",
+      "device": "/dev/accel/accel0",
+      "kernels": 2,
+      "priority": 1,
+      "expected_speedup": "28-220x"
+    },
+    "setup": "server_dynamic.py",
+    "tests": []
+  },
+  "uc_meeting_ops_config": {
+    "model": "whisper-base",
+    "compute_type": "int8",
+    "device": "cpu",
+    "vad_filter": true,
+    "vad_parameters": {
+      "min_silence_duration_ms": 1500,
+      "speech_pad_ms": 1000,
+      "threshold": 0.25
+    },
+    "beam_size": 5,
+    "best_of": 5,
+    "temperature": 0,
+    "word_timestamps": true,
+    "npu_preprocessing": true,
+    "npu_kernels": {
+      "mel_spectrogram": "Custom MLIR-AIE2",
+      "encoder": "INT8 ONNX + NPU",
+      "decoder": "INT8 ONNX + NPU"
+    },
+    "performance": {
+      "rtf": 0.0045,
+      "speedup": "220x",
+      "throughput": "4,789 tokens/sec"
+    }
+  },
+  "profile": {
+    "mel_time": 0.6667165756225586,
+    "encoder_time": 0.18452444076538088,
+    "decoder_time": 0.27678666114807127,
+    "total_time": 1.1280276775360107
+  },
+  "comparison": {
+    "current": {
+      "model": "base (faster-whisper)",
+      "compute_type": "int8",
+      "npu_mel": "batch-20 (45x realtime)",
+      "npu_encoder": "None (CPU only)",
+      "npu_decoder": "None (CPU only)",
+      "estimated_rtf": "13.5x"
+    },
+    "uc_meeting_ops": {
+      "model": "base (faster-whisper)",
+      "compute_type": "int8",
+      "npu_mel": "Custom MLIR-AIE2",
+      "npu_encoder": "INT8 ONNX + GEMM kernels",
+      "npu_decoder": "INT8 ONNX + GEMM kernels",
+      "measured_rtf": "220x"
+    },
+    "gap": {
+      "speedup_gap": "16.3x (220 / 13.5)",
+      "bottleneck": "Encoder/Decoder on CPU",
+      "solution": "Use NPU GEMM + Attention kernels"
+    }
+  },
+  "recommendations": [
+    {
+      "priority": 1,
+      "name": "Use NPU GEMM kernels for Encoder/Decoder",
+      "impact": "10-15x speedup",
+      "effort": "Medium (integrate precompiled GEMM.xclbin)",
+      "target_rtf": "150-200x",
+      "steps": [
+        "Load gemm.xclbin from npu_optimization/gemm_kernels/",
+        "Inject NPU GEMM into faster-whisper encoder",
+        "Inject NPU GEMM into faster-whisper decoder",
+        "Benchmark encoder/decoder separately"
+      ]
+    },
+    {
+      "priority": 2,
+      "name": "Upgrade to batch-30 mel preprocessing",
+      "impact": "1.5x speedup (45x \u2192 67x)",
+      "effort": "Low (recompile existing kernel)",
+      "target_rtf": "220x (with GEMM)",
+      "steps": [
+        "Modify mel_batch20.mlir to batch_size=30",
+        "Recompile with aiecc.py",
+        "Test accuracy and performance",
+        "Deploy to production"
+      ]
+    },
+    {
+      "priority": 3,
+      "name": "Optimize VAD settings for speed",
+      "impact": "1.2-1.5x speedup",
+      "effort": "Very Low (config change)",
+      "target_rtf": "16-20x (current setup)",
+      "steps": [
+        "Increase min_silence_duration_ms to 1500",
+        "Reduce threshold to 0.25",
+        "Test on sample audio",
+        "Measure improvement"
+      ]
+    },
+    {
+      "priority": 4,
+      "name": "Use smaller model (tiny) for speed",
+      "impact": "2-3x speedup",
+      "effort": "Very Low (model parameter)",
+      "target_rtf": "30-40x (current setup)",
+      "note": "Trades accuracy for speed - not recommended unless needed"
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "Current System",
+      "config": "batch-20 mel + CPU encoder/decoder",
+      "rtf": "13.5x",
+      "1hr_time": "266s (4.4 min)"
+    },
+    {
+      "name": "With Optimized VAD",
+      "config": "batch-20 mel + optimized VAD",
+      "rtf": "18x",
+      "1hr_time": "200s (3.3 min)"
+    },
+    {
+      "name": "With NPU GEMM (Priority 1)",
+      "config": "batch-20 mel + NPU encoder/decoder",
+      "rtf": "180x",
+      "1hr_time": "20s"
+    },
+    {
+      "name": "With batch-30 + GEMM (Target)",
+      "config": "batch-30 mel + NPU encoder/decoder",
+      "rtf": "220x",
+      "1hr_time": "16.4s"
+    }
+  ]
+}

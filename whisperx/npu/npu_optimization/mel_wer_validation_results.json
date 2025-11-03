@@ -1,0 +1,44 @@
+{
+  "test_date": "2025-10-30",
+  "audio_file": "/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/mel_kernels/test_audio_jfk.wav",
+  "ground_truth": "and so my fellow americans ask not what your country can do for you ask what you can do for your country",
+  "whisper_model": "base",
+  "mel_kernel_correlation": 0.9152,
+  "tests": [
+    {
+      "name": "CPU Baseline",
+      "method": "librosa mel \u2192 faster-whisper",
+      "mel_time": 0.03129220008850098,
+      "transcription_time": 0.5469832420349121,
+      "total_time": 0.5782754421234131,
+      "realtime_factor": 19.02207702199539,
+      "transcription": "and so my fellow americans, ask not what your country can do for you, ask what you can do for your country.",
+      "wer": 0.13636363636363635,
+      "cer": 0.028846153846153848,
+      "mel_shape": [
+        80,
+        1101
+      ],
+      "mel_range": [
+        -80.0,
+        -1.9073486328125e-06
+      ]
+    },
+    {
+      "name": "NPU Mel Kernel",
+      "method": "NPU mel kernel (correlation test only)",
+      "mel_time": 0.28124570846557617,
+      "mel_correlation_with_cpu": 0.12155831214814236,
+      "mel_shape": [
+        80,
+        1098
+      ],
+      "mel_range": [
+        0.0,
+        1.7917594909667969
+      ],
+      "note": "faster-whisper doesn't support injecting pre-computed mel features",
+      "npu_speedup_vs_cpu": 0.11126285360663937
+    }
+  ]
+}

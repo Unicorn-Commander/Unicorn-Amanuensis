@@ -1,0 +1,16 @@
+=== Multi-Core Attention Kernel Compilation (IRON) ===
+Build directory: /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/whisper_encoder_kernels/build_attention_iron
+
+Step 1/3: Compiling C kernel to AIE2 object...
+./compile_attention_iron.sh: line 25: /home/ucadmin/mlir-aie-fresh/mlir-aie/my_install/aie_kernels/peano/bin/clang: No such file or directory
+=== Multi-Core Attention Kernel Compilation (IRON) ===
+Build directory: /home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/whisper_encoder_kernels/build_attention_iron
+
+Step 1/3: Using pre-compiled C kernel...
+✓ Using existing attention_int8_64x64_tiled.o
+
+Step 2/3: Compiling MLIR to XCLBIN using aiecc.py...
+Traceback (most recent call last):
+  File "/home/ucadmin/mlir-aie-fresh/mlir-aie/python/compiler/aiecc.py", line 9, in <module>
+    from aie.compiler.aiecc.main import main
+ModuleNotFoundError: No module named 'aie'

@@ -1,0 +1,45 @@
+# Baseline Configuration
+# No optimizations - measure baseline performance
+
+name: baseline
+description: Baseline configuration with no optimizations
+
+optimizations:
+  buffer_reuse: false
+  batching: false
+  multi_core: false
+  dma_optimization: false
+  pipeline_overlap: false
+
+kernels:
+  attention:
+    enabled: true
+    tile_size: 64
+    num_heads: 1
+
+  layernorm:
+    enabled: true
+    size: 256
+
+  gelu:
+    enabled: true
+    size: 512
+
+  matmul:
+    enabled: true
+    tile_size: 16
+
+benchmarks:
+  num_iterations: 100
+  warmup_iterations: 5
+  audio_lengths: [10, 30, 60, 120, 300]
+
+accuracy:
+  validate: true
+  tolerance: 0.95
+  compare_with_cpu: true
+
+reporting:
+  generate_markdown: true
+  generate_json: true
+  generate_plots: false

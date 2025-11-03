@@ -1,0 +1,104 @@
+
+
+======================================================================
+DMA-OPTIMIZED ENCODER BLOCK TEST
+======================================================================
+
+Initializing DMA-optimized encoder...
+======================================================================
+NPU Encoder Block Initialization
+======================================================================
+
+✅ NPU device: /dev/accel/accel0
+Loading Attention kernel (64x64)...
+  ✅ Attention kernel loaded (2.04ms per tile)
+Loading LayerNorm kernel...
+  ✅ LayerNorm kernel loaded (0.12ms per operation)
+Loading GELU kernel...
+  ✅ GELU kernel loaded (0.19ms per operation)
+Loading Matmul kernel (16x16)...
+  ✅ Matmul kernel loaded (0.45ms per operation)
+
+======================================================================
+✅ NPU Encoder Block Ready!
+======================================================================
+
+  Initialization: 233.1ms
+
+Test 1: Single Tile Performance
+----------------------------------------------------------------------
+  Average: 3.31ms
+  Std dev: 0.04ms
+  Min:     3.26ms
+  Max:     3.38ms
+
+Test 2: Batch Processing (10 tiles)
+----------------------------------------------------------------------
+  Total time:  31.75ms
+  Avg/tile:    3.17ms
+  Throughput:  315.0 tiles/second
+
+======================================================================
+PERFORMANCE PROJECTION
+======================================================================
+
+DMA Optimization Impact:
+  Baseline (per-kernel sync):  2.40ms/tile
+  Optimized (pipelined):       1.93ms/tile
+  DMA improvement:             1.24x
+
+Full Pipeline Projection (11-second audio):
+  Mel preprocessing:    304.7ms (unchanged)
+
+  Baseline encoder:     758.2ms
+  Optimized encoder:    445.7ms
+  Encoder improvement:  1.70x
+
+  Baseline total:       1062.9ms → 10.3x realtime
+  Optimized total:      750.4ms → 14.7x realtime
+  Overall improvement:  1.42x
+
+✅ GOOD PROGRESS! 14.7x realtime
+======================================================================
+
+Optimization Statistics:
+----------------------------------------------------------------------
+
+NPU Buffer Pool Statistics:
+==================================================
+  Total allocations:    0
+  Buffer reuses:        0
+  Reuse ratio:          0.00%
+  Current buffers:      0
+  Current bytes:        0
+  Peak buffers:         0
+  Total allocated:      0 bytes
+==================================================
+
+Buffer Cache Statistics:
+==================================================
+  Cache hits:           0
+  Cache misses:         0
+  Cache hit rate:       0.00%
+==================================================
+
+Pipelined Executor Statistics:
+======================================================================
+  Tiles processed:        10
+  Total time:             19.57ms
+  Avg time per tile:      1.96ms
+  DMA write time:         0.22ms
+  Compute time:           0.69ms
+  DMA read time:          0.08ms
+  DMA overhead:           1.5%
+  Pipeline stalls:        0
+======================================================================
+
+
+✅ DMA-optimized encoder test complete!
+   Performance: 3.17ms per tile
+   DMA improvement: 1.24x
+   Projected RTF: 14.7x realtime
+
+💡 Run with --compare to compare baseline vs optimized
+

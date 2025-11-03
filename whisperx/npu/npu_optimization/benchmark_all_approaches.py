@@ -14,10 +14,20 @@ print("🦄 Unicorn Amanuensis - Comprehensive NPU Benchmark")
 print("="*70)
 print()
 
-# Test audio file
-test_audio = "/app/whisper-cpp-igpu/bindings/go/samples/jfk.wav"
-if not Path(test_audio).exists():
-    print(f"❌ Test audio not found: {test_audio}")
+# Test audio file (fixed Nov 3, 2025)
+test_audio_candidates = [
+    "/app/whisper-cpp-igpu/bindings/go/samples/jfk.wav",  # Container path
+    "/home/ucadmin/VibeVoice/Shafen_Khan_call.m4a",  # Local path
+    "test_audio.wav"  # Current directory
+]
+test_audio = None
+for candidate in test_audio_candidates:
+    if Path(candidate).exists():
+        test_audio = candidate
+        break
+
+if test_audio is None:
+    print(f"❌ No test audio found in any of: {test_audio_candidates}")
     sys.exit(1)
 
 print(f"📁 Test audio: {test_audio}")
@@ -30,7 +40,9 @@ print("="*70)
 print("Test 1: Custom NPU Hybrid Runtime (Current Implementation)")
 print("="*70)
 try:
-    sys.path.insert(0, '/app/npu')
+    # Fixed Nov 3, 2025
+    base_dir = Path(__file__).parent.parent.parent  # whisperx/
+    sys.path.insert(0, str(base_dir / 'npu'))
     from npu_runtime import NPURuntime
     
     runtime = NPURuntime()

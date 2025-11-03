@@ -1,0 +1,109 @@
+
+
+======================================================================
+BATCHED ENCODER TEST - Parallel Processing with Existing Kernels
+======================================================================
+
+Initializing encoders...
+
+1. Sequential encoder (baseline):
+======================================================================
+NPU Encoder Block Initialization
+======================================================================
+
+✅ NPU device: /dev/accel/accel0
+Loading Attention kernel (64x64)...
+  ✅ Attention kernel loaded (2.04ms per tile)
+Loading LayerNorm kernel...
+  ✅ LayerNorm kernel loaded (0.12ms per operation)
+Loading GELU kernel...
+  ✅ GELU kernel loaded (0.19ms per operation)
+
+======================================================================
+✅ NPU Encoder Block Ready!
+======================================================================
+
+2. Batched encoder (batch_size=4):
+======================================================================
+NPU Encoder Block Initialization
+======================================================================
+
+✅ NPU device: /dev/accel/accel0
+Loading Attention kernel (64x64)...
+  ✅ Attention kernel loaded (2.04ms per tile)
+Loading LayerNorm kernel...
+  ✅ LayerNorm kernel loaded (0.12ms per operation)
+Loading GELU kernel...
+  ✅ GELU kernel loaded (0.19ms per operation)
+
+======================================================================
+✅ NPU Encoder Block Ready!
+======================================================================
+
+
+✅ Batched encoder initialized (batch_size=4)
+   Will process 4 tiles with overlapped execution
+
+Preparing 12 tiles for testing...
+  ✅ 12 tiles prepared
+
+Running warm-up pass...
+  ✅ Warm-up complete
+
+======================================================================
+TEST 1: Sequential Processing (Baseline)
+======================================================================
+
+Processing 12 tiles sequentially...
+  ✅ Sequential processing complete
+     Total time: 36.96ms
+     Time per tile: 3.08ms
+
+======================================================================
+TEST 2: Batched Processing (batch_size=4)
+======================================================================
+
+Processing 12 tiles with batching...
+  ✅ Batched processing complete
+     Total time: 32.03ms
+     Time per tile: 2.67ms
+
+======================================================================
+PERFORMANCE COMPARISON
+======================================================================
+
+Sequential time:  36.96ms (3.08ms per tile)
+Batched time:     32.03ms (2.67ms per tile)
+Improvement:      1.15× faster
+
+Full Pipeline Projection (11-second audio):
+  Mel preprocessing:    304.7ms (unchanged)
+
+  Baseline encoder:     400.1ms
+  Batched encoder:      374.8ms
+  Encoder improvement:  1.07×
+
+  Baseline total:       704.8ms → 15.6× realtime
+  Batched total:        679.5ms → 16.2× realtime
+  Overall improvement:  1.04×
+
+✅ PROGRESS! 16.2× realtime (continuing optimization)
+======================================================================
+
+Output Validation:
+  Sequential results: 12 tiles
+  Batched results:    12 tiles
+  Sequential attention activity: 3730/4096 (91.1%)
+  Batched attention activity:    3647/4096 (89.0%)
+
+
+✅ Batched encoder test complete!
+   Batching improvement: 1.15×
+   New realtime factor: 16.2×
+   Time per tile: 2.67ms
+
+💡 Next steps:
+   - If batching works well (2-3× improvement), this is immediate win!
+   - Then move to true multi-core MLIR for 4× improvement
+   - Combined: 2-3× (batching) + 4× (multi-core) = 8-12× total speedup
+

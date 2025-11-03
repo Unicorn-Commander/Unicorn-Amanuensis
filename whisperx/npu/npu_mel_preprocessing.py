@@ -170,8 +170,29 @@ class NPUMelPreprocessor:
         output_size = 80  # 80 int8 mel bins
 
         # Read instruction binary
-        insts_path = Path(self.xclbin_path).parent / "insts_fixed.bin"
-        insts_bin = open(insts_path, "rb").read()
+        # Try multiple possible instruction file names
+        insts_candidates = [
+            "insts.bin",
+            "insts_fixed.bin",
+            "mel_aie_cdo_init.bin",  # Alternative instruction format
+        ]
+
+        insts_bin = None
+        insts_path = None
+
+        for insts_file in insts_candidates:
+            candidate_path = Path(self.xclbin_path).parent / insts_file
+            if candidate_path.exists():
+                insts_path = candidate_path
+                insts_bin = open(insts_path, "rb").read()
+                break
+
+        if insts_bin is None or len(insts_bin) == 0:
+            raise FileNotFoundError(
+                f"No valid instruction binary found in {Path(self.xclbin_path).parent}. "
+                f"Tried: {insts_candidates}"
+            )
+
         n_insts = len(insts_bin)
 
         # Allocate buffers

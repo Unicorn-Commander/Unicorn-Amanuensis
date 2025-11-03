@@ -1,0 +1,85 @@
+
+
+======================================================================
+COMPREHENSIVE PIPELINED ENCODER BENCHMARK
+======================================================================
+
+Initializing NPU encoder...
+======================================================================
+NPU Encoder Block Initialization
+======================================================================
+
+✅ NPU device: /dev/accel/accel0
+Loading Attention kernel (64x64)...
+  ✅ Attention kernel loaded (2.04ms per tile)
+Loading LayerNorm kernel...
+  ✅ LayerNorm kernel loaded (0.12ms per operation)
+Loading GELU kernel...
+  ✅ GELU kernel loaded (0.19ms per operation)
+Loading Matmul kernel (16x16)...
+  ✅ Matmul kernel loaded (0.45ms per operation)
+
+======================================================================
+✅ NPU Encoder Block Ready!
+======================================================================
+
+
+Preparing test data for 20 tiles...
+  Test data ready: 20 tiles
+
+======================================================================
+BASELINE: Sequential Execution
+======================================================================
+
+Results:
+  Total time:         43.86ms
+  Avg time per tile:  2.19ms
+
+======================================================================
+PIPELINED EXECUTION: Depth 2
+======================================================================
+
+Results:
+  Total time:         38.36ms
+  Avg time per tile:  1.92ms
+  Pipeline stalls:    0
+  DMA overhead:       1.2%
+  Speedup vs seq:     1.14x
+
+======================================================================
+PIPELINED EXECUTION: Depth 3
+======================================================================
+
+Results:
+  Total time:         38.27ms
+  Avg time per tile:  1.91ms
+  Pipeline stalls:    0
+  DMA overhead:       0.8%
+  Speedup vs seq:     1.15x
+
+======================================================================
+PERFORMANCE SUMMARY
+======================================================================
+
+Configuration        Time/Tile (ms)  Speedup    Stalls    
+----------------------------------------------------------------------
+sequential           2.19            1.00      x 0         
+depth_2              1.92            1.14      x 0         
+depth_3              1.91            1.15      x 0         
+----------------------------------------------------------------------
+
+Best Configuration: depth_3
+  Speedup: 1.15x
+  Time per tile: 1.91ms
+
+Projected Performance (11-second audio):
+  Encoder time:    268.5ms
+  Total time:      573.2ms
+  Realtime factor: 19.2x
+  vs Baseline:     14.0x → 19.2x (1.37x improvement)
+
+PROGRESS: 19.2x (target: 23-26x)
+======================================================================
+
+Benchmark complete!
+

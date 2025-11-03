@@ -1,0 +1,24 @@
+======================================================================
+QUICK CORRELATION TEST
+======================================================================
+
+Testing: build_fixed_v3/mel_fixed_v3.xclbin
+This XCLBIN includes:
+  - FFT scaling fix (21:06 UTC)
+  - HTK mel filterbank (21:23 UTC)
+  - Expected correlation: >0.95
+NPU output range: [0, 15]
+NPU output mean: 0.28
+Non-zero bins: 3/80
+
+Librosa output range: [-58.52, -3.94]
+NPU output (dB scale): [-24.08, 0.00]
+
+Correlation (linear): 0.3736
+Correlation (dB scale): 0.4329
+
+======================================================================
+❌ LOW - kernel needs fixes compiled in
+
+Conclusion: Need to recompile with fixes
+======================================================================
