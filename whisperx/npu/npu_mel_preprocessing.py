@@ -87,6 +87,9 @@ class NPUMelPreprocessor:
         self.npu_time = 0.0
         self.cpu_time = 0.0
 
+        # Debug flag for logging first frame
+        self._first_frame_logged = False
+
         # Initialize NPU
         self._initialize_npu()
 
@@ -223,6 +226,12 @@ class NPUMelPreprocessor:
         # Read output
         output_bo.sync(xrt.xclBOSyncDirection.XCL_BO_SYNC_BO_FROM_DEVICE, output_size, 0)
         mel_bins = np.frombuffer(output_bo.read(output_size, 0), dtype=np.int8)
+
+        # Debug: Check if NPU is returning non-zero values
+        if not self._first_frame_logged:
+            logger.info(f"   NPU output (INT8): min={mel_bins.min()}, max={mel_bins.max()}, mean={mel_bins.mean():.2f}")
+            logger.info(f"   First 10 values: {mel_bins[:10]}")
+            self._first_frame_logged = True
 
         # Convert int8 to float32 for compatibility
         # Scale back to approximate mel spectrogram range
