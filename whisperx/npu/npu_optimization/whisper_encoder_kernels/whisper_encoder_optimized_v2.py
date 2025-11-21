@@ -21,7 +21,8 @@ class WhisperEncoderOptimizedV2:
     def __init__(self,
                  model_size="base",
                  xclbin_dir: Optional[Path] = None,
-                 device_id: int = 0):
+                 device_id: int = 0,
+                 use_npu_layernorm: bool = False):
         """
         Initialize optimized Whisper encoder with buffer reuse
 
@@ -29,6 +30,7 @@ class WhisperEncoderOptimizedV2:
             model_size: "base" (6 layers, 512 dims)
             xclbin_dir: Directory containing compiled XCLBINs
             device_id: NPU device ID
+            use_npu_layernorm: Use NPU for LayerNorm (False = CPU vectorized, 195× faster!)
         """
         self.model_size = model_size
 
@@ -51,7 +53,16 @@ class WhisperEncoderOptimizedV2:
             xclbin_dir = Path(__file__).parent
         self.xclbin_dir = Path(xclbin_dir)
 
-        # Load kernels
+        # Hardware constraints (Phoenix NPU) - calculate BEFORE loading kernels
+        self.memory_tile_capacity = 2 * 1024 * 1024  # 2 MB
+        self.chunk_size = self._calculate_optimal_chunk_size()
+
+        # LayerNorm configuration
+        # NOTE: CPU vectorized LayerNorm is 195× faster than sequential NPU calls!
+        # Only use NPU LayerNorm after implementing batched/chunked NPU processing
+        self.use_npu_layernorm = use_npu_layernorm
+
+        # Load kernels (needs chunk_size for buffer allocation)
         self._load_kernels()
 
         # Initialize attention and FFN modules
@@ -69,10 +80,6 @@ class WhisperEncoderOptimizedV2:
 
         # Initialize random weights
         self._init_weights()
-
-        # Hardware constraints (Phoenix NPU)
-        self.memory_tile_capacity = 2 * 1024 * 1024  # 2 MB
-        self.chunk_size = self._calculate_optimal_chunk_size()
 
         print(f"\n✅ Optimized Whisper {model_size} encoder initialized (v2)")
         print(f"   - {self.n_layers} layers with full attention + FFN")
@@ -103,7 +110,9 @@ class WhisperEncoderOptimizedV2:
 
         layernorm_path = self.xclbin_dir / "build_layernorm_nosqrt/main.xclbin"
 
-        if layernorm_path.exists():
+        # Only load LayerNorm kernel if explicitly requested
+        # CPU vectorized is 195× faster for sequential processing!
+        if self.use_npu_layernorm and layernorm_path.exists():
             print(f"   Loading LayerNorm: {layernorm_path.name}")
             try:
                 xclbin_obj = xrt.xclbin(str(layernorm_path))
@@ -119,23 +128,33 @@ class WhisperEncoderOptimizedV2:
                     self.ln_insts = f.read()
 
                 # Pre-allocate buffers (REUSE for all calls!)
-                self._preallocate_buffers()
+                buffers_ok = self._preallocate_buffers()
 
-                print(f"   ✅ LayerNorm loaded with pre-allocated buffers")
-                self.use_ln_npu = True
+                if buffers_ok:
+                    print(f"   ✅ LayerNorm loaded with pre-allocated buffers")
+                    self.use_ln_npu = True
+                else:
+                    print(f"   ⚠️  Buffer allocation failed")
+                    self.use_ln_npu = False
             except Exception as e:
                 print(f"   ⚠️  LayerNorm failed: {e}")
                 self.use_ln_npu = False
+        elif not self.use_npu_layernorm:
+            print(f"   Skipping LayerNorm: Using CPU vectorized (195× faster!)")
+            self.use_ln_npu = False
         else:
             print(f"   ⚠️  LayerNorm not found")
             self.use_ln_npu = False
 
-    def _preallocate_buffers(self):
-        """Pre-allocate reusable buffers for LayerNorm"""
-        # Always preallocate (even if we end up using CPU fallback)
-        # This prevents AttributeError if use_ln_npu is False
+    def _preallocate_buffers(self) -> bool:
+        """
+        Pre-allocate reusable buffers for LayerNorm
+
+        Returns:
+            bool: True if buffers were allocated successfully, False otherwise
+        """
         if not hasattr(self, 'ln_kernel'):
-            return
+            return False
 
         kernel = self.ln_kernel
 
@@ -169,7 +188,7 @@ class WhisperEncoderOptimizedV2:
         self.bo_instr.write(self.ln_insts, 0)
         self.bo_instr.sync(xrt.xclBOSyncDirection.XCL_BO_SYNC_BO_TO_DEVICE)
 
-        print(f"   ✅ Buffers pre-allocated: {buffer_size/1024:.1f} KB per buffer")
+        return True  # Buffers allocated successfully
 
     def _init_weights(self):
         """Initialize random weights for testing"""
