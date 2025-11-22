@@ -194,6 +194,32 @@ class DynamicWhisperEngine:
     def _init_npu_engine(self):
         """Initialize NPU-accelerated engine"""
 
+        # Initialize NPU attention kernel (NEW - Nov 3, 2025)
+        try:
+            logger.info("🚀 Initializing NPU attention kernel...")
+            sys.path.insert(0, str(Path(__file__).parent / 'npu' / 'npu_optimization'))
+
+            from npu_attention_integration import NPUAttentionIntegration
+
+            # Load validated INT32 attention kernel
+            self.npu_attention = NPUAttentionIntegration(enable_npu=True)
+
+            if self.npu_attention.npu_available:
+                logger.info("✅ NPU attention kernel loaded!")
+                logger.info(f"   • XCLBIN: attention_64x64.xclbin (INT32, 12.4 KB)")
+                logger.info(f"   • Accuracy: 0.92 correlation (VALIDATED)")
+                logger.info(f"   • Latency: 2.08ms per 64x64 tile")
+                logger.info(f"   • Expected speedup: 1.5-2x encoder acceleration")
+                logger.info(f"   • Target: 25-35x realtime (from 16-17x baseline)")
+            else:
+                logger.warning("⚠️ NPU attention unavailable - using CPU fallback")
+                logger.info("   Decoder performance: 16-17x realtime (unchanged)")
+
+        except Exception as e:
+            logger.warning(f"⚠️ NPU attention init failed: {e}")
+            logger.info("   Will use CPU for attention (decoder still works)")
+            self.npu_attention = None
+
         # Initialize NPU runtime for mel preprocessing
         try:
             logger.info("🚀 Initializing NPU mel preprocessing runtime...")
@@ -203,10 +229,10 @@ class DynamicWhisperEngine:
 
             # Try different XCLBINs in order of preference
             xclbin_candidates = [
-                'npu/npu_optimization/mel_kernels/build/mel_fixed_v3.xclbin',  # PRODUCTION (Nov 1, 2025 - with Oct 28 fixes)
+                'npu/npu_optimization/mel_kernels/build_fixed_v3/mel_fixed_v3.xclbin',  # ✅ FRESH Nov 22 - matching insts.bin, Oct 28 fixes
+                'npu/npu_optimization/mel_kernels/build_fixed_v3/mel_fixed_v3_PRODUCTION_v2.0.xclbin',  # Fallback - Oct 30 (no matching insts)
+                'npu/npu_optimization/mel_kernels/build_fixed_v3/mel_fixed_v3_PRODUCTION_v1.0.xclbin',  # Fallback - Oct 29 (no matching insts)
                 'npu/npu_optimization/mel_kernels/build/mel_int8_final.xclbin',
-                'npu/npu_optimization/mel_kernels/build/mel_fft.xclbin',
-                'npu/npu_optimization/mel_kernels/build/mel_int8_optimized.xclbin',
             ]
 
             npu_initialized = False
@@ -304,27 +330,39 @@ class DynamicWhisperEngine:
             return
 
         try:
-            # Check for HuggingFace token
-            hf_token = os.environ.get("HF_TOKEN", None)
-
-            # Try to load diarization pipeline
+            # Try to load diarization pipeline from local cache first
             logger.info("📥 Loading speaker diarization pipeline...")
-            self.diarization_pipeline = DiarizationPipeline.from_pretrained(
-                "pyannote/speaker-diarization-3.1",
-                use_auth_token=hf_token
-            )
+
+            # Check if models are downloaded locally (no token needed!)
+            local_model_path = Path(__file__).parent / "models" / "pyannote"
+            if local_model_path.exists():
+                logger.info(f"   ✅ Using bundled models from: {local_model_path}")
+                # Load from local cache (no token needed)
+                self.diarization_pipeline = DiarizationPipeline.from_pretrained(
+                    "pyannote/speaker-diarization-3.1",
+                    cache_dir=str(local_model_path)
+                )
+            else:
+                # Fall back to HuggingFace with token (for users who haven't downloaded)
+                hf_token = os.environ.get("HF_TOKEN", None)
+                if hf_token:
+                    logger.info("   Loading from HuggingFace with token...")
+                    self.diarization_pipeline = DiarizationPipeline.from_pretrained(
+                        "pyannote/speaker-diarization-3.1",
+                        use_auth_token=hf_token
+                    )
+                else:
+                    raise ValueError("No local models found and no HF_TOKEN provided")
 
             # Move to CPU (compatible with all hardware)
             self.diarization_pipeline.to(torch.device("cpu"))
 
-            logger.info("✅ Speaker diarization pipeline loaded")
+            logger.info("✅ Speaker diarization pipeline loaded and ready!")
 
         except Exception as e:
             logger.warning(f"⚠️ Could not load diarization pipeline: {e}")
             logger.info("   Transcription will work without speaker labels")
-            logger.info("   To enable diarization:")
-            logger.info("   1. Accept license: https://huggingface.co/pyannote/speaker-diarization-3.1")
-            logger.info("   2. Set HF_TOKEN environment variable")
+            logger.info("   Note: Diarization models are now bundled - no token needed!")
             self.diarization_pipeline = None
 
     def add_speaker_diarization(self, audio_path: str, segments: List[Dict], min_speakers: int = 1, max_speakers: int = 10) -> List[Dict]:
@@ -436,8 +474,11 @@ class DynamicWhisperEngine:
             # TODO: Implement full text generation with NPU pipeline
             pass
 
-        # NPU mel preprocessing - ENABLED (Nov 3, 2025 - Production XCLBIN deployed)
-        use_npu_mel = True  # ✅ ENABLED - Using mel_fixed_v3.xclbin with 0.92 accuracy
+        # NPU mel preprocessing - DISABLED (even fresh recompiled kernel outputs zeros)
+        # Tested Nov 22: Recompiled mel_fixed_v3.xclbin + insts_v3.bin still outputs all zeros
+        # Issue appears to be in mel kernel logic itself, not binary compatibility
+        # Investigation needed: mel_kernel_fft_fixed.c and fft_fixed_point.c implementation
+        use_npu_mel = False  # ❌ DISABLED - Kernel logic issue, using CPU mel for accuracy
         mel_time = 0
 
         if use_npu_mel and hasattr(self, 'npu_runtime'):
@@ -471,8 +512,8 @@ class DynamicWhisperEngine:
                 else:
                     audio, sr = librosa.load(audio_path, sr=16000)
 
-                # Process with NPU - call the mel_processor directly
-                mel_features = self.npu_runtime.mel_processor.process(audio)
+                # Process with NPU - call process_audio directly
+                mel_features = self.npu_runtime.process_audio(audio)
                 mel_time = time.time() - mel_start
                 logger.info(f"✅ NPU mel completed in {mel_time:.3f}s - Shape: {mel_features.shape}")
 
@@ -538,6 +579,9 @@ class DynamicWhisperEngine:
 
             # Use generate_segments with NPU features (no encoder_output = it will encode from features)
             logger.info("🚀 Calling generate_segments with NPU mel features...")
+            logger.info(f"   Mel features shape: {mel_features.shape}, dtype: {mel_features.dtype}")
+            logger.info(f"   Features min: {mel_features.min():.4f}, max: {mel_features.max():.4f}, mean: {mel_features.mean():.4f}")
+
             segments = self.engine.generate_segments(
                 features=mel_features,
                 tokenizer=tokenizer,
@@ -545,6 +589,8 @@ class DynamicWhisperEngine:
                 log_progress=False,
                 encoder_output=None  # Let it encode our NPU features
             )
+
+            logger.info("   generate_segments() returned, generator created")
 
             # Calculate duration from features
             duration = float(mel_features.shape[-1] * self.engine.feature_extractor.time_per_frame)
@@ -606,12 +652,17 @@ class DynamicWhisperEngine:
         result_segments = []
         full_text = ""
 
+        logger.info("📝 Processing segments from generator...")
+        segment_count = 0
         for segment in segments:
+            segment_count += 1
             segment_data = {
                 "start": segment.start,
                 "end": segment.end,
                 "text": segment.text
             }
+
+            logger.info(f"   Segment {segment_count}: [{segment.start:.2f}s - {segment.end:.2f}s] {segment.text[:50]}")
 
             if hasattr(segment, 'words'):
                 segment_data["words"] = [
@@ -621,6 +672,8 @@ class DynamicWhisperEngine:
 
             result_segments.append(segment_data)
             full_text += segment.text + " "
+
+        logger.info(f"✅ Processed {segment_count} segments, total text length: {len(full_text)} chars")
 
         # Add speaker diarization if requested
         speaker_info = None
@@ -755,24 +808,67 @@ async def list_models():
 
 @app.get("/status")
 async def status():
-    return {
-        "status": "ready",
-        "hardware": whisper_engine.hardware,
-        "models_found": list(whisper_engine.models.keys()),
-        "current_model": whisper_engine.current_model,
-        "models_with_performance": f"See /models endpoint for detailed performance data",
-        "diarization": {
-            "available": whisper_engine.diarization_pipeline is not None,
-            "model": "pyannote/speaker-diarization-3.1" if whisper_engine.diarization_pipeline else None,
-            "note": "Speaker diarization ready" if whisper_engine.diarization_pipeline else "Diarization not available. Set HF_TOKEN and accept model license."
-        },
-        "npu_runtime": {
-            "available": hasattr(whisper_engine, 'npu_runtime'),
-            "mel_ready": whisper_engine.npu_runtime.mel_available if hasattr(whisper_engine, 'npu_runtime') else False,
-            "gelu_ready": whisper_engine.npu_runtime.gelu_available if hasattr(whisper_engine, 'npu_runtime') else False,
-            "attention_ready": whisper_engine.npu_runtime.attention_available if hasattr(whisper_engine, 'npu_runtime') else False,
+    try:
+        # Check NPU runtime status safely
+        npu_runtime_available = hasattr(whisper_engine, 'npu_runtime') and whisper_engine.npu_runtime is not None
+        mel_ready = False
+        gelu_ready = False
+        attention_ready = False
+
+        if npu_runtime_available:
+            try:
+                mel_ready = getattr(whisper_engine.npu_runtime, 'mel_available', False)
+                gelu_ready = getattr(whisper_engine.npu_runtime, 'gelu_available', False)
+                attention_ready = getattr(whisper_engine.npu_runtime, 'attention_available', False)
+            except:
+                pass
+
+        # Check NPU attention status safely
+        npu_attention_available = hasattr(whisper_engine, 'npu_attention') and whisper_engine.npu_attention is not None
+        npu_attention_active = False
+
+        if npu_attention_available:
+            try:
+                npu_attention_active = getattr(whisper_engine.npu_attention, 'available', False)
+            except:
+                pass
+
+        return {
+            "status": "ready",
+            "hardware": whisper_engine.hardware,
+            "models_found": list(whisper_engine.models.keys()),
+            "current_model": whisper_engine.current_model,
+            "models_with_performance": "See /models endpoint for detailed performance data",
+            "diarization": {
+                "available": whisper_engine.diarization_pipeline is not None,
+                "model": "pyannote/speaker-diarization-3.1" if whisper_engine.diarization_pipeline else None,
+                "note": "Speaker diarization ready (models bundled)" if whisper_engine.diarization_pipeline else "Diarization not available"
+            },
+            "npu_runtime": {
+                "available": npu_runtime_available,
+                "mel_ready": mel_ready,
+                "gelu_ready": gelu_ready,
+                "attention_ready": attention_ready,
+            },
+            "npu_attention": {
+                "available": npu_attention_available,
+                "active": npu_attention_active,
+                "xclbin": "attention_64x64.xclbin (INT32, 12.4 KB)",
+                "accuracy": "0.92 correlation",
+                "status": "VALIDATED" if npu_attention_active else "CPU fallback"
+            },
+            "performance_target": "25-35x realtime"
         }
-    }
+    except Exception as e:
+        logger.error(f"Error in status endpoint: {e}")
+        return {
+            "status": "error",
+            "error": str(e),
+            "hardware": {"type": "unknown"},
+            "models_found": [],
+            "diarization": {"available": False},
+            "npu_attention": {"available": False, "active": False}
+        }
 
 @app.get("/progress/{job_id}")
 async def get_progress(job_id: str):

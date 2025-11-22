@@ -1,0 +1,193 @@
+In file included from softmax_bf16_xdna1.cc:20:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/aie.hpp:41:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/abs.hpp:13:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/../vector.hpp:12:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/../concepts.hpp:17:
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/../types.hpp:30:9: warning: '__aie_register' macro redefined [-Wmacro-redefined]
+   30 | #define __aie_register(...) chess_storage(__VA_ARGS__)
+      |         ^
+/home/ucadmin/.local/lib/python3.13/site-packages/llvm-aie/lib/clang/20/include/aiebase_chess.h:15:9: note: previous definition is here
+   15 | #define __aie_register(x)
+      |         ^
+In file included from softmax_bf16_xdna1.cc:20:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/aie.hpp:41:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/abs.hpp:13:
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/../vector.hpp:72:7: warning: unknown attribute 'behave_as_fundamental_type' ignored [-Wunknown-attributes]
+   72 | class __AIE_API_FUNDAMENTAL_TYPE__ vector : private detail::vector_base<T, Elems>
+      |       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/../detail/config.hpp:19:40: note: expanded from macro '__AIE_API_FUNDAMENTAL_TYPE__'
+   19 | #define __AIE_API_FUNDAMENTAL_TYPE__ [[chess::behave_as_fundamental_type]]
+      |                                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from softmax_bf16_xdna1.cc:20:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/aie.hpp:41:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/abs.hpp:63:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/abs.hpp:10:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../broadcast.hpp:13:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../accum.hpp:10:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../aie_types.hpp:19:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/mdspan.hpp:12:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/../iterator.hpp:12:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/../detail/array_helpers.hpp:17:
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/../detail/../sparse_vector.hpp:80:7: warning: unknown attribute 'behave_as_fundamental_type' ignored [-Wunknown-attributes]
+   80 | class __AIE_API_FUNDAMENTAL_TYPE__ sparse_vector
+      |       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/../detail/config.hpp:19:40: note: expanded from macro '__AIE_API_FUNDAMENTAL_TYPE__'
+   19 | #define __AIE_API_FUNDAMENTAL_TYPE__ [[chess::behave_as_fundamental_type]]
+      |                                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from softmax_bf16_xdna1.cc:20:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/aie.hpp:41:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/abs.hpp:63:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/abs.hpp:10:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../broadcast.hpp:13:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../accum.hpp:10:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../aie_types.hpp:19:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/mdspan.hpp:12:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/../iterator.hpp:12:
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/../detail/array_helpers.hpp:55:7: warning: unknown attribute 'keep_in_registers' ignored [-Wunknown-attributes]
+   55 | class __AIE_API_KEEP_IN_REGISTERS__ tensor_buffer_stream;
+      |       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/../detail/config.hpp:20:41: note: expanded from macro '__AIE_API_KEEP_IN_REGISTERS__'
+   20 | #define __AIE_API_KEEP_IN_REGISTERS__ [[chess::keep_in_registers]]
+      |                                         ^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from softmax_bf16_xdna1.cc:20:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/aie.hpp:41:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/abs.hpp:63:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/abs.hpp:10:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../broadcast.hpp:13:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../accum.hpp:10:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../aie_types.hpp:19:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/mdspan.hpp:12:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/../iterator.hpp:12:
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/../detail/array_helpers.hpp:206:7: warning: unknown attribute 'keep_in_registers' ignored [-Wunknown-attributes]
+  206 | class __AIE_API_KEEP_IN_REGISTERS__ tensor_buffer_stream
+      |       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/../detail/config.hpp:20:41: note: expanded from macro '__AIE_API_KEEP_IN_REGISTERS__'
+   20 | #define __AIE_API_KEEP_IN_REGISTERS__ [[chess::keep_in_registers]]
+      |                                         ^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from softmax_bf16_xdna1.cc:20:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/aie.hpp:41:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/abs.hpp:63:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/abs.hpp:10:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../broadcast.hpp:13:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../accum.hpp:10:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../aie_types.hpp:19:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/mdspan.hpp:12:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/../iterator.hpp:12:
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/../detail/array_helpers.hpp:523:8: warning: unknown attribute 'keep_in_registers' ignored [-Wunknown-attributes]
+  523 | struct __AIE_API_KEEP_IN_REGISTERS__ random_circular_iterator_storage_static
+      |        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/../detail/config.hpp:20:41: note: expanded from macro '__AIE_API_KEEP_IN_REGISTERS__'
+   20 | #define __AIE_API_KEEP_IN_REGISTERS__ [[chess::keep_in_registers]]
+      |                                         ^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from softmax_bf16_xdna1.cc:20:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/aie.hpp:41:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/abs.hpp:63:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/abs.hpp:10:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../broadcast.hpp:13:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../accum.hpp:10:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../aie_types.hpp:19:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/mdspan.hpp:12:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/../iterator.hpp:12:
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/../detail/array_helpers.hpp:531:8: warning: unknown attribute 'keep_in_registers' ignored [-Wunknown-attributes]
+  531 | struct __AIE_API_KEEP_IN_REGISTERS__ random_circular_iterator_storage_dynamic
+      |        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/../detail/config.hpp:20:41: note: expanded from macro '__AIE_API_KEEP_IN_REGISTERS__'
+   20 | #define __AIE_API_KEEP_IN_REGISTERS__ [[chess::keep_in_registers]]
+      |                                         ^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from softmax_bf16_xdna1.cc:20:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/aie.hpp:41:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/abs.hpp:63:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/abs.hpp:10:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../broadcast.hpp:13:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../accum.hpp:10:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../aie_types.hpp:19:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/mdspan.hpp:12:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/../iterator.hpp:12:
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/../detail/array_helpers.hpp:539:7: warning: unknown attribute 'keep_in_registers' ignored [-Wunknown-attributes]
+  539 | class __AIE_API_KEEP_IN_REGISTERS__ random_circular_iterator
+      |       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/../detail/config.hpp:20:41: note: expanded from macro '__AIE_API_KEEP_IN_REGISTERS__'
+   20 | #define __AIE_API_KEEP_IN_REGISTERS__ [[chess::keep_in_registers]]
+      |                                         ^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from softmax_bf16_xdna1.cc:20:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/aie.hpp:41:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/abs.hpp:63:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/abs.hpp:10:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../broadcast.hpp:13:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../accum.hpp:10:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../aie_types.hpp:19:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/mdspan.hpp:12:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/../iterator.hpp:12:
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/../detail/array_helpers.hpp:750:9: warning: if statement has empty body [-Wempty-body]
+  750 |         REQUIRES_MSG(elems % Elems == 0,                          "Array size needs to be a multiple of vector size");
+      |         ^
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/../detail/utils.hpp:764:13: note: expanded from macro 'REQUIRES_MSG'
+  764 |             STATIC_ASSERT_CONSTANT_EXPRESSION(a, m); \
+      |             ^
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/../detail/utils.hpp:750:92: note: expanded from macro 'STATIC_ASSERT_CONSTANT_EXPRESSION'
+  750 | #define STATIC_ASSERT_CONSTANT_EXPRESSION(e, m) do { if (!chess_manifest(e)) chess_error(m); } while (0)
+      |                                                                                            ^
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/../detail/array_helpers.hpp:750:9: note: put the semicolon on a separate line to silence this warning
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/../detail/utils.hpp:764:13: note: expanded from macro 'REQUIRES_MSG'
+  764 |             STATIC_ASSERT_CONSTANT_EXPRESSION(a, m); \
+      |             ^
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/../detail/utils.hpp:750:92: note: expanded from macro 'STATIC_ASSERT_CONSTANT_EXPRESSION'
+  750 | #define STATIC_ASSERT_CONSTANT_EXPRESSION(e, m) do { if (!chess_manifest(e)) chess_error(m); } while (0)
+      |                                                                                            ^
+In file included from softmax_bf16_xdna1.cc:20:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/aie.hpp:41:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/abs.hpp:63:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/abs.hpp:10:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../broadcast.hpp:13:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../accum.hpp:10:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../aie_types.hpp:19:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/mdspan.hpp:12:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/../iterator.hpp:12:
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/../detail/array_helpers.hpp:872:7: warning: unknown attribute 'keep_in_registers' ignored [-Wunknown-attributes]
+  872 | class __AIE_API_KEEP_IN_REGISTERS__ vector_iterator
+      |       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/../detail/config.hpp:20:41: note: expanded from macro '__AIE_API_KEEP_IN_REGISTERS__'
+   20 | #define __AIE_API_KEEP_IN_REGISTERS__ [[chess::keep_in_registers]]
+      |                                         ^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from softmax_bf16_xdna1.cc:20:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/aie.hpp:41:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/abs.hpp:63:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/abs.hpp:10:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../broadcast.hpp:13:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../accum.hpp:10:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../aie_types.hpp:19:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/mdspan.hpp:12:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/../iterator.hpp:12:
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/../detail/array_helpers.hpp:996:7: warning: unknown attribute 'keep_in_registers' ignored [-Wunknown-attributes]
+  996 | class __AIE_API_KEEP_IN_REGISTERS__ restrict_vector_iterator
+      |       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/../detail/config.hpp:20:41: note: expanded from macro '__AIE_API_KEEP_IN_REGISTERS__'
+   20 | #define __AIE_API_KEEP_IN_REGISTERS__ [[chess::keep_in_registers]]
+      |                                         ^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from softmax_bf16_xdna1.cc:20:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/aie.hpp:41:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/abs.hpp:63:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/abs.hpp:10:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../broadcast.hpp:13:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../accum.hpp:10:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../aie_types.hpp:19:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/mdspan.hpp:12:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/../iterator.hpp:12:
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../detail/../detail/array_helpers.hpp:1427:7: warning: unknown attribute 'keep_in_registers' ignored [-Wunknown-attributes]
+ 1427 | class __AIE_API_KEEP_IN_REGISTERS__ sparse_vector_input_buffer_stream :
+      |       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/../detail/config.hpp:20:41: note: expanded from macro '__AIE_API_KEEP_IN_REGISTERS__'
+   20 | #define __AIE_API_KEEP_IN_REGISTERS__ [[chess::keep_in_registers]]
+      |                                         ^~~~~~~~~~~~~~~~~~~~~~~~
+In file included from softmax_bf16_xdna1.cc:20:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/aie.hpp:41:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/abs.hpp:63:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/abs.hpp:10:
+In file included from /home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../broadcast.hpp:13:
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/aie2/../../accum.hpp:47:7: warning: unknown attribute 'behave_as_fundamental_type' ignored [-Wunknown-attributes]
+   47 | class __AIE_API_FUNDAMENTAL_TYPE__ accum :
+      |       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/ucadmin/mlir-aie-source/third_party/aie_api/include/aie_api/detail/../detail/config.hpp:19:40: note: expanded from macro '__AIE_API_FUNDAMENTAL_TYPE__'
+   19 | #define __AIE_API_FUNDAMENTAL_TYPE__ [[chess::behave_as_fundamental_type]]
+      |                                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+13 warnings generated.

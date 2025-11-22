@@ -93,7 +93,14 @@ class NPUAttention:
         self.kernel = xrt.kernel(self.hw_ctx, "MLIR_AIE")
 
         # Load instruction sequence
-        insts_path = self.xclbin_path.parent / "build_attention_64x64" / "insts.bin"
+        # Check if xclbin_path is inside a build directory
+        if "build_attention" in str(self.xclbin_path):
+            # XCLBIN is in build directory, insts.bin is in the same directory
+            insts_path = self.xclbin_path.parent / "insts.bin"
+        else:
+            # XCLBIN is a symlink, look in the actual build directory
+            insts_path = self.xclbin_path.parent / "build_attention_64x64" / "insts.bin"
+
         with open(insts_path, "rb") as f:
             self.insts = f.read()
         self.n_insts = len(self.insts)

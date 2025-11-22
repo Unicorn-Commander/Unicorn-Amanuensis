@@ -1,0 +1,103 @@
+XRT build version: 2.20.0
+Build hash: 9b916190ad2865a7e7e497155c66b3b4940f0add
+Build date: 2025-10-08 06:49:15
+Git branch: HEAD
+PID: 3261533
+UID: 1000
+[Tue Nov 18 06:09:09 2025 GMT]
+HOST: uc-1
+EXE: /usr/bin/python3.13
+[XRT] WARNING: Kernel MLIR_AIE has no compute units with connectivity required for global argument at index 0. The argument is allocated in bank 1, the compute unit is connected to bank 131071. Allocating local copy of argument buffer in connected bank.
+[XRT] WARNING: Reverting to host copy of buffers (exec_buf: Operation not supported)
+[XRT] WARNING: Kernel MLIR_AIE has no compute units with connectivity required for global argument at index 2. The argument is allocated in bank 0, the compute unit is connected to bank 131071. Allocating local copy of argument buffer in connected bank.
+[XRT] WARNING: Reverting to host copy of buffers (exec_buf: Operation not supported)
+[XRT] WARNING: Kernel MLIR_AIE has no compute units with connectivity required for global argument at index 0. The argument is allocated in bank 1, the compute unit is connected to bank 131071. Allocating local copy of argument buffer in connected bank.
+[XRT] WARNING: Reverting to host copy of buffers (exec_buf: Operation not supported)
+[XRT] WARNING: Kernel MLIR_AIE has no compute units with connectivity required for global argument at index 2. The argument is allocated in bank 0, the compute unit is connected to bank 131071. Allocating local copy of argument buffer in connected bank.
+[XRT] WARNING: Reverting to host copy of buffers (exec_buf: Operation not supported)
+[XRT] WARNING: Kernel MLIR_AIE has no compute units with connectivity required for global argument at index 0. The argument is allocated in bank 1, the compute unit is connected to bank 131071. Allocating local copy of argument buffer in connected bank.
+[XRT] WARNING: Reverting to host copy of buffers (exec_buf: Operation not supported)
+[XRT] WARNING: Kernel MLIR_AIE has no compute units with connectivity required for global argument at index 2. The argument is allocated in bank 0, the compute unit is connected to bank 131071. Allocating local copy of argument buffer in connected bank.
+[XRT] WARNING: Reverting to host copy of buffers (exec_buf: Operation not supported)
+[XRT] WARNING: Kernel MLIR_AIE has no compute units with connectivity required for global argument at index 0. The argument is allocated in bank 1, the compute unit is connected to bank 131071. Allocating local copy of argument buffer in connected bank.
+[XRT] WARNING: Reverting to host copy of buffers (exec_buf: Operation not supported)
+[XRT] WARNING: Kernel MLIR_AIE has no compute units with connectivity required for global argument at index 2. The argument is allocated in bank 0, the compute unit is connected to bank 131071. Allocating local copy of argument buffer in connected bank.
+[XRT] WARNING: Reverting to host copy of buffers (exec_buf: Operation not supported)
+[XRT] WARNING: Kernel MLIR_AIE has no compute units with connectivity required for global argument at index 0. The argument is allocated in bank 1, the compute unit is connected to bank 131071. Allocating local copy of argument buffer in connected bank.
+[XRT] WARNING: Reverting to host copy of buffers (exec_buf: Operation not supported)
+[XRT] WARNING: Kernel MLIR_AIE has no compute units with connectivity required for global argument at index 2. The argument is allocated in bank 0, the compute unit is connected to bank 131071. Allocating local copy of argument buffer in connected bank.
+[XRT] WARNING: Reverting to host copy of buffers (exec_buf: Operation not supported)
+[XRT] WARNING: Kernel MLIR_AIE has no compute units with connectivity required for global argument at index 0. The argument is allocated in bank 1, the compute unit is connected to bank 131071. Allocating local copy of argument buffer in connected bank.
+[XRT] WARNING: Reverting to host copy of buffers (exec_buf: Operation not supported)
+[XRT] WARNING: Kernel MLIR_AIE has no compute units with connectivity required for global argument at index 2. The argument is allocated in bank 0, the compute unit is connected to bank 131071. Allocating local copy of argument buffer in connected bank.
+[XRT] WARNING: Reverting to host copy of buffers (exec_buf: Operation not supported)
+[XRT] WARNING: Kernel MLIR_AIE has no compute units with connectivity required for global argument at index 0. The argument is allocated in bank 1, the compute unit is connected to bank 131071. Allocating local copy of argument buffer in connected bank.
+[XRT] WARNING: Reverting to host copy of buffers (exec_buf: Operation not supported)
+[XRT] WARNING: Kernel MLIR_AIE has no compute units with connectivity required for global argument at index 2. The argument is allocated in bank 0, the compute unit is connected to bank 131071. Allocating local copy of argument buffer in connected bank.
+[XRT] WARNING: Reverting to host copy of buffers (exec_buf: Operation not supported)
+[XRT] WARNING: Kernel MLIR_AIE has no compute units with connectivity required for global argument at index 0. The argument is allocated in bank 1, the compute unit is connected to bank 131071. Allocating local copy of argument buffer in connected bank.
+[XRT] WARNING: Reverting to host copy of buffers (exec_buf: Operation not supported)
+[XRT] WARNING: Kernel MLIR_AIE has no compute units with connectivity required for global argument at index 2. The argument is allocated in bank 0, the compute unit is connected to bank 131071. Allocating local copy of argument buffer in connected bank.
+[XRT] WARNING: Reverting to host copy of buffers (exec_buf: Operation not supported)
+[XRT] WARNING: Kernel MLIR_AIE has no compute units with connectivity required for global argument at index 0. The argument is allocated in bank 1, the compute unit is connected to bank 131071. Allocating local copy of argument buffer in connected bank.
+[XRT] WARNING: Reverting to host copy of buffers (exec_buf: Operation not supported)
+[XRT] WARNING: Kernel MLIR_AIE has no compute units with connectivity required for global argument at index 2. The argument is allocated in bank 0, the compute unit is connected to bank 131071. Allocating local copy of argument buffer in connected bank.
+[XRT] WARNING: Reverting to host copy of buffers (exec_buf: Operation not supported)
+[XRT] WARNING: Kernel MLIR_AIE has no compute units with connectivity required for global argument at index 0. The argument is allocated in bank 1, the compute unit is connected to bank 131071. Allocating local copy of argument buffer in connected bank.
+[XRT] WARNING: Reverting to host copy of buffers (exec_buf: Operation not supported)
+[XRT] WARNING: Kernel MLIR_AIE has no compute units with connectivity required for global argument at index 2. The argument is allocated in bank 0, the compute unit is connected to bank 131071. Allocating local copy of argument buffer in connected bank.
+[XRT] WARNING: Reverting to host copy of buffers (exec_buf: Operation not supported)
+======================================================================
+Softmax BF16 Kernel Test - AMD Phoenix NPU
+======================================================================
+
+Test Configuration:
+  Elements: 1024
+  Data Type: BF16 (2048 bytes)
+  Iterations: 10
+
+Step 1: Loading XCLBIN...
+✅ XCLBIN loaded successfully
+
+Step 2: Creating hardware context...
+✅ Hardware context created
+
+Step 3: Getting kernel...
+✅ Kernel found: MLIR_AIE
+
+Step 4: Loading instruction sequence...
+✅ Instructions loaded: 300 bytes
+
+Step 5: Preparing buffers...
+✅ Buffers allocated and instructions written
+
+Step 6: Computing reference softmax...
+✅ Reference computed
+   Input range: [-5.000, 5.000]
+   Output range: [0.000000, 0.009728]
+   Output sum: 1.000000 (should be 1.0)
+
+Step 7: Running kernel on NPU...
+✅ Kernel execution complete
+
+Step 8: Performance Measurements:
+  Average time: 0.459 ms
+  Std deviation: 0.347 ms
+  Min time: 0.244 ms
+  Max time: 1.461 ms
+
+Step 9: Verifying results...
+  Output sum: 0.000000 (should be 1.0)
+  Max error: 0.009728
+  Mean error: 0.000977
+  ❌ Softmax sum check FAILED (got 0.000000, expected 1.0)
+  ✅ Accuracy check PASSED
+
+Sample Output (first 10 elements):
+  Expected: [4.4164983e-07 4.4598823e-07 4.5036927e-07 4.5479328e-07 4.5926072e-07
+ 4.6377212e-07 4.6832778e-07 4.7292824e-07 4.7757379e-07 4.8226508e-07]
+  NPU Out:  [0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+
+======================================================================
+✅ TEST COMPLETE - Softmax kernel working on NPU!
+======================================================================

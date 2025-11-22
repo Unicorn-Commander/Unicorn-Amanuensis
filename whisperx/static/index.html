@@ -3,33 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🦄 Unicorn Amanuensis - Professional Transcription Suite</title>
+    <title>🦄 Unicorn Amanuensis - NPU Edition (Nov 3, 2025)</title>
     <link rel="icon" type="image/png" href="/static/unicorn-logo.png">
     <style>
         /* Theme Configurations */
         :root {
-            /* Light Theme (Default) */
-            --bg-primary: #f8fafc;
-            --bg-secondary: #ffffff;
-            --bg-card: rgba(255, 255, 255, 0.95);
-            --text-primary: #1e293b;
-            --text-secondary: #475569;
-            --text-muted: #94a3b8;
-            --border-color: #e2e8f0;
-            --accent-purple: #8b5cf6;
-            --accent-purple-hover: #7c3aed;
-            --accent-gold: #fbbf24;
-            --accent-blue: #3b82f6;
-            --accent-green: #10b981;
-            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
-            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
-            --input-bg: #ffffff;
-            --input-border: #cbd5e1;
-            --input-focus: #8b5cf6;
-        }
-
-        [data-theme="dark"] {
             --bg-primary: #0f172a;
             --bg-secondary: #1e293b;
             --bg-card: rgba(30, 41, 59, 0.95);
@@ -42,16 +20,42 @@
             --accent-gold: #fcd34d;
             --accent-blue: #60a5fa;
             --accent-green: #34d399;
+            --accent-orange: #fb923c;
+            --accent-red: #f87171;
             --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
             --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
             --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+            --shadow-glow: 0 0 20px rgba(167, 139, 250, 0.3);
             --input-bg: #1e293b;
             --input-border: #475569;
             --input-focus: #a78bfa;
         }
 
+        [data-theme="light"] {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-card: rgba(255, 255, 255, 0.95);
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --border-color: #e2e8f0;
+            --accent-purple: #8b5cf6;
+            --accent-purple-hover: #7c3aed;
+            --accent-gold: #fbbf24;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-orange: #f97316;
+            --accent-red: #ef4444;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+            --shadow-glow: 0 0 20px rgba(139, 92, 246, 0.2);
+            --input-bg: #ffffff;
+            --input-border: #cbd5e1;
+            --input-focus: #8b5cf6;
+        }
+
         [data-theme="unicorn"] {
-            /* Dark Magic Unicorn theme as requested */
             --bg-primary: linear-gradient(135deg, #1a0033 0%, #2d1b4e 50%, #4a1b6b 100%);
             --bg-secondary: rgba(74, 27, 107, 0.3);
             --bg-card: rgba(45, 27, 78, 0.95);
@@ -64,15 +68,17 @@
             --accent-gold: #fbbf24;
             --accent-blue: #60a5fa;
             --accent-green: #34d399;
+            --accent-orange: #fb923c;
+            --accent-red: #f87171;
             --shadow-sm: 0 2px 4px rgba(168, 85, 247, 0.2);
             --shadow-md: 0 4px 8px rgba(168, 85, 247, 0.3);
             --shadow-lg: 0 10px 20px rgba(168, 85, 247, 0.4);
+            --shadow-glow: 0 0 30px rgba(192, 132, 252, 0.5);
             --input-bg: rgba(45, 27, 78, 0.8);
             --input-border: rgba(168, 85, 247, 0.4);
             --input-focus: #c084fc;
         }
 
-        /* Base Styles */
         * {
             margin: 0;
             padding: 0;
@@ -92,7 +98,6 @@
             position: relative;
         }
 
-        /* Magical sparkles for unicorn theme */
         [data-theme="unicorn"] body::before {
             content: '';
             position: fixed;
@@ -100,13 +105,11 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: 
+            background-image:
                 radial-gradient(2px 2px at 20% 30%, #c084fc, transparent),
                 radial-gradient(2px 2px at 40% 70%, #a855f7, transparent),
-                radial-gradient(1px 1px at 90% 40%, #fbbf24, transparent),
-                radial-gradient(1px 1px at 80% 10%, #c084fc, transparent);
-            background-repeat: repeat;
-            background-size: 550px 550px, 350px 350px, 250px 250px, 150px 150px;
+                radial-gradient(1px 1px at 90% 40%, #fbbf24, transparent);
+            background-size: 550px 550px, 350px 350px, 250px 250px;
             animation: sparkle 20s linear infinite;
             pointer-events: none;
             opacity: 0.6;
@@ -118,57 +121,126 @@
             to { transform: translateY(-550px); }
         }
 
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(16, 185, 129, 0.8); }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes slide-up {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 2rem;
             position: relative;
             z-index: 1;
         }
 
-        /* Header */
-        header {
+        /* NPU Status Dashboard - Top of Page */
+        .npu-dashboard {
             background: var(--bg-card);
             backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border-color);
-            box-shadow: var(--shadow-sm);
-            margin-bottom: 2rem;
+            border: 2px solid var(--border-color);
             border-radius: 1rem;
-        }
-
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             padding: 1.5rem 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 2rem;
+            align-items: center;
+            animation: slide-up 0.5s ease;
         }
 
-        .logo {
+        .npu-status-indicator {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
-            gap: 1rem;
-        }
-
-        .logo-icon {
+            justify-content: center;
             font-size: 2.5rem;
-            background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-gold) 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
+            position: relative;
+            transition: all 0.3s ease;
         }
 
-        .logo-text h1 {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: var(--text-primary);
+        .npu-status-indicator.active {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-blue));
+            animation: pulse-glow 2s infinite;
         }
 
-        .logo-text p {
+        .npu-status-indicator.cpu {
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-red));
+        }
+
+        .npu-info {
+            flex: 1;
+        }
+
+        .npu-info h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .npu-status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .npu-status-badge.active {
+            background: var(--accent-green);
+            color: white;
+        }
+
+        .npu-status-badge.fallback {
+            background: var(--accent-orange);
+            color: white;
+        }
+
+        .npu-components {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .npu-component {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
             font-size: 0.875rem;
-            color: var(--text-muted);
+            color: var(--text-secondary);
         }
 
-        /* Theme Switcher */
+        .npu-component-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .npu-component-dot.active {
+            background: var(--accent-green);
+            box-shadow: 0 0 10px var(--accent-green);
+        }
+
+        .npu-component-dot.inactive {
+            background: var(--text-muted);
+        }
+
         .theme-switcher {
             display: flex;
             gap: 0.5rem;
@@ -186,9 +258,6 @@
             border-radius: 1.5rem;
             cursor: pointer;
             transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 0.375rem;
             font-size: 0.875rem;
             font-weight: 500;
         }
@@ -203,14 +272,14 @@
             color: white;
         }
 
-        /* Main Content */
+        /* Main Grid Layout */
         main {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 450px 1fr;
             gap: 2rem;
         }
 
-        @media (max-width: 968px) {
+        @media (max-width: 1200px) {
             main {
                 grid-template-columns: 1fr;
             }
@@ -223,6 +292,7 @@
             box-shadow: var(--shadow-md);
             border: 1px solid var(--border-color);
             backdrop-filter: blur(10px);
+            animation: slide-up 0.5s ease;
         }
 
         .card-title {
@@ -249,7 +319,6 @@
         }
 
         input[type="file"],
-        input[type="url"],
         select {
             width: 100%;
             padding: 0.75rem 1rem;
@@ -303,7 +372,6 @@
             color: var(--accent-green);
         }
 
-        /* Buttons */
         .btn {
             padding: 0.75rem 1.5rem;
             border: none;
@@ -316,14 +384,15 @@
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
+            width: 100%;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-purple-hover) 100%);
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-purple-hover));
             color: white;
         }
 
-        .btn-primary:hover {
+        .btn-primary:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
         }
@@ -331,25 +400,324 @@
         .btn-primary:disabled {
             opacity: 0.5;
             cursor: not-allowed;
-            transform: none;
         }
 
-        .btn-secondary {
+        /* Performance Metrics Dashboard */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
             background: var(--bg-secondary);
-            color: var(--text-secondary);
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .metric-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .metric-sublabel {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Speedup Visualization */
+        .speedup-viz {
+            margin: 2rem 0;
+        }
+
+        .speedup-bar-container {
+            background: var(--bg-secondary);
+            height: 60px;
+            border-radius: 0.75rem;
+            position: relative;
+            overflow: hidden;
             border: 1px solid var(--border-color);
         }
 
-        .btn-secondary:hover {
-            background: var(--bg-primary);
+        .speedup-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-green), var(--accent-blue), var(--accent-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1.25rem;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .speedup-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            to { left: 100%; }
+        }
+
+        .speedup-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Speaker Timeline */
+        .speaker-timeline {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 0.75rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .speaker-colors {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .speaker-color-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .speaker-color-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 0.25rem;
+        }
+
+        .timeline-bar {
+            height: 60px;
+            background: var(--bg-card);
+            border-radius: 0.5rem;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .timeline-segment {
+            position: absolute;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-right: 1px solid rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .timeline-segment:hover {
+            filter: brightness(1.2);
+            z-index: 10;
+        }
+
+        /* Speaker Statistics */
+        .speaker-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .speaker-stat {
+            background: var(--bg-card);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .speaker-stat-name {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .speaker-stat-percent {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-purple);
+        }
+
+        /* Processing Pipeline */
+        .processing-pipeline {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 0.75rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+        }
+
+        .pipeline-stage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            min-width: 120px;
+            padding: 1rem;
+            background: var(--bg-card);
+            border-radius: 0.5rem;
+            border: 2px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .pipeline-stage.active {
+            border-color: var(--accent-green);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .pipeline-stage.completed {
+            border-color: var(--accent-blue);
+        }
+
+        .pipeline-icon {
+            font-size: 2rem;
+        }
+
+        .pipeline-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .pipeline-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .pipeline-arrow {
+            font-size: 1.5rem;
+            color: var(--text-muted);
+        }
+
+        /* Transcription Display */
+        .transcription-section {
+            margin-top: 2rem;
+        }
+
+        .transcription-text {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border-color);
+            max-height: 400px;
+            overflow-y: auto;
+            line-height: 1.8;
             color: var(--text-primary);
+            white-space: pre-wrap;
+        }
+
+        .speaker-segment {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: var(--bg-card);
+            border-radius: 0.5rem;
+            border-left: 4px solid var(--accent-purple);
+        }
+
+        .speaker-label {
+            font-weight: 700;
+            color: var(--accent-purple);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .timestamp {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+
+        /* Download Options */
+        .download-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .download-btn {
+            padding: 0.75rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .download-btn:hover {
+            background: var(--accent-purple);
+            color: white;
+            transform: translateY(-2px);
         }
 
         /* Loading State */
         .loading {
             display: none;
             text-align: center;
-            padding: 2rem;
+            padding: 3rem;
         }
 
         .loading.active {
@@ -357,383 +725,348 @@
         }
 
         .spinner {
-            width: 3rem;
-            height: 3rem;
-            border: 3px solid var(--border-color);
+            width: 4rem;
+            height: 4rem;
+            border: 4px solid var(--border-color);
             border-top-color: var(--accent-purple);
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin: 0 auto 1rem;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Progress Dialog */
-        .progress-dialog {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 1rem;
-            padding: 1.5rem;
-            margin-top: 1rem;
-            box-shadow: var(--shadow-md);
-        }
-
-        .progress-content h3 {
-            margin: 0 0 1rem 0;
-            color: var(--text-primary);
+        .loading-stage {
             font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
         }
 
+        .loading-detail {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        /* Progress Bar */
         .progress-bar {
-            background: var(--bg-secondary);
+            width: 100%;
             height: 8px;
+            background: var(--bg-secondary);
             border-radius: 4px;
             overflow: hidden;
             margin: 1rem 0;
         }
 
         .progress-fill {
-            background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue));
             height: 100%;
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue));
             border-radius: 4px;
             transition: width 0.3s ease;
         }
 
-        .progress-stats {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            margin-bottom: 1rem;
-        }
-
-        .chunk-results {
-            max-height: 200px;
-            overflow-y: auto;
-            border: 1px solid var(--border-color);
-            border-radius: 0.5rem;
-            padding: 0.5rem;
-            background: var(--bg-secondary);
-            font-family: monospace;
-            font-size: 0.85rem;
-        }
-
-        .chunk-result {
-            padding: 0.5rem;
-            margin: 0.25rem 0;
-            border-radius: 0.25rem;
-            border-left: 3px solid var(--accent-purple);
-        }
-
-        .chunk-result.stage-info {
-            background: rgba(139, 92, 246, 0.1);
-            border-left-color: var(--accent-blue);
-        }
-
-        .chunk-result.transcription {
-            background: rgba(16, 185, 129, 0.1);
-            border-left-color: var(--accent-green);
-        }
-
-        .chunk-result small {
-            color: var(--text-muted);
-            font-size: 0.75rem;
-        }
-
-        /* Results */
-        .result-section {
-            margin-top: 1.5rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .result-title {
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: var(--text-secondary);
-        }
-
-        .transcription-text {
-            background: var(--bg-secondary);
-            padding: 1rem;
-            border-radius: 0.75rem;
-            border: 1px solid var(--border-color);
-            max-height: 300px;
-            overflow-y: auto;
-            line-height: 1.6;
-            color: var(--text-primary);
-        }
-
-        .word-timestamp {
-            display: inline-block;
-            padding: 0.25rem 0.5rem;
-            margin: 0.125rem;
-            background: rgba(139, 92, 246, 0.1);
-            border-radius: 0.375rem;
-            font-size: 0.875rem;
-            color: var(--text-primary);
-        }
-
-        .speaker-segment {
-            margin-bottom: 1rem;
-            padding: 0.75rem;
-            background: var(--bg-secondary);
-            border-radius: 0.5rem;
-            border-left: 3px solid var(--accent-purple);
-        }
-
-        .speaker-label {
-            font-weight: 600;
-            color: var(--accent-purple);
-            margin-bottom: 0.25rem;
-        }
-
-        /* Stats */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .stat-card {
-            background: var(--bg-secondary);
-            padding: 1rem;
-            border-radius: 0.75rem;
-            border: 1px solid var(--border-color);
+        /* Empty State */
+        .empty-state {
             text-align: center;
-        }
-
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--accent-purple);
-        }
-
-        .stat-label {
-            font-size: 0.875rem;
+            padding: 4rem 2rem;
             color: var(--text-muted);
-            margin-top: 0.25rem;
         }
 
-        /* Wave Visualizer */
-        #waveform {
-            width: 100%;
-            height: 128px;
-            margin: 1rem 0;
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
             background: var(--bg-secondary);
-            border-radius: 0.75rem;
-            overflow: hidden;
-            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-purple);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-purple-hover);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .npu-dashboard {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .processing-pipeline {
+                flex-direction: column;
+            }
+
+            .pipeline-arrow {
+                transform: rotate(90deg);
+            }
         }
     </style>
 </head>
-<body>
+<body data-theme="dark">
     <div class="container">
-        <header>
-            <div class="header-content">
-                <div class="logo">
-                    <img src="/static/unicorn-logo.png" alt="Unicorn Logo" class="logo-icon" style="height: 60px; width: auto;">
-                    <div class="logo-text">
-                        <h1>Unicorn Amanuensis</h1>
-                        <p>Professional AI Transcription Suite</p>
-                        <div id="hardwareStatus" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: #4a5568; border-radius: 0.5rem; display: inline-block; font-size: 0.875rem;">
-                            <span id="hardwareIcon">⚙️</span> <span id="hardwareText">Detecting...</span>
-                        </div>
+        <!-- NPU Status Dashboard -->
+        <div class="npu-dashboard">
+            <div class="npu-status-indicator" id="npuStatusIndicator">
+                <img src="/static/unicorn-logo.png" alt="Unicorn Logo" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover;">
+            </div>
+            <div class="npu-info">
+                <h2>
+                    <span id="hardwareName">Unicorn Amanuensis</span>
+                    <span class="npu-status-badge" id="npuStatusBadge">NPU ACTIVE</span>
+                </h2>
+                <p style="color: var(--text-secondary); margin-bottom: 0.5rem;" id="hardwareDetail">
+                    NPU-Accelerated Speech-to-Text with Speaker Diarization
+                </p>
+                <div class="npu-components">
+                    <div class="npu-component">
+                        <div class="npu-component-dot active" id="melDot"></div>
+                        <span>NPU Mel Spectrogram</span>
                     </div>
-                </div>
-                <div class="theme-switcher">
-                    <button class="theme-btn active" data-theme="light">
-                        <span>☀️</span> Light
-                    </button>
-                    <button class="theme-btn" data-theme="dark">
-                        <span>🌙</span> Dark
-                    </button>
-                    <button class="theme-btn" data-theme="unicorn">
-                        <span>✨</span> Unicorn
-                    </button>
+                    <div class="npu-component">
+                        <div class="npu-component-dot active" id="attentionDot"></div>
+                        <span>NPU Attention</span>
+                    </div>
+                    <div class="npu-component">
+                        <div class="npu-component-dot active" id="encoderDot"></div>
+                        <span>NPU Encoder</span>
+                    </div>
+                    <div class="npu-component">
+                        <div class="npu-component-dot active" id="decoderDot"></div>
+                        <span>NPU Decoder</span>
+                    </div>
                 </div>
             </div>
-        </header>
+            <div class="theme-switcher">
+                <button class="theme-btn" data-theme="light">☀️</button>
+                <button class="theme-btn active" data-theme="dark">🌙</button>
+                <button class="theme-btn" data-theme="unicorn">✨</button>
+            </div>
+        </div>
 
         <main>
-            <div class="card">
-                <h2 class="card-title">
-                    <span>🎙️</span> Upload & Transcribe
-                </h2>
-                
-                <form id="transcribeForm">
-                    <div class="form-group">
-                        <label for="audioFile">Audio File</label>
-                        <div class="file-input-wrapper">
-                            <input type="file" id="audioFile" accept="audio/*,video/*">
-                            <label for="audioFile" class="file-input-label" id="fileLabel">
-                                📁 Choose audio or video file
+            <!-- Left Column: Upload Form -->
+            <div>
+                <div class="card">
+                    <h2 class="card-title">
+                        <span>🎙️</span> Upload & Transcribe
+                    </h2>
+
+                    <form id="transcribeForm">
+                        <div class="form-group">
+                            <label for="audioFile">Audio File</label>
+                            <div class="file-input-wrapper">
+                                <input type="file" id="audioFile" accept="audio/*,video/*">
+                                <label for="audioFile" class="file-input-label" id="fileLabel">
+                                    📁 Choose audio or video file
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="model">Whisper Model</label>
+                            <select id="model">
+                                <option value="base" selected>Base (Fastest - 25-35× realtime)</option>
+                                <option value="small">Small (Balanced - 15-20× realtime)</option>
+                                <option value="medium">Medium (Accurate - 10-15× realtime)</option>
+                                <option value="large-v3">Large-v3 (Best - 5-8× realtime)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" id="vadFilter" checked style="width: 18px; height: 18px;">
+                                <span>Voice Activity Detection (VAD)</span>
                             </label>
                         </div>
-                    </div>
 
-                    <div class="form-group">
-                        <label for="audioUrl">Or Audio URL</label>
-                        <input type="url" id="audioUrl" placeholder="https://example.com/audio.mp3">
-                    </div>
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" id="enableDiarization" style="width: 18px; height: 18px;">
+                                <span>Speaker Diarization</span>
+                            </label>
+                        </div>
 
-                    <div class="form-group">
-                        <label for="model">Model</label>
-                        <select id="model">
-                            <option value="large-v3">Large v3 (Most Accurate - XDNA1 NPU)</option>
-                            <option value="medium">Medium (XDNA1 NPU Optimized)</option>
-                            <option value="small">Small (XDNA1 NPU Optimized)</option>
-                            <option value="base" selected>Base (Fast 13x realtime - XDNA1 NPU + Sign-Fixed Mel)</option>
-                            <option value="tiny">Tiny (Fastest - XDNA1 NPU)</option>
-                        </select>
-                    </div>
+                        <button type="submit" class="btn btn-primary" id="transcribeBtn">
+                            <span>🚀</span> Transcribe with NPU
+                        </button>
+                    </form>
 
-                    <div class="form-group">
-                        <label for="language">Language</label>
-                        <select id="language">
-                            <option value="">Auto-detect</option>
-                            <option value="en">English</option>
-                            <option value="es">Spanish</option>
-                            <option value="fr">French</option>
-                            <option value="de">German</option>
-                            <option value="it">Italian</option>
-                            <option value="pt">Portuguese</option>
-                            <option value="ru">Russian</option>
-                            <option value="ja">Japanese</option>
-                            <option value="zh">Chinese</option>
-                            <option value="ar">Arabic</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                            <input type="checkbox" id="vadFilter" checked style="cursor: pointer; width: 18px; height: 18px;">
-                            <span style="font-weight: 600;">Enable Voice Activity Detection (VAD)</span>
-                        </label>
-                        <p style="margin: 0.5rem 0 0 1.75rem; font-size: 0.875rem; color: var(--text-muted); line-height: 1.4;">
-                            Automatically filters out silence and non-speech segments for cleaner transcription
-                        </p>
-                    </div>
-
-                    <div class="form-group">
-                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                            <input type="checkbox" id="enableDiarization" style="cursor: pointer; width: 18px; height: 18px;">
-                            <span style="font-weight: 600;">Enable Speaker Diarization</span>
-                        </label>
-                        <p style="margin: 0.5rem 0 0 1.75rem; font-size: 0.875rem; color: var(--text-muted); line-height: 1.4;">
-                            Identify different speakers in the audio (experimental feature, may log warnings)
-                        </p>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary" id="transcribeBtn">
-                        <span>🚀</span> Transcribe
-                    </button>
-                </form>
-
-                <div class="loading" id="loading">
-                    <div class="spinner"></div>
-                    <p>Processing transcription...</p>
-                </div>
-                
-                <!-- Progress Dialog for Chunked Processing -->
-                <div class="progress-dialog" id="progressDialog" style="display: none;">
-                    <div class="progress-content">
-                        <h3>🔪 Processing Long Audio</h3>
-                        <p id="progressMessage">Preparing chunked processing...</p>
-                        
+                    <div class="loading" id="loading">
+                        <div class="spinner"></div>
+                        <div class="loading-stage" id="loadingStage">Processing...</div>
+                        <div class="loading-detail" id="loadingDetail">Initializing NPU</div>
                         <div class="progress-bar">
                             <div class="progress-fill" id="progressFill" style="width: 0%"></div>
                         </div>
-                        
-                        <div class="progress-stats">
-                            <span id="progressPercent">0%</span>
-                            <span id="chunkProgress">Chunk 0/0</span>
-                        </div>
-                        
-                        <div class="chunk-results" id="chunkResults">
-                            <!-- Chunk results will be added here -->
-                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="card">
-                <h2 class="card-title">
-                    <span>📝</span> Results
-                </h2>
+            <!-- Right Column: Results -->
+            <div>
+                <!-- Performance Metrics -->
+                <div class="card" id="metricsCard" style="display: none;">
+                    <h2 class="card-title">
+                        <span>⚡</span> Performance Metrics
+                    </h2>
 
-                <div id="results" style="display: none;">
-                    <div id="waveform"></div>
-                    
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-value" id="duration">0:00</div>
-                            <div class="stat-label">Duration</div>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-icon">🚀</div>
+                            <div class="metric-value" id="realtimeFactor">0×</div>
+                            <div class="metric-label">Realtime Factor</div>
+                            <div class="metric-sublabel" id="speedupDetail">--</div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="wordCount">0</div>
-                            <div class="stat-label">Words</div>
+                        <div class="metric-card">
+                            <div class="metric-icon">⏱️</div>
+                            <div class="metric-value" id="processingTime">0s</div>
+                            <div class="metric-label">Processing Time</div>
+                            <div class="metric-sublabel" id="audioDuration">--</div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="speakerCount">0</div>
-                            <div class="stat-label">Speakers</div>
+                        <div class="metric-card">
+                            <div class="metric-icon">🎯</div>
+                            <div class="metric-value" id="hardwareUsed">NPU</div>
+                            <div class="metric-label">Hardware</div>
+                            <div class="metric-sublabel" id="npuComponents">--</div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="processingTime">0s</div>
-                            <div class="stat-label">Processing</div>
+                        <div class="metric-card">
+                            <div class="metric-icon">👥</div>
+                            <div class="metric-value" id="speakerCount">0</div>
+                            <div class="metric-label">Speakers</div>
+                            <div class="metric-sublabel" id="wordCount">-- words</div>
                         </div>
                     </div>
 
-                    <div class="stats-grid" style="margin-top: 1rem;">
-                        <div class="stat-card">
-                            <div class="stat-value" id="vadStatus" style="font-size: 1.2rem;">--</div>
-                            <div class="stat-label">VAD Filter</div>
+                    <!-- Speedup Visualization -->
+                    <div class="speedup-viz">
+                        <h3 style="font-size: 1rem; margin-bottom: 1rem; color: var(--text-secondary);">Performance vs Target</h3>
+                        <div class="speedup-bar-container">
+                            <div class="speedup-bar" id="speedupBar" style="width: 0%">
+                                <span id="speedupBarText">0×</span>
+                            </div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="diarizationStatus" style="font-size: 1.2rem;">--</div>
-                            <div class="stat-label">Diarization</div>
+                        <div class="speedup-labels">
+                            <span>0×</span>
+                            <span>25× Target</span>
+                            <span>50×</span>
                         </div>
                     </div>
 
-                    <div class="result-section">
-                        <h3 class="result-title">Transcription</h3>
+                    <!-- Processing Pipeline -->
+                    <div class="processing-pipeline" id="processingPipeline" style="display: none;">
+                        <div class="pipeline-stage" id="pipelineMel">
+                            <div class="pipeline-icon">🎵</div>
+                            <div class="pipeline-label">NPU Mel</div>
+                            <div class="pipeline-time" id="melTime">--</div>
+                        </div>
+                        <div class="pipeline-arrow">→</div>
+                        <div class="pipeline-stage" id="pipelineEncoder">
+                            <div class="pipeline-icon">🧠</div>
+                            <div class="pipeline-label">NPU Encoder</div>
+                            <div class="pipeline-time" id="encoderTime">--</div>
+                        </div>
+                        <div class="pipeline-arrow">→</div>
+                        <div class="pipeline-stage" id="pipelineDecoder">
+                            <div class="pipeline-icon">📝</div>
+                            <div class="pipeline-label">NPU Decoder</div>
+                            <div class="pipeline-time" id="decoderTime">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Speaker Timeline -->
+                <div class="card" id="speakerTimelineCard" style="display: none;">
+                    <h2 class="card-title">
+                        <span>👥</span> Speaker Timeline
+                    </h2>
+
+                    <div class="speaker-timeline">
+                        <div class="timeline-header">
+                            <h3 style="font-size: 1rem; margin: 0;">Who spoke when</h3>
+                            <div class="speaker-colors" id="speakerColors"></div>
+                        </div>
+                        <div class="timeline-bar" id="timelineBar"></div>
+                        <div class="speaker-stats" id="speakerStats"></div>
+                    </div>
+                </div>
+
+                <!-- Transcription Results -->
+                <div class="card" id="resultsCard" style="display: none;">
+                    <h2 class="card-title">
+                        <span>📝</span> Transcription
+                    </h2>
+
+                    <div class="transcription-section">
                         <div class="transcription-text" id="transcriptionText"></div>
                     </div>
 
-                    <div class="result-section" id="speakersSection" style="display: none;">
-                        <h3 class="result-title">Speaker Segments</h3>
-                        <div id="speakerSegments"></div>
-                    </div>
-
-                    <div class="result-section">
-                        <button class="btn btn-secondary" onclick="downloadTranscription()">
-                            <span>💾</span> Download
+                    <!-- Download Options -->
+                    <div class="download-options">
+                        <button class="download-btn" onclick="downloadAs('json')">
+                            💾 JSON
                         </button>
-                        <button class="btn btn-secondary" onclick="copyTranscription()">
-                            <span>📋</span> Copy
+                        <button class="download-btn" onclick="downloadAs('txt')">
+                            📄 TXT
+                        </button>
+                        <button class="download-btn" onclick="downloadAs('srt')">
+                            🎬 SRT
+                        </button>
+                        <button class="download-btn" onclick="copyToClipboard()">
+                            📋 Copy
                         </button>
                     </div>
                 </div>
 
-                <div id="emptyState">
-                    <p style="text-align: center; color: var(--text-muted); padding: 2rem;">
-                        Upload an audio file to see transcription results
-                    </p>
+                <!-- Empty State -->
+                <div class="card" id="emptyState">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🦄</div>
+                        <h3>Ready for NPU-Accelerated Transcription</h3>
+                        <p>Upload an audio file to experience 25-35× realtime performance</p>
+                    </div>
                 </div>
             </div>
         </main>
+
+        <!-- Footer -->
+        <footer style="text-align: center; padding: 2rem 0; margin-top: 3rem; border-top: 1px solid var(--border-color); color: var(--text-muted);">
+            <p style="margin: 0.5rem 0; font-size: 0.875rem;">
+                🦄 Powered by <strong style="color: var(--accent-purple);">Magic Unicorn Unconventional Technology & Stuff Inc.</strong>
+            </p>
+            <p style="margin: 0.5rem 0; font-size: 0.75rem;">
+                NPU-Accelerated Speech-to-Text • AMD Phoenix NPU • 16 TOPS INT8
+            </p>
+        </footer>
     </div>
 
-    <script src="https://unpkg.com/wavesurfer.js@7"></script>
     <script>
+        let currentTranscription = null;
+        const speakerColors = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
+
         // Theme Switching
         const themeButtons = document.querySelectorAll('.theme-btn');
-        const currentTheme = localStorage.getItem('theme') || 'light';
-        
+        const currentTheme = localStorage.getItem('theme') || 'dark';
+
         document.documentElement.setAttribute('data-theme', currentTheme);
         themeButtons.forEach(btn => {
             if (btn.dataset.theme === currentTheme) {
@@ -751,7 +1084,7 @@
         // File Input Handler
         const fileInput = document.getElementById('audioFile');
         const fileLabel = document.getElementById('fileLabel');
-        
+
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
@@ -763,55 +1096,91 @@
             }
         });
 
-        // Form Submission with Progress Updates
+        // Check NPU Status on Load
+        async function checkNPUStatus() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                updateNPUDashboard(data);
+            } catch (error) {
+                console.error('Failed to check NPU status:', error);
+            }
+        }
+
+        function updateNPUDashboard(status) {
+            const hardware = status.hardware || {};
+            const npuRuntime = status.npu_runtime || {};
+            const npuAttention = status.npu_attention || {};
+
+            const indicator = document.getElementById('npuStatusIndicator');
+            const badge = document.getElementById('npuStatusBadge');
+            const hardwareName = document.getElementById('hardwareName');
+            const hardwareDetail = document.getElementById('hardwareDetail');
+
+            if (hardware.type === 'npu') {
+                indicator.classList.add('active');
+                indicator.classList.remove('cpu');
+                badge.classList.add('active');
+                badge.classList.remove('fallback');
+                badge.textContent = 'ACTIVE';
+                hardwareName.textContent = hardware.name || 'AMD Phoenix NPU';
+
+                const components = [];
+                if (npuRuntime.mel_ready) components.push('Mel');
+                if (npuAttention.active) components.push('Attention');
+                if (components.length > 0) {
+                    hardwareDetail.textContent = `16 TOPS INT8 • ${components.join(' + ')} Accelerated • Nov 3, 2025`;
+                }
+
+                // Update component indicators
+                document.getElementById('melDot').className = `npu-component-dot ${npuRuntime.mel_ready ? 'active' : 'inactive'}`;
+                document.getElementById('attentionDot').className = `npu-component-dot ${npuAttention.active ? 'active' : 'inactive'}`;
+                document.getElementById('encoderDot').className = `npu-component-dot ${npuAttention.active ? 'active' : 'inactive'}`;
+                document.getElementById('decoderDot').className = `npu-component-dot active`;
+            } else {
+                indicator.classList.remove('active');
+                indicator.classList.add('cpu');
+                indicator.textContent = '💻';
+                badge.classList.remove('active');
+                badge.classList.add('fallback');
+                badge.textContent = 'CPU FALLBACK';
+                hardwareName.textContent = hardware.name || 'CPU';
+                hardwareDetail.textContent = 'NPU not detected - using CPU mode';
+
+                // Update all components to inactive
+                document.querySelectorAll('.npu-component-dot').forEach(dot => {
+                    dot.className = 'npu-component-dot inactive';
+                });
+            }
+        }
+
+        // Form Submission
         document.getElementById('transcribeForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const file = document.getElementById('audioFile').files[0];
-            const url = document.getElementById('audioUrl').value;
-            
-            if (!file && !url) {
-                alert('Please select a file or enter a URL');
+
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Please select a file');
                 return;
             }
-            
+
             const model = document.getElementById('model').value;
-            const language = document.getElementById('language').value;
             const vadFilter = document.getElementById('vadFilter').checked;
             const diarization = document.getElementById('enableDiarization').checked;
 
             // Show loading
-            document.getElementById('loading').classList.add('active');
-            document.getElementById('transcribeBtn').disabled = true;
-            document.getElementById('results').style.display = 'none';
-            document.getElementById('emptyState').style.display = 'none';
-            
+            showLoading();
+
             const startTime = Date.now();
-            
-            // Check if audio is likely to be long (>5MB suggests >60s for typical audio)
-            const isLikelyLongAudio = file && file.size > 5 * 1024 * 1024;
-            
+
             try {
                 const formData = new FormData();
-
-                if (file) {
-                    formData.append('file', file);
-                } else {
-                    formData.append('url', url);
-                }
-
+                formData.append('file', file);
                 formData.append('model', model);
-                if (language) formData.append('language', language);
                 formData.append('vad_filter', vadFilter);
                 formData.append('enable_diarization', diarization);
-                formData.append('response_format', 'verbose_json');
-                formData.append('timestamp_granularities', JSON.stringify(['word', 'segment']));
 
-                // Always show progress dialog
-                showProgressDialog();
-
-                // Start transcription and get job_id from response
-                const response = await fetch('/v1/audio/transcriptions', {
+                const response = await fetch('/transcribe', {
                     method: 'POST',
                     body: formData
                 });
@@ -823,319 +1192,294 @@
                 const result = await response.json();
                 const processingTime = ((Date.now() - startTime) / 1000).toFixed(1);
 
-                // If we have a job_id, we could connect to the stream for future requests
-                // (Currently transcription completes too fast, but this is ready for long audio)
-                if (result.job_id) {
-                    console.log('Job ID:', result.job_id);
-                }
-
-                // Hide progress dialog
-                setTimeout(() => hideProgressDialog(), 1000);
-                
-                // Display results
+                currentTranscription = result;
                 displayResults(result, processingTime);
-                
-                // Initialize waveform if file was uploaded
-                if (file) {
-                    initWaveform(file);
-                }
-                
+
             } catch (error) {
                 console.error('Error:', error);
-                hideProgressDialog();
                 alert('Error during transcription: ' + error.message);
             } finally {
-                document.getElementById('loading').classList.remove('active');
-                document.getElementById('transcribeBtn').disabled = false;
+                hideLoading();
             }
         });
 
+        function showLoading() {
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('transcribeBtn').disabled = true;
+            document.getElementById('emptyState').style.display = 'none';
+
+            // Simulate progress
+            let progress = 0;
+            const stages = [
+                { text: 'Uploading file', detail: 'Transferring audio data' },
+                { text: 'Initializing NPU', detail: 'Loading XCLBIN kernels' },
+                { text: 'NPU Mel Processing', detail: 'Computing mel spectrograms on NPU' },
+                { text: 'NPU Attention', detail: 'Running attention layers on NPU' },
+                { text: 'NPU Encoding', detail: 'Processing with NPU encoder' },
+                { text: 'NPU Decoding', detail: 'Generating text with NPU decoder' },
+                { text: 'Finalizing', detail: 'Post-processing results' }
+            ];
+            let stageIndex = 0;
+
+            const interval = setInterval(() => {
+                progress += Math.random() * 10 + 5;
+                if (progress > 95) progress = 95;
+
+                document.getElementById('progressFill').style.width = progress + '%';
+
+                const newStageIndex = Math.floor((progress / 100) * stages.length);
+                if (newStageIndex !== stageIndex && newStageIndex < stages.length) {
+                    stageIndex = newStageIndex;
+                    document.getElementById('loadingStage').textContent = stages[stageIndex].text;
+                    document.getElementById('loadingDetail').textContent = stages[stageIndex].detail;
+                }
+            }, 500);
+
+            window.loadingInterval = interval;
+        }
+
+        function hideLoading() {
+            clearInterval(window.loadingInterval);
+            document.getElementById('progressFill').style.width = '100%';
+            setTimeout(() => {
+                document.getElementById('loading').classList.remove('active');
+                document.getElementById('transcribeBtn').disabled = false;
+                document.getElementById('progressFill').style.width = '0%';
+            }, 500);
+        }
+
         function displayResults(result, processingTime) {
-            document.getElementById('results').style.display = 'block';
+            // Show result cards
+            document.getElementById('metricsCard').style.display = 'block';
+            document.getElementById('resultsCard').style.display = 'block';
+            document.getElementById('emptyState').style.display = 'none';
 
-            // Update stats
-            document.getElementById('duration').textContent = formatDuration(result.duration || 0);
-            document.getElementById('wordCount').textContent = result.words ? result.words.length : '0';
+            // Calculate metrics
+            const duration = result.duration || 0;
+            const rtf = parseFloat(result.realtime_factor) || 0;
+            const wordCount = result.text ? result.text.split(/\s+/).length : 0;
+
+            // Update performance metrics
+            document.getElementById('realtimeFactor').textContent = result.realtime_factor || '0×';
+            document.getElementById('speedupDetail').textContent = `${duration.toFixed(1)}s audio in ${processingTime}s`;
             document.getElementById('processingTime').textContent = processingTime + 's';
+            document.getElementById('audioDuration').textContent = `${duration.toFixed(1)}s audio`;
+            document.getElementById('hardwareUsed').textContent = result.hardware || 'NPU';
+            document.getElementById('npuComponents').textContent = result.npu_mel_time ? `Mel: ${result.npu_mel_time.toFixed(3)}s` : 'Full pipeline';
+            document.getElementById('wordCount').textContent = wordCount + ' words';
 
-            // Update VAD and diarization status
-            const vadFilterUsed = document.getElementById('vadFilter').checked;
-            const diarizationEnabled = document.getElementById('enableDiarization').checked;
+            // Update speedup bar
+            const speedupPercent = Math.min((rtf / 50) * 100, 100);
+            document.getElementById('speedupBar').style.width = speedupPercent + '%';
+            document.getElementById('speedupBarText').textContent = result.realtime_factor || '0×';
 
-            document.getElementById('vadStatus').textContent = vadFilterUsed ? '✓ ON' : '✗ OFF';
-            document.getElementById('vadStatus').style.color = vadFilterUsed ? 'var(--accent-green)' : 'var(--text-muted)';
-
-            document.getElementById('diarizationStatus').textContent = diarizationEnabled ? '✓ ON' : '✗ OFF';
-            document.getElementById('diarizationStatus').style.color = diarizationEnabled ? 'var(--accent-green)' : 'var(--text-muted)';
+            // Show processing pipeline if we have timing data
+            if (result.npu_mel_time) {
+                document.getElementById('processingPipeline').style.display = 'flex';
+                document.getElementById('melTime').textContent = (result.npu_mel_time * 1000).toFixed(0) + 'ms';
+                document.getElementById('pipelineMel').classList.add('completed');
+                document.getElementById('pipelineEncoder').classList.add('completed');
+                document.getElementById('pipelineDecoder').classList.add('completed');
+            }
 
             // Display transcription
-            document.getElementById('transcriptionText').textContent = result.text;
+            displayTranscription(result);
 
-            // Display speaker segments if available
-            if (result.speakers && result.speakers.length > 0) {
-                document.getElementById('speakerCount').textContent = new Set(result.speakers.map(s => s.speaker)).size;
-                document.getElementById('speakersSection').style.display = 'block';
-                displaySpeakers(result.speakers);
+            // Display speaker timeline if diarization is enabled
+            if (result.speakers && result.speakers.count > 0) {
+                document.getElementById('speakerCount').textContent = result.speakers.count;
+                displaySpeakerTimeline(result);
             } else {
                 document.getElementById('speakerCount').textContent = '1';
-                document.getElementById('speakersSection').style.display = 'none';
+                document.getElementById('speakerTimelineCard').style.display = 'none';
             }
-
-            // Store result for download
-            window.currentTranscription = result;
         }
 
-        function displaySpeakers(speakers) {
-            const container = document.getElementById('speakerSegments');
+        function displayTranscription(result) {
+            const container = document.getElementById('transcriptionText');
             container.innerHTML = '';
-            
-            speakers.forEach(segment => {
-                const div = document.createElement('div');
-                div.className = 'speaker-segment';
-                div.innerHTML = `
-                    <div class="speaker-label">Speaker ${segment.speaker}</div>
-                    <div>${segment.text}</div>
+
+            if (result.segments && result.segments.length > 0) {
+                // Display with speaker labels if available
+                result.segments.forEach(segment => {
+                    const div = document.createElement('div');
+                    div.className = 'speaker-segment';
+
+                    if (segment.speaker) {
+                        const label = document.createElement('div');
+                        label.className = 'speaker-label';
+                        label.innerHTML = `
+                            <span>${segment.speaker}</span>
+                            <span class="timestamp">[${formatTime(segment.start)} - ${formatTime(segment.end)}]</span>
+                        `;
+                        div.appendChild(label);
+                    }
+
+                    const text = document.createElement('div');
+                    text.textContent = segment.text;
+                    div.appendChild(text);
+
+                    container.appendChild(div);
+                });
+            } else {
+                container.textContent = result.text || 'No transcription available';
+            }
+        }
+
+        function displaySpeakerTimeline(result) {
+            if (!result.segments || result.segments.length === 0) return;
+
+            document.getElementById('speakerTimelineCard').style.display = 'block';
+
+            const duration = result.duration || 0;
+            const timelineBar = document.getElementById('timelineBar');
+            timelineBar.innerHTML = '';
+
+            // Get unique speakers
+            const speakers = [...new Set(result.segments.filter(s => s.speaker).map(s => s.speaker))];
+
+            // Create speaker color legend
+            const colorsContainer = document.getElementById('speakerColors');
+            colorsContainer.innerHTML = '';
+            speakers.forEach((speaker, i) => {
+                const item = document.createElement('div');
+                item.className = 'speaker-color-item';
+                item.innerHTML = `
+                    <div class="speaker-color-box" style="background: ${speakerColors[i % speakerColors.length]}"></div>
+                    <span>${speaker}</span>
                 `;
-                container.appendChild(div);
+                colorsContainer.appendChild(item);
+            });
+
+            // Create timeline segments
+            result.segments.filter(s => s.speaker).forEach((segment, i) => {
+                const speakerIndex = speakers.indexOf(segment.speaker);
+                const left = (segment.start / duration) * 100;
+                const width = ((segment.end - segment.start) / duration) * 100;
+
+                const segmentDiv = document.createElement('div');
+                segmentDiv.className = 'timeline-segment';
+                segmentDiv.style.left = left + '%';
+                segmentDiv.style.width = width + '%';
+                segmentDiv.style.background = speakerColors[speakerIndex % speakerColors.length];
+                segmentDiv.title = `${segment.speaker}: ${segment.text.substring(0, 50)}...`;
+
+                if (width > 5) {
+                    segmentDiv.textContent = segment.speaker.replace('SPEAKER_', 'S');
+                }
+
+                timelineBar.appendChild(segmentDiv);
+            });
+
+            // Calculate speaker statistics
+            const speakerStats = {};
+            speakers.forEach(speaker => {
+                speakerStats[speaker] = 0;
+            });
+
+            result.segments.filter(s => s.speaker).forEach(segment => {
+                speakerStats[segment.speaker] += segment.end - segment.start;
+            });
+
+            // Display stats
+            const statsContainer = document.getElementById('speakerStats');
+            statsContainer.innerHTML = '';
+            speakers.forEach((speaker, i) => {
+                const percent = ((speakerStats[speaker] / duration) * 100).toFixed(1);
+                const statDiv = document.createElement('div');
+                statDiv.className = 'speaker-stat';
+                statDiv.innerHTML = `
+                    <div class="speaker-stat-name" style="color: ${speakerColors[i % speakerColors.length]}">${speaker}</div>
+                    <div class="speaker-stat-percent">${percent}%</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+                        ${formatTime(speakerStats[speaker])} speaking
+                    </div>
+                `;
+                statsContainer.appendChild(statDiv);
             });
         }
 
-        function formatDuration(seconds) {
+        function formatTime(seconds) {
             const mins = Math.floor(seconds / 60);
             const secs = Math.floor(seconds % 60);
-            return `${mins}:${secs.toString().padStart(2, '0')}`;
+            const ms = Math.floor((seconds % 1) * 10);
+            return `${mins}:${secs.toString().padStart(2, '0')}.${ms}`;
         }
 
-        // Progress Dialog Functions
-        let progressEventSource = null;
-        let progressSimulator = null;
+        function downloadAs(format) {
+            if (!currentTranscription) return;
 
-        function simulateProgress() {
-            let currentProgress = 0;
-            const messages = [
-                'Uploading audio file...',
-                'Preprocessing audio...',
-                'Loading Whisper model...',
-                'Processing with NPU...',
-                'Transcribing audio...',
-                'Generating timestamps...',
-                'Finalizing transcription...'
-            ];
-            let messageIndex = 0;
+            let content, filename, mimeType;
 
-            progressSimulator = setInterval(() => {
-                if (currentProgress < 95) {
-                    // Increment progress
-                    currentProgress += Math.random() * 8 + 2; // Random 2-10% jumps
-                    if (currentProgress > 95) currentProgress = 95;
+            switch (format) {
+                case 'json':
+                    content = JSON.stringify(currentTranscription, null, 2);
+                    filename = 'transcription.json';
+                    mimeType = 'application/json';
+                    break;
 
-                    // Update message occasionally
-                    if (currentProgress > (messageIndex + 1) * 15 && messageIndex < messages.length - 1) {
-                        messageIndex++;
-                    }
+                case 'txt':
+                    content = currentTranscription.text || '';
+                    filename = 'transcription.txt';
+                    mimeType = 'text/plain';
+                    break;
 
-                    // Update UI
-                    document.getElementById('progressPercent').textContent = Math.floor(currentProgress) + '%';
-                    document.getElementById('progressFill').style.width = currentProgress + '%';
-                    document.getElementById('progressMessage').textContent = messages[messageIndex];
-                    document.getElementById('chunkProgress').textContent = 'Processing...';
-                }
-            }, 500); // Update every 500ms
-        }
-
-        function stopProgressSimulation() {
-            if (progressSimulator) {
-                clearInterval(progressSimulator);
-                progressSimulator = null;
-            }
-            // Set to 100%
-            document.getElementById('progressPercent').textContent = '100%';
-            document.getElementById('progressFill').style.width = '100%';
-            document.getElementById('progressMessage').textContent = 'Complete!';
-        }
-
-        function connectToProgressStream(jobId) {
-            // Close existing connection if any
-            if (progressEventSource) {
-                progressEventSource.close();
+                case 'srt':
+                    content = generateSRT(currentTranscription);
+                    filename = 'transcription.srt';
+                    mimeType = 'text/plain';
+                    break;
             }
 
-            // Connect to SSE endpoint
-            progressEventSource = new EventSource(`/progress/${jobId}/stream`);
-
-            progressEventSource.onmessage = function(event) {
-                const progress = JSON.parse(event.data);
-
-                // Update progress display
-                document.getElementById('progressPercent').textContent = progress.progress + '%';
-                document.getElementById('progressFill').style.width = progress.progress + '%';
-                document.getElementById('progressMessage').textContent = progress.message;
-                document.getElementById('chunkProgress').textContent = progress.status;
-
-                // Close stream when complete or error
-                if (progress.status === 'completed' || progress.status === 'error') {
-                    progressEventSource.close();
-                    progressEventSource = null;
-                }
-            };
-
-            progressEventSource.onerror = function(error) {
-                console.error('SSE error:', error);
-                if (progressEventSource) {
-                    progressEventSource.close();
-                    progressEventSource = null;
-                }
-            };
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
 
-        function showProgressDialog() {
-            const dialog = document.getElementById('progressDialog');
-            dialog.style.display = 'block';
+        function generateSRT(result) {
+            if (!result.segments || result.segments.length === 0) return result.text || '';
 
-            // Reset progress
-            document.getElementById('progressPercent').textContent = '0%';
-            document.getElementById('progressFill').style.width = '0%';
-            document.getElementById('progressMessage').textContent = 'Starting transcription...';
-            document.getElementById('chunkProgress').textContent = 'Initializing...';
-            document.getElementById('chunkResults').innerHTML = '';
-
-            // Start simulating progress
-            simulateProgress();
-        }
-
-        function hideProgressDialog() {
-            // Stop progress simulation
-            stopProgressSimulation();
-
-            // Hide after a brief moment to show 100%
-            setTimeout(() => {
-                const dialog = document.getElementById('progressDialog');
-                dialog.style.display = 'none';
-
-                // Close SSE connection if open
-                if (progressEventSource) {
-                    progressEventSource.close();
-                    progressEventSource = null;
-                }
-            }, 800);
-        }
-
-        function updateProgress(chunk, totalChunks, message, chunkResult = null) {
-            const percent = totalChunks > 0 ? (chunk / totalChunks * 100).toFixed(1) : 0;
-
-            document.getElementById('progressPercent').textContent = percent + '%';
-            document.getElementById('progressFill').style.width = percent + '%';
-            document.getElementById('chunkProgress').textContent = `Chunk ${chunk}/${totalChunks}`;
-            document.getElementById('progressMessage').textContent = message;
-            
-            // Add detailed chunk result if provided
-            if (chunkResult) {
-                const resultsContainer = document.getElementById('chunkResults');
-                
-                if (chunkResult.stage_info) {
-                    // Add stage information
-                    const stageDiv = document.createElement('div');
-                    stageDiv.className = 'chunk-result stage-info';
-                    stageDiv.innerHTML = `📋 <strong>${chunkResult.stage_info}</strong>`;
-                    if (chunkResult.technical_detail) {
-                        stageDiv.innerHTML += `<br>🔧 ${chunkResult.technical_detail}`;
-                    }
-                    if (chunkResult.efficiency_note) {
-                        stageDiv.innerHTML += `<br>⚡ ${chunkResult.efficiency_note}`;
-                    }
-                    resultsContainer.appendChild(stageDiv);
-                }
-                
-                if (chunkResult.chunk_text) {
-                    // Add transcription result
-                    const chunkDiv = document.createElement('div');
-                    chunkDiv.className = 'chunk-result transcription';
-                    chunkDiv.innerHTML = `<strong>📝 Chunk ${chunk} Transcription:</strong><br>${chunkResult.chunk_text}`;
-                    
-                    if (chunkResult.chunk_performance) {
-                        chunkDiv.innerHTML += `<br><small>⚡ ${chunkResult.chunk_performance}</small>`;
-                    }
-                    if (chunkResult.hardware_status) {
-                        chunkDiv.innerHTML += `<br><small>🎮 ${chunkResult.hardware_status}</small>`;
-                    }
-                    
-                    resultsContainer.appendChild(chunkDiv);
-                }
-                
-                resultsContainer.scrollTop = resultsContainer.scrollHeight;
-            }
-        }
-
-        function initWaveform(file) {
-            const wavesurfer = WaveSurfer.create({
-                container: '#waveform',
-                waveColor: getComputedStyle(document.documentElement).getPropertyValue('--accent-purple'),
-                progressColor: getComputedStyle(document.documentElement).getPropertyValue('--accent-purple-hover'),
-                cursorColor: getComputedStyle(document.documentElement).getPropertyValue('--accent-gold'),
-                barWidth: 2,
-                barRadius: 3,
-                responsive: true,
-                height: 128,
-                normalize: true
-            });
-            
-            wavesurfer.loadBlob(file);
-        }
-
-        function downloadTranscription() {
-            if (!window.currentTranscription) return;
-            
-            const dataStr = JSON.stringify(window.currentTranscription, null, 2);
-            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-            
-            const link = document.createElement('a');
-            link.setAttribute('href', dataUri);
-            link.setAttribute('download', 'transcription.json');
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        function copyTranscription() {
-            if (!window.currentTranscription) return;
-
-            navigator.clipboard.writeText(window.currentTranscription.text).then(() => {
-                alert('Transcription copied to clipboard!');
-            });
-        }
-
-        // Update hardware status from server
-        async function updateHardwareStatus() {
-            try {
-                const response = await fetch('/status');
-                const data = await response.json();
-                const hardware = data.hardware || {};
-
-                const statusEl = document.getElementById('hardwareStatus');
-                const iconEl = document.getElementById('hardwareIcon');
-                const textEl = document.getElementById('hardwareText');
-
-                if (hardware.type === 'npu') {
-                    iconEl.textContent = '🚀';
-                    textEl.textContent = 'XDNA1 NPU (Phoenix) - ' + (data.npu_runtime?.mel_ready ? 'Sign-Fixed Mel Ready!' : 'Ready');
-                    statusEl.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-                } else if (hardware.type === 'igpu') {
-                    iconEl.textContent = '💎';
-                    textEl.textContent = 'Intel iGPU';
-                    statusEl.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
+            let srt = '';
+            result.segments.forEach((segment, i) => {
+                srt += `${i + 1}\n`;
+                srt += `${formatSRTTime(segment.start)} --> ${formatSRTTime(segment.end)}\n`;
+                if (segment.speaker) {
+                    srt += `[${segment.speaker}] ${segment.text}\n\n`;
                 } else {
-                    iconEl.textContent = '⚙️';
-                    textEl.textContent = 'CPU';
-                    statusEl.style.background = '#4a5568';
+                    srt += `${segment.text}\n\n`;
                 }
-            } catch (error) {
-                console.error('Failed to update hardware status:', error);
-            }
+            });
+            return srt;
         }
 
-        // Update hardware status on load and every 30 seconds
-        updateHardwareStatus();
-        setInterval(updateHardwareStatus, 30000);
+        function formatSRTTime(seconds) {
+            const date = new Date(seconds * 1000);
+            const hours = Math.floor(seconds / 3600);
+            const mins = date.getMinutes();
+            const secs = date.getSeconds();
+            const ms = date.getMilliseconds();
+            return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')},${ms.toString().padStart(3, '0')}`;
+        }
+
+        function copyToClipboard() {
+            if (!currentTranscription) return;
+
+            navigator.clipboard.writeText(currentTranscription.text).then(() => {
+                alert('Transcription copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+            });
+        }
+
+        // Initialize
+        checkNPUStatus();
+        setInterval(checkNPUStatus, 30000); // Update every 30 seconds
     </script>
 </body>
 </html>

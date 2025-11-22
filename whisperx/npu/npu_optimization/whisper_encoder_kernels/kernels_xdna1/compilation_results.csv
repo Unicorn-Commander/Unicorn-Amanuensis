@@ -1,0 +1,2 @@
+Kernel,Duration(s),SourceSize,ObjectSize,Status
+softmax_bf16_xdna1,1.416905916,4.0K,4.0K,SUCCESS

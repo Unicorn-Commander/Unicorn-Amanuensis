@@ -134,8 +134,9 @@ static inline int16_t fast_magnitude_q15(int16_t real, int16_t imag) {
 }
 
 // More accurate magnitude using squared values
-// Result is NOT in Q15 - it's a scaled INT32 magnitude
+// Result is in Q30 format (NOT Q15!) to preserve all precision after FFT scaling
 // Use this for mel spectrogram (we need power spectrum)
+// WARNING: Returns int32_t in Q30 format, NOT int16_t!
 static inline int32_t magnitude_squared_q15(int16_t real, int16_t imag) {
     // Square both components (Q15 * Q15 = Q30)
     int32_t real_sq = (int32_t)real * (int32_t)real;
@@ -144,23 +145,23 @@ static inline int32_t magnitude_squared_q15(int16_t real, int16_t imag) {
     // Sum of squares (Q30 format)
     int32_t mag_sq = real_sq + imag_sq;
 
-    // Right shift to Q15 (divide by 2^15)
-    return mag_sq >> 15;
+    // DO NOT SHIFT! Keep full Q30 precision
+    // After FFT /512 scaling, values are small enough that Q30 won't overflow int32_t
+    // The mel filter accumulator will handle the Q30 values
+    return mag_sq;
 }
 
 // Compute magnitude spectrum (first half only, due to symmetry)
-// Output is INT16 for mel filterbank processing
-void compute_magnitude_fixed(complex_q15_t* fft_output, int16_t* magnitude, uint32_t size) {
+// Output is INT32 for mel filterbank processing (Q30 format)
+// This is necessary to preserve precision after FFT scaling
+void compute_magnitude_fixed(complex_q15_t* fft_output, int32_t* magnitude, uint32_t size) {
     uint32_t i;
 
     for (i = 0; i < size; i++) {
         // Use squared magnitude to match librosa (power=2.0)
         // This is critical for correct mel spectrogram computation
-        int32_t mag_sq = magnitude_squared_q15(fft_output[i].real, fft_output[i].imag);
-        magnitude[i] = (int16_t)((mag_sq > 32767) ? 32767 : mag_sq);
-
-        // Old: Used fast approximation (incorrect for power spectrum)
-        // magnitude[i] = fast_magnitude_q15(fft_output[i].real, fft_output[i].imag);
+        // Returns Q30 value with full precision
+        magnitude[i] = magnitude_squared_q15(fft_output[i].real, fft_output[i].imag);
     }
 }
 

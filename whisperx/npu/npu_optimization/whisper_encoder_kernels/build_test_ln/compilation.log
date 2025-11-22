@@ -1,0 +1,26 @@
+Traceback (most recent call last):
+  File "/home/ucadmin/mlir-aie-fresh/mlir-aie/venv313/bin/aiecc.py", line 3, in <module>
+    from aie.compiler.aiecc.main import main
+  File "/home/ucadmin/mlir-aie-fresh/mlir-aie/venv313/lib/python3.13/site-packages/mlir_aie/python/aie/compiler/aiecc/main.py", line 26, in <module>
+    from aie.extras.runtime.passes import Pipeline
+  File "/home/ucadmin/mlir-aie-fresh/mlir-aie/venv313/lib/python3.13/site-packages/aie/extras/runtime/passes.py", line 9, in <module>
+    from ..context import disable_multithreading
+  File "/home/ucadmin/mlir-aie-fresh/mlir-aie/venv313/lib/python3.13/site-packages/aie/extras/context.py", line 9, in <module>
+    @dataclass
+     ^^^^^^^^^
+  File "/home/ucadmin/mlir-aie-fresh/mlir-aie/venv313/lib/python3.13/site-packages/dataclasses.py", line 958, in dataclass
+    return wrap(_cls)
+  File "/home/ucadmin/mlir-aie-fresh/mlir-aie/venv313/lib/python3.13/site-packages/dataclasses.py", line 950, in wrap
+    return _process_class(cls, init, repr, eq, order, unsafe_hash, frozen)
+  File "/home/ucadmin/mlir-aie-fresh/mlir-aie/venv313/lib/python3.13/site-packages/dataclasses.py", line 800, in _process_class
+    cls_fields = [_get_field(cls, name, type)
+                  ~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/ucadmin/mlir-aie-fresh/mlir-aie/venv313/lib/python3.13/site-packages/dataclasses.py", line 659, in _get_field
+    if (_is_classvar(a_type, typing)
+        ~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/ucadmin/mlir-aie-fresh/mlir-aie/venv313/lib/python3.13/site-packages/dataclasses.py", line 550, in _is_classvar
+    return type(a_type) is typing._ClassVar
+                           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/typing.py", line 3817, in __getattr__
+    raise AttributeError(f"module {__name__!r} has no attribute {attr!r}")
+AttributeError: module 'typing' has no attribute '_ClassVar'. Did you mean: 'ClassVar'?

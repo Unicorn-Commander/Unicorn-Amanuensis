@@ -1,0 +1,16 @@
+======================================================================
+MEL KERNEL DIAGNOSTIC TEST SUITE
+======================================================================
+Testing each stage of the pipeline to isolate zero-output bug
+
+======================================================================
+TEST 1: Input Conversion (INT8 → INT16)
+======================================================================
+Traceback (most recent call last):
+  File "/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/mel_kernels/test_kernel_stages.py", line 280, in <module>
+    "Input Conversion": test_input_conversion(),
+                        ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/home/ucadmin/UC-1/Unicorn-Amanuensis/whisperx/npu/npu_optimization/mel_kernels/test_kernel_stages.py", line 35, in test_input_conversion
+    reconstructed[i] = ((audio_bytes[byte_idx]) |
+    ~~~~~~~~~~~~~^^^
+OverflowError: Python integer 65408 out of bounds for int16

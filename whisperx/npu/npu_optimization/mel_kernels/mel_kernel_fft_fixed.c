@@ -29,7 +29,7 @@ extern "C" {
 
 // C functions from fft_fixed_point.c
 void fft_radix2_512_fixed(int16_t* input, complex_q15_t* output);
-void compute_magnitude_fixed(complex_q15_t* fft_output, int16_t* magnitude, uint32_t size);
+void compute_magnitude_fixed(complex_q15_t* fft_output, int32_t* magnitude, uint32_t size);
 void apply_hann_window_fixed(int16_t* samples, const int16_t* window, uint32_t size);
 void zero_pad_to_512(int16_t* samples, uint32_t input_size);
 
@@ -50,14 +50,14 @@ void zero_pad_to_512(int16_t* samples, uint32_t input_size);
 // Note: mel_coeffs_fixed.h uses full 257-element weight arrays with zeros for unused bins.
 //       We optimize by only processing the non-zero range [start_bin, end_bin).
 void apply_mel_filters_q15(
-    const int16_t* magnitude,  // 256 FFT magnitude bins (Q15)
-    int8_t* mel_output,         // 80 mel bins (INT8 output)
-    uint32_t n_mels             // Number of mel filters (typically 80)
+    const int32_t* magnitude,  // 256 FFT magnitude bins (Q30 format!)
+    int8_t* mel_output,        // 80 mel bins (INT8 output)
+    uint32_t n_mels            // Number of mel filters (typically 80)
 ) {
     for (uint32_t m = 0; m < n_mels; m++) {
         const mel_filter_q15_t* filter = &mel_filters_q15[m];
 
-        int32_t mel_energy = 0;  // Accumulator (Q30 after Q15 × Q15)
+        int64_t mel_energy = 0;  // Accumulator (needs int64_t for Q30 × Q15 = Q45)
 
         // Apply triangular filter across the filter's frequency range
         // Filter weights array is indexed by FFT bin number (0-256)
@@ -72,23 +72,29 @@ void apply_mel_filters_q15(
             // Skip if weight is zero (sparse optimization)
             if (weight == 0) continue;
 
-            // Q15 × Q15 = Q30 multiplication
-            int32_t weighted = (int32_t)magnitude[bin] * (int32_t)weight;
+            // Magnitude is Q30 (int32_t)
+            // Weight is Q15 (int16_t)
+            // Result: Q30 × Q15 = Q45 (needs int64_t)
+            int64_t weighted = (int64_t)magnitude[bin] * (int64_t)weight;
 
-            // Scale back to Q15 and accumulate
+            // Shift by 15 to normalize weights, accumulate in Q30
             mel_energy += weighted >> 15;
         }
 
-        // Convert Q15 energy to INT8 range [0, 127]
-        // Use simpler compression: just scale the full Q15 range
-        // Research shows this should work with proper scaling factor
+        // mel_energy is now in Q30 format (BUT scaled down by FFT!)
+        // Convert to INT8 range [0, 127]
 
         // Clamp to prevent negative values
         if (mel_energy < 0) mel_energy = 0;
 
-        // Direct linear scaling from Q15 [0, 32767] to INT8 [0, 127]
-        // Formula from research: (mel_energy * 127) / 32767
-        int32_t scaled = (mel_energy * 127) / 32767;
+        // CRITICAL: Compensate for FFT scaling!
+        // FFT applies 9 stages of >>1, reducing values by 512x
+        // This means magnitude² is reduced by 512² = 262144x = 2^18
+        // So mel_energy in Q30 only uses lower 12 bits, not full 30 bits!
+        // Must scale by >>12 instead of >>30 to compensate
+        //
+        // Math: FFT /512 → mag² /262144 → shift 30-18=12 instead of 30
+        int32_t scaled = (int32_t)((mel_energy * 127) >> 12);
 
         // Clamp to INT8 range [0, 127]
         if (scaled > 127) scaled = 127;
@@ -100,12 +106,12 @@ void apply_mel_filters_q15(
 
 void mel_kernel_simple(int8_t *input, int8_t *output) {
     // Working buffers (stack allocation - carefully sized)
-    // Total: 1024 + 2048 + 512 = 3584 bytes (~3.5KB)
-    // This is under the ~7KB limit that caused stack overflow
+    // Total: 1024 + 2048 + 1024 = 4096 bytes (4KB)
+    // Changed magnitude to int32_t to preserve Q30 precision
 
     int16_t samples[512];        // 1024 bytes - zero-padded audio
     complex_q15_t fft_out[512];  // 2048 bytes - FFT output
-    int16_t magnitude[256];      // 512 bytes - magnitude spectrum
+    int32_t magnitude[256];      // 1024 bytes - magnitude spectrum (Q30 format)
 
     // Step 1: Convert 800 bytes to 400 INT16 samples (little-endian)
     for (int i = 0; i < 400; i++) {

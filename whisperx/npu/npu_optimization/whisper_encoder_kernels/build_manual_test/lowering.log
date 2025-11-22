@@ -1,0 +1,2 @@
+aie-opt: Too many positional arguments specified!
+Can specify at most 1 positional arguments: See: /home/ucadmin/mlir-aie-source/install/bin/aie-opt --help
