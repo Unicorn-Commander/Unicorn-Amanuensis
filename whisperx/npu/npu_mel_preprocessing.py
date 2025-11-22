@@ -69,8 +69,8 @@ class NPUMelPreprocessor:
 
         # Locate XCLBIN
         if xclbin_path is None:
-            # Default to mel_kernels/build_fixed/mel_fixed.xclbin
-            default_path = Path(__file__).parent / "npu_optimization" / "mel_kernels" / "build_fixed" / "mel_fixed.xclbin"
+            # Default to mel_kernels/build_fixed_v3/mel_fixed_v3.xclbin (FIXED VERSION - Nov 22 2025)
+            default_path = Path(__file__).parent / "npu_optimization" / "mel_kernels" / "build_fixed_v3" / "mel_fixed_v3.xclbin"
             self.xclbin_path = str(default_path)
         else:
             self.xclbin_path = xclbin_path
