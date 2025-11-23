@@ -69,8 +69,8 @@ class NPUMelPreprocessor:
 
         # Locate XCLBIN
         if xclbin_path is None:
-            # Default to mel_kernels/build_fixed_v3/mel_fixed_v3.xclbin (FIXED VERSION - Nov 22 2025)
-            default_path = Path(__file__).parent / "npu_optimization" / "mel_kernels" / "build_fixed_v3" / "mel_fixed_v3.xclbin"
+            # Default to mel_kernels/build_batch20/mel_batch20.xclbin (BATCH20 VERSION - Nov 23 2025)
+            default_path = Path(__file__).parent / "npu_optimization" / "mel_kernels" / "build_batch20" / "mel_batch20.xclbin"
             self.xclbin_path = str(default_path)
         else:
             self.xclbin_path = xclbin_path
@@ -174,7 +174,11 @@ class NPUMelPreprocessor:
 
         # Read instruction binary
         # Try multiple possible instruction file names
+        # Match instruction file to XCLBIN name automatically
+        xclbin_name = Path(self.xclbin_path).stem  # e.g., "mel_batch20" or "mel_fixed_v3"
         insts_candidates = [
+            f"insts_{xclbin_name.split('_')[-1]}.bin",  # Match last part (e.g., insts_batch20.bin, insts_v3.bin)
+            "insts_v3.bin",  # FIXED VERSION v3 (Nov 22 2025)
             "insts.bin",
             "insts_fixed.bin",
             "mel_aie_cdo_init.bin",  # Alternative instruction format

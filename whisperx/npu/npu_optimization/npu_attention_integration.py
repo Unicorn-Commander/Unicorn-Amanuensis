@@ -178,28 +178,43 @@ class NPUAttentionIntegration:
         num_heads: int,
         mask: Optional[np.ndarray] = None
     ) -> np.ndarray:
-        """
-        Multi-head attention wrapper
+        """Multi-head attention wrapper with statistics tracking"""
+        import time
 
-        Args:
-            query, key, value: Input matrices (seq_len, d_model)
-            num_heads: Number of attention heads
-            mask: Optional attention mask
+        logger.info(f"🚀 NPUAttentionIntegration.multi_head_attention() CALLED! query.shape={query.shape}, num_heads={num_heads}")
 
-        Returns:
-            Multi-head attention output (seq_len, d_model)
-        """
         if self.npu_available and not self.fallback_to_cpu:
             try:
+                # ADD TIMING
+                start = time.perf_counter()
+
                 # Use NPU multi-head attention
-                return self.npu_attention.multi_head_attention(
+                output = self.npu_attention.multi_head_attention(
                     query, key, value, num_heads, mask=mask, quantize=True
                 ).astype(np.float32)
+
+                # ADD STATISTICS TRACKING
+                elapsed_ms = (time.perf_counter() - start) * 1000
+                self.performance_log['npu_calls'] += 1
+                self.performance_log['npu_time_ms'] += elapsed_ms
+
+                logger.debug(f"NPU multi-head attention: {elapsed_ms:.2f}ms")
+                return output
+
             except Exception as e:
                 logger.warning(f"NPU multi-head attention failed: {e}")
-                return self._cpu_multi_head_attention(query, key, value, num_heads, mask)
-        else:
-            return self._cpu_multi_head_attention(query, key, value, num_heads, mask)
+                self.fallback_to_cpu = True
+
+        # CPU fallback with statistics
+        start = time.perf_counter()
+        output = self._cpu_multi_head_attention(query, key, value, num_heads, mask)
+        elapsed_ms = (time.perf_counter() - start) * 1000
+
+        self.performance_log['cpu_calls'] += 1
+        self.performance_log['cpu_time_ms'] += elapsed_ms
+
+        logger.debug(f"CPU multi-head attention: {elapsed_ms:.2f}ms")
+        return output
 
     def _cpu_multi_head_attention(
         self,
