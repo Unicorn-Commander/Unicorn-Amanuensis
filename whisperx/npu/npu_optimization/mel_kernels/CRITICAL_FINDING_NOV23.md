@@ -174,3 +174,11 @@ Transcription: "And so my fellow Americans, ask not what your country can do for
 **Status**: Mel kernel zero-output confirmed across all tests
 **Action**: Recommend Path B deployment, defer Path A debugging
 **Timeline**: Path B ready for testing TODAY
+
+**Update November 24, 2025**:
+- ✅ Path B tested - see ../PATH_B_TEST_RESULTS_NOV24.md
+- ✅ Confirmed mel_batch30.xclbin ALSO outputs zeros (same DMA bug)
+- ✅ Previous "99.73% coverage" was Python normalization artifacts, not real NPU output
+- ⚠️ ALL mel kernels affected: batch10, batch20, batch30, fixed_v3, optimized
+- 🔧 Root cause: DMA buffer configuration or instruction binary encoding issue
+- 📊 faster-whisper baseline: 18.27x realtime (production-ready alternative)

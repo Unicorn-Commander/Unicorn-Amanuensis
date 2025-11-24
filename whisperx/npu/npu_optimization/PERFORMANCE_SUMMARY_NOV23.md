@@ -359,13 +359,21 @@ transcribe(
 
 ---
 
-**Report Date**: November 23, 2025
+**Report Date**: November 23, 2025 (Updated November 24, 2025)
 **Testing By**: Claude Code (continued session)
-**Status**: Baseline validated, mel kernel issue documented
-**Recommendation**: Deploy baseline, continue NPU investigation in parallel
+**Status**: Baseline validated, mel kernel issue documented, Path B tested
+**Recommendation**: Deploy baseline (18.27x), test NPU attention (Path B)
 
 **Next Steps**:
-1. Commit this report to Forgejo
-2. Deploy faster-whisper baseline to production
-3. Schedule Path B testing session
-4. Open issue for mel kernel DMA debugging
+1. ✅ Commit reports to Forgejo
+2. ✅ Path B tested (November 24, 2025) - See PATH_B_TEST_RESULTS_NOV24.md
+3. ⏳ Test NPU attention integration (2-3 hours)
+4. ⏳ Open issue for mel kernel DMA debugging
+5. ⏳ Deploy faster-whisper baseline to production
+
+**Update November 24, 2025**:
+- ✅ Path B test completed
+- ✅ Confirmed ALL mel kernels output zeros (batch10, batch20, batch30, fixed_v3)
+- ✅ faster-whisper baseline: 18.27x realtime (consistent with Nov 23)
+- ⚠️ NPU attention kernels exist but need API integration
+- 📊 See PATH_B_TEST_RESULTS_NOV24.md for complete analysis
