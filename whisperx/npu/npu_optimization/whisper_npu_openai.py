@@ -91,6 +91,8 @@ class NPUAcceleratedAttention(nn.Module):
         Returns:
             Output tensor (and kv_cache if provided)
         """
+        logger.info(f"🔥 NPUAcceleratedAttention.forward() CALLED! x.shape={x.shape}, xa={'None' if xa is None else xa.shape}")
+
         # Compute Q, K, V using original projections
         q = self.query(x)
 
@@ -173,7 +175,8 @@ class NPUAcceleratedEncoder(AudioEncoder):
             for block in original_encoder.blocks
         ])
 
-        logger.info("✅ NPU encoder initialized")
+        logger.info(f"✅ NPU encoder initialized with {len(self.blocks)} blocks")
+        logger.info(f"✅ Block 0 attention type: {type(self.blocks[0].attn).__name__}")
 
     def _create_npu_block(self, original_block: ResidualAttentionBlock, npu_integration: NPUAttentionIntegration):
         """Create NPU-accelerated attention block"""
@@ -307,6 +310,12 @@ class WhisperNPU:
         Returns:
             Transcription result dict with text, segments, and performance metrics
         """
+        logger.info("=" * 70)
+        logger.info("🎤 STARTING TRANSCRIPTION")
+        logger.info(f"Encoder type: {type(self.base_model.encoder).__name__}")
+        logger.info(f"NPU enabled: {self.enable_npu}")
+        logger.info("=" * 70)
+
         start_time = time.time()
 
         # Transcribe using base model (with NPU encoder if enabled)

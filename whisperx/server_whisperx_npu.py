@@ -67,27 +67,18 @@ class DockerWhisperEngine:
     def _detect_best_mode(self) -> str:
         """Detect the best available transcription mode"""
 
-        # Mode 0: Try NPU (AMD Phoenix XDNA1) - PRIORITY!
-        if Path("/dev/accel/accel0").exists():
-            try:
-                # Use the CUSTOM MLIR-AIE2 runtime with 220x speedup!
-                sys.path.insert(0, str(Path(__file__).parent / 'npu'))
-                from npu_runtime_aie2 import NPURuntime
-
-                # Test NPU availability
-                test_npu = NPURuntime()
-                if test_npu.is_available():
-                    logger.info("🚀 AMD Phoenix NPU detected with MLIR-AIE2 kernels - enabling NPU acceleration!")
-                    return "npu"
-                else:
-                    logger.warning("⚠️ NPU device found but not accessible")
-            except Exception as e:
-                logger.warning(f"⚠️ NPU device found but initialization failed: {e}")
+        # Mode 0: faster_whisper (CTranslate2) - best accuracy + performance on CPU
+        try:
+            import faster_whisper
+            logger.info("faster-whisper (CTranslate2) available - using as primary backend")
+            return "faster_whisper"
+        except ImportError:
+            pass
 
         # Mode 1: Try whisper.cpp SYCL (if available)
         if Path("/tmp/whisper.cpp/build_sycl/bin/whisper-cli").exists():
             return "sycl"
-        
+
         # Mode 2: Try system whisper.cpp
         try:
             result = subprocess.run(["which", "whisper-cli"], capture_output=True)
@@ -95,23 +86,23 @@ class DockerWhisperEngine:
                 return "whisper_cpp_system"
         except:
             pass
-        
+
         # Mode 3: Try OpenAI whisper
         try:
             import whisper
             return "openai_whisper"
         except ImportError:
             pass
-        
-        # Mode 4: Try whisperx 
+
+        # Mode 4: Try whisperx
         try:
             import whisperx
             return "whisperx"
         except ImportError:
             pass
-        
+
         # Fallback: Mock mode for debugging
-        logger.warning("⚠️  No Whisper backend found, using mock mode")
+        logger.warning("No Whisper backend found, using mock mode")
         return "mock"
 
     def _detect_fallback_mode(self) -> str:
@@ -146,46 +137,38 @@ class DockerWhisperEngine:
     
     def _setup_environment(self):
         """Set up environment for the selected mode"""
-        if self.mode == "npu":
-            # Initialize REAL NPU runtime
+        if self.mode == "faster_whisper":
+            # Pre-load faster_whisper model at startup for fast first request
             try:
-                sys.path.insert(0, str(Path(__file__).parent / 'npu'))
-                from npu_runtime import SimplifiedNPURuntime
+                from faster_whisper import WhisperModel
 
-                self.npu_engine = SimplifiedNPURuntime()
-                if self.npu_engine.open_device():
-                    logger.info(f"✅ NPU device opened: {self.npu_engine.device_path}")
-                    logger.info(f"   AIE Version: {self.npu_engine.aie_version}")
+                model_name = self.model_name
+                if "magicunicorn" in model_name or "whisper-base-amd-npu" in model_name:
+                    model_name = "base"
+                elif "large-v3" in model_name:
+                    model_name = "large-v3"
 
-                    # Load Whisper model
-                    if self.npu_engine.load_model(f"whisper-{self.model_name}"):
-                        logger.info("✅ NPU acceleration enabled - 220x+ speedup expected!")
-                    else:
-                        logger.warning("⚠️ NPU model loading failed, will fallback")
-                        self.mode = self._detect_fallback_mode()
-                else:
-                    logger.warning("⚠️ NPU initialization failed, will fallback to other modes")
-                    self.mode = self._detect_fallback_mode()
+                logger.info(f"Loading faster-whisper model: {model_name} (int8, CPU)")
+                self.faster_whisper_model = WhisperModel(model_name, device="cpu", compute_type="int8")
+                self._faster_whisper_model_name = model_name
+                logger.info(f"faster-whisper model loaded: {model_name}")
             except Exception as e:
-                logger.error(f"❌ NPU setup failed: {e}")
+                logger.error(f"Failed to pre-load faster-whisper model: {e}")
                 self.mode = self._detect_fallback_mode()
         elif self.mode == "sycl":
-            # Set up Intel oneAPI environment if available
             oneapi_env = "/opt/intel/oneapi/setvars.sh"
             if Path(oneapi_env).exists():
-                # Source oneAPI environment
                 result = subprocess.run([
-                    "bash", "-c", 
+                    "bash", "-c",
                     f"source {oneapi_env} && env"
                 ], capture_output=True, text=True)
-                
+
                 if result.returncode == 0:
                     for line in result.stdout.split('\n'):
                         if '=' in line:
                             key, value = line.split('=', 1)
                             os.environ[key] = value
-                
-                # Set Intel iGPU specific vars
+
                 os.environ["ONEAPI_DEVICE_SELECTOR"] = "level_zero:gpu"
                 os.environ["SYCL_DEVICE_FILTER"] = "gpu"
     
@@ -350,15 +333,12 @@ class DockerWhisperEngine:
         try:
             from faster_whisper import WhisperModel
 
-            # Convert magicunicorn model names to standard Whisper models
-            model_name = self.model_name
-            if "magicunicorn" in model_name or "whisper-base-amd-npu" in model_name:
-                model_name = "base"  # Default to base model
-            elif "large-v3" in model_name:
-                model_name = "large-v3"
-
-            # Use CPU with int8 compute type
             if not hasattr(self, 'faster_whisper_model'):
+                model_name = self.model_name
+                if "magicunicorn" in model_name or "whisper-base-amd-npu" in model_name:
+                    model_name = "base"
+                elif "large-v3" in model_name:
+                    model_name = "large-v3"
                 logger.info(f"Loading faster-whisper model: {model_name}")
                 self.faster_whisper_model = WhisperModel(model_name, device="cpu", compute_type="int8")
 
@@ -787,9 +767,12 @@ async def health_check():
     """Health check"""
     try:
         engine = initialize_whisper_engine()
+        model_name = getattr(engine, '_faster_whisper_model_name', engine.model_name) if engine else "unknown"
         return {
             "status": "healthy",
             "engine": engine.mode if engine else "unknown",
+            "model": model_name,
+            "backend": "CTranslate2 INT8 CPU" if engine and engine.mode == "faster_whisper" else engine.mode if engine else "unknown",
             "timestamp": time.time()
         }
     except Exception as e:

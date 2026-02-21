@@ -258,34 +258,25 @@ class ONNXWhisperNPU:
                             # Efficient decoding with KV cache
                             inputs = {'input_ids': decoder_input_ids[:, -1:]}
 
-                            for i, kv in enumerate(past_key_values):
-                                inputs[f'past_key_values.{i}.decoder.key'] = kv[0]
-                                inputs[f'past_key_values.{i}.decoder.value'] = kv[1]
-                                inputs[f'past_key_values.{i}.encoder.key'] = kv[2]
-                                inputs[f'past_key_values.{i}.encoder.value'] = kv[3]
+                            for j, kv in enumerate(past_key_values):
+                                inputs[f'past_key_values.{j}.decoder.key'] = kv[0]
+                                inputs[f'past_key_values.{j}.decoder.value'] = kv[1]
+                                inputs[f'past_key_values.{j}.encoder.key'] = kv[2]
+                                inputs[f'past_key_values.{j}.encoder.value'] = kv[3]
 
                             decoder_outputs = self.decoder_with_past_session.run(None, inputs)
                             logits = decoder_outputs[0]
 
-                            # Update decoder KVs - CRITICAL: Concatenate with previous KV!
+                            # decoder_with_past outputs already contain the FULL cumulative KV cache
+                            # (past + new token), so use them directly — do NOT concatenate.
+                            # Outputs: [logits, L0.dec.key, L0.dec.val, L1.dec.key, L1.dec.val, ...]
                             new_past = []
-                            for i in range(6):
-                                # Concatenate new decoder KV with previous decoder KV (growing cache)
-                                new_decoder_key = np.concatenate([
-                                    past_key_values[i][0],  # Previous decoder keys
-                                    decoder_outputs[i*2 + 1]  # New decoder key for this token
-                                ], axis=2)  # Concatenate along sequence dimension
-
-                                new_decoder_value = np.concatenate([
-                                    past_key_values[i][1],  # Previous decoder values
-                                    decoder_outputs[i*2 + 2]  # New decoder value for this token
-                                ], axis=2)
-
+                            for j in range(6):
                                 new_past.append((
-                                    new_decoder_key,
-                                    new_decoder_value,
-                                    past_key_values[i][2],     # encoder.key (unchanged)
-                                    past_key_values[i][3]      # encoder.value (unchanged)
+                                    decoder_outputs[j*2 + 1],  # present.j.decoder.key (full)
+                                    decoder_outputs[j*2 + 2],  # present.j.decoder.value (full)
+                                    past_key_values[j][2],     # encoder.key (unchanged)
+                                    past_key_values[j][3]      # encoder.value (unchanged)
                                 ))
                             past_key_values = new_past
                         else:
@@ -309,9 +300,15 @@ class ONNXWhisperNPU:
                                     past_key_values.append((dec_key, dec_val, enc_key, enc_val))
 
                         logits = decoder_outputs[0]
-                        next_token_id = np.argmax(logits[0, -1, :])
+                        next_token_id = int(np.argmax(logits[0, -1, :]))
 
                         if next_token_id == 50257:  # End token
+                            break
+
+                        # Detect repetition: stop if same token repeated 3+ times
+                        if (len(generated_tokens) >= 2
+                                and generated_tokens[-1] == next_token_id
+                                and generated_tokens[-2] == next_token_id):
                             break
 
                         decoder_input_ids = np.concatenate([
@@ -322,20 +319,14 @@ class ONNXWhisperNPU:
                         generated_tokens.append(next_token_id)
 
                     # Decode to text
-                    print(f"\n  [Chunk {i+1}] Generated {len(generated_tokens)} tokens")
-                    if generated_tokens and len(generated_tokens) > 0:
-                        print(f"  [Chunk {i+1}] First 10 tokens: {generated_tokens[:10]}")
+                    if generated_tokens:
                         text_tokens = [t for t in generated_tokens if t < 50257]
-                        print(f"  [Chunk {i+1}] Text tokens (non-special): {len(text_tokens)}")
                         chunk_text = tokenizer.decode(text_tokens, skip_special_tokens=True) if text_tokens else ""
-                        print(f"  [Chunk {i+1}] Decoded text: '{chunk_text}'")
                     else:
                         chunk_text = ""
-                        print(f"  [Chunk {i+1}] No tokens generated")
 
                     if not chunk_text.strip():
-                        chunk_text = f"[Chunk {i+1}: No speech detected]"
-                        print(f"  [Chunk {i+1}] Using fallback text")
+                        chunk_text = ""
 
                 except Exception as e:
                     logger.warning(f"⚠️ Decoding failed for chunk {i+1}: {e}")
@@ -438,14 +429,6 @@ class ONNXWhisperNPU:
                 from transformers import WhisperTokenizer
                 tokenizer = WhisperTokenizer.from_pretrained("openai/whisper-base")
 
-                print("\n" + "="*70)
-                print("TOKENIZER DEBUG INFO")
-                print("="*70)
-                print(f"Tokenizer type: {type(tokenizer)}")
-                print(f"Tokenizer vocab size: {len(tokenizer)}")
-                print(f"Special tokens: EOT={tokenizer.eos_token_id}, SOT={tokenizer.bos_token_id}")
-                print("="*70 + "\n")
-
                 # Whisper decoding sequence
                 max_length = 448  # Whisper max sequence length
                 generated_tokens = []
@@ -458,27 +441,15 @@ class ONNXWhisperNPU:
                 use_past = self.decoder_with_past_session is not None
                 past_key_values = None
 
-                # Generate tokens autoregressively with KV cache
-                print(f"\n{'='*70}")
-                print(f"STARTING TOKEN GENERATION LOOP (max_length={max_length})")
-                print(f"{'='*70}\n")
-
                 for step in range(max_length):  # Generate up to 448 tokens
-                    # Check if we're about to exceed maximum sequence length
                     if decoder_input_ids.shape[1] >= 448:
-                        logger.warning(f"⚠️ Reached maximum sequence length (448 tokens), stopping generation")
                         break
-
-                    if step % 10 == 0:  # Print every 10 steps to avoid spam
-                        print(f"Step {step}: Generated {len(generated_tokens)} tokens so far...")
 
                     if use_past and past_key_values is not None:
                         # Efficient decoding with KV cache - only process last token
                         inputs = {'input_ids': decoder_input_ids[:, -1:]}
 
-                        # Add past key values (6 layers, each with decoder and encoder keys/values)
                         for i, kv in enumerate(past_key_values):
-                            logger.debug(f"Passing to decoder-with-past Layer {i}: dec_key={kv[0].shape}, enc_key={kv[2].shape}")
                             inputs[f'past_key_values.{i}.decoder.key'] = kv[0]
                             inputs[f'past_key_values.{i}.decoder.value'] = kv[1]
                             inputs[f'past_key_values.{i}.encoder.key'] = kv[2]
@@ -487,24 +458,14 @@ class ONNXWhisperNPU:
                         decoder_outputs = self.decoder_with_past_session.run(None, inputs)
                         logits = decoder_outputs[0]
 
-                        # Update decoder KVs, keep encoder KVs unchanged
-                        # CRITICAL: Concatenate with previous KV for growing cache
+                        # decoder_with_past outputs already contain the FULL cumulative KV cache
+                        # (past + new token), so use them directly — do NOT concatenate.
+                        # Outputs: [logits, L0.dec.key, L0.dec.val, L1.dec.key, L1.dec.val, ...]
                         new_past = []
                         for i in range(6):  # 6 decoder layers
-                            # Concatenate new decoder KV with previous decoder KV
-                            new_decoder_key = np.concatenate([
-                                past_key_values[i][0],  # Previous decoder keys
-                                decoder_outputs[i*2 + 1]  # present.i.decoder.key
-                            ], axis=2)  # Concatenate along sequence dimension
-
-                            new_decoder_value = np.concatenate([
-                                past_key_values[i][1],  # Previous decoder values
-                                decoder_outputs[i*2 + 2]  # present.i.decoder.value
-                            ], axis=2)
-
                             new_past.append((
-                                new_decoder_key,
-                                new_decoder_value,
+                                decoder_outputs[i*2 + 1],  # present.i.decoder.key (full)
+                                decoder_outputs[i*2 + 2],  # present.i.decoder.value (full)
                                 past_key_values[i][2],     # encoder.key (unchanged)
                                 past_key_values[i][3]      # encoder.value (unchanged)
                             ))
@@ -533,32 +494,17 @@ class ONNXWhisperNPU:
 
                     logits = decoder_outputs[0]
 
-                    # Debug: Analyze logits for first few steps
-                    if step < 3:
-                        print(f"\n  === Logits Analysis (Step {step}) ===")
-                        print(f"  Logits shape: {logits.shape}")
-                        print(f"  Logits range: [{logits.min():.4f}, {logits.max():.4f}]")
-
-                        # Get top 5 most likely tokens
-                        last_logits = logits[0, -1, :]
-                        top5_indices = np.argsort(last_logits)[-5:][::-1]
-                        print(f"  Top 5 token candidates:")
-                        for idx in top5_indices:
-                            token_text = tokenizer.decode([idx]) if idx < 50257 else f"<SPECIAL:{idx}>"
-                            print(f"    {idx}: logit={last_logits[idx]:.4f} → '{token_text}'")
-                        print()
-
-                    # Get next token
-                    next_token_id = np.argmax(logits[0, -1, :])
-
-                    # Debug: Show token details for first 20 tokens
-                    if step < 20:
-                        token_str = tokenizer.decode([next_token_id])
-                        print(f"  Step {step}: token_id={next_token_id} → '{token_str}' (is_special={next_token_id >= 50257})")
+                    # Get next token (greedy)
+                    next_token_id = int(np.argmax(logits[0, -1, :]))
 
                     # Check for end token
                     if next_token_id == 50257:  # <|endoftext|>
-                        print(f"\n⚠️ End token detected at step {step}, stopping generation")
+                        break
+
+                    # Detect repetition: stop if same token repeated 3+ times
+                    if (len(generated_tokens) >= 2
+                            and generated_tokens[-1] == next_token_id
+                            and generated_tokens[-2] == next_token_id):
                         break
 
                     # Add to sequence
@@ -568,54 +514,20 @@ class ONNXWhisperNPU:
                     ], axis=1)
 
                     generated_tokens.append(next_token_id)
-                
+
                 # Decode tokens to text
-                print(f"\n{'='*70}")
-                print(f"TOKEN DECODING DEBUG")
-                print(f"{'='*70}")
-                print(f"Total generated tokens: {len(generated_tokens)}")
-
                 if generated_tokens:
-                    print(f"Generated tokens (all {len(generated_tokens)}): {generated_tokens}")
-                    print(f"\nFirst 20 tokens: {generated_tokens[:20]}")
-
-                    # Count special vs regular tokens
-                    special_count = sum(1 for t in generated_tokens if t >= 50257)
-                    regular_count = len(generated_tokens) - special_count
-                    print(f"\nToken breakdown:")
-                    print(f"  Regular tokens (< 50257): {regular_count}")
-                    print(f"  Special tokens (>= 50257): {special_count}")
-
-                    # Skip special tokens and decode
-                    text_tokens = [t for t in generated_tokens if t < 50257]  # Filter out special tokens
-
+                    text_tokens = [t for t in generated_tokens if t < 50257]
                     if text_tokens:
-                        print(f"\nText tokens to decode: {text_tokens[:50]}")  # First 50
-
-                        # Decode individual tokens for inspection
-                        print(f"\nIndividual token decoding (first 10):")
-                        for i, token in enumerate(text_tokens[:10]):
-                            decoded = tokenizer.decode([token])
-                            print(f"  Token {i}: {token} → '{decoded}'")
-
-                        # Full decode
                         text = tokenizer.decode(text_tokens, skip_special_tokens=True)
-                        print(f"\nFull decoded text length: {len(text)}")
-                        print(f"Full decoded text: '{text}'")
-
                         if not text.strip():
                             text = "[Audio processed but no speech detected]"
-                            print(f"⚠️ Decoded text was empty!")
                     else:
                         text = "[Audio processed but no text tokens generated]"
-                        print(f"⚠️ No regular text tokens generated (all special tokens)")
                 else:
                     text = "[Audio processed but no tokens generated]"
-                    print(f"⚠️ No tokens generated at all")
 
-                print(f"{'='*70}\n")
-
-                logger.info(f"✅ ONNX Whisper decoding completed: '{text}'")
+                logger.info(f"✅ ONNX Whisper decoded {len(generated_tokens)} tokens: '{text[:100]}'")
                 
             except Exception as e:
                 logger.warning(f"⚠️ Advanced decoding failed, trying simple approach: {e}")
